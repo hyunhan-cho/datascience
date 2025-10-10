@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 07. 기초 통계분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <!-- KaTeX for rendering mathematical formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMeaCKZTL/kvh6DzhXDCFhPGaJMSxL4O5TC7iNvIQeDfsGjsP" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1UtbQTgBMSwmlS2iGDxIsvQLIX+wjL2TxTAJ+K" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+        }
+        .slide.active {
+            display: block;
+        }
+        code {
+            background-color: #f3f4f6;
+            color: #1e293b;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.9em;
+            font-family: 'D2Coding', 'Courier New', monospace;
+        }
+        pre {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        .slide-content {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .katex-display {
+            margin: 1em 0;
+            font-size: 1.2em;
+        }
+        .output-box pre {
+            background-color: #ffffff;
+            color: #374151;
+            padding: 0;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <!-- Presentation Slides Container -->
+        <div id="presentation-container" class="relative p-8 md:p-12 min-h-[600px] flex items-center justify-center">
+            
+            <!-- Slide 1: Title -->
+            <div id="slide-1" class="slide active">
+                <div class="slide-content text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Chapter 07</h1>
+                    <p class="text-2xl md:text-3xl text-blue-600 font-semibold">기초 통계분석</p>
+                    <div class="mt-8 w-24 h-1.5 bg-blue-500 mx-auto rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Slide 2: summarize -->
+            <div id="slide-2" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">1. summarize</h2>
+                    <p class="text-slate-600 mb-4">연속형 변수의 평균, 표준편차 등 주요 요약 통계량을 계산합니다.</p>
+                    <pre><code>su lived</code></pre>
+                    <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                        <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                        <pre><code>  Variable |        Obs        Mean    Std. dev.       Min        Max
+-----------+---------------------------------------------------------
+     lived |        153    19.26797    16.95383          1         84</code></pre>
+                    </div>
+                     <pre class="mt-4"><code>su lived, detail</code></pre>
+                     <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                        <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                        <pre><code>                      lived
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            1              1
+ 5%            2              1
+10%            3              2       Obs                 153
+25%            6              3       Sum of wgt.         153
+
+50%           15                      Mean           19.26797
+                        Largest       Std. dev.      16.95383
+75%           29             70
+90%           45             72       Variance       287.4328
+95%           53             75       Skewness       1.161327
+99%           75             84       Kurtosis       3.693774</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 3: summarize 수학적 개념 -->
+            <div id="slide-3" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-4">Summarize: 수학적 개념</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">표본 평균 (Sample Mean)</h3>
+                            <p class="text-slate-600 text-sm">데이터의 중심 경향을 나타내는 값입니다.</p>
+                            <div class="text-center text-slate-800">$$ \bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i $$</div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-700">표본 표준편차 (Sample Standard Deviation)</h3>
+                            <p class="text-slate-600 text-sm">데이터가 평균으로부터 얼마나 퍼져 있는지를 나타내는 값입니다.</p>
+                            <div class="text-center text-slate-800">$$ s = \sqrt{\frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2} $$</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: summarize와 return list -->
+            <div id="slide-4" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">summarize와 r() 저장값 활용</h2>
+                    <p class="text-slate-600 mb-2"><code>summarize</code> 실행 후, 주요 통계량은 r() 스칼라에 임시 저장되어 후속 작업에 활용할 수 있습니다.</p>
+                    <pre><code>* lived 변수의 요약 통계량 계산
+su lived
+
+* 저장된 스칼라 값 확인
+return list
+
+* 표준화(z-score) 변수 생성
+gen lived_s = (lived - r(mean)) / r(sd)</code></pre>
+                    <p class="text-sm text-red-600 bg-red-50 p-3 rounded-lg mt-4"><strong>주의:</strong> <code>return list</code>는 가장 마지막에 실행된 명령어의 결과만 저장합니다.</p>
+                </div>
+            </div>
+
+            <!-- Slide 5: tabstat, table -->
+            <div id="slide-5" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">2. tabstat & 3. table</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">tabstat</h3>
+                            <p class="text-slate-600">사용자가 원하는 통계량(평균, 중앙값, 개수 등)을 선택하여 표 형태로 보여줍니다.</p>
+                            <pre><code>tabstat lived, by(gender) stats(mean sd N)</code></pre>
+                            <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                                <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                                <pre><code>Summary for variables: lived
+     by categories of: gender
+
+  gender |      mean        sd         N
+---------+------------------------------
+       0 |  23.51667  19.10829        60
+       1 |  16.55914  14.77334        93
+---------+------------------------------
+   Total |  19.26797  16.95383       153
+----------------------------------------</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-700">table</h3>
+                            <p class="text-slate-600">범주형 변수를 기준으로 교차표를 만들고, 지정한 연속형 변수의 요약 통계량을 셀에 표시합니다.</p>
+                            <pre><code>table gender kids, contents(mean lived)</code></pre>
+                            <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                                <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                                <pre><code>---------------------------------------
+          |         kids                 
+   gender |       0            1         
+----------+------------------------------
+        0 | 25.105263      20.727273     
+        1 | 18.019608      14.714286     
+---------------------------------------</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: tabulate -->
+            <div id="slide-6" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">4. tabulate</h2>
+                    <p class="text-slate-600 mb-2">범주형 변수의 빈도(frequency), 비율(percentage), 교차표를 만드는 가장 기본적인 명령어입니다.</p>
+                     <pre><code>tab gender kids</code></pre>
+                    <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                        <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                        <pre><code>           |        kids
+    gender |         0          1 |     Total
+-----------+----------------------+----------
+         0 |        38         22 |        60 
+         1 |        51         42 |        93 
+-----------+----------------------+----------
+     Total |        89         64 |       153</code></pre>
+                    </div>
+                    <pre class="mt-4"><code>tab1 gender kids meetings</code></pre>
+                    <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                        <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                        <pre><code>-> tabulation of gender
+    gender |      Freq.     Percent        Cum.
+-----------+-----------------------------------
+         0 |         60       39.22       39.22
+         1 |         93       60.78      100.00
+-----------+-----------------------------------
+     Total |        153      100.00
+
+-> tabulation of kids
+... (kids 결과 생략) ...
+
+-> tabulation of meetings
+... (meetings 결과 생략) ...</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 7: tabulate와 카이제곱 검정 -->
+            <div id="slide-7" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">카이제곱(Chi-squared) 독립성 검정</h2>
+                    <p class="text-slate-600 mb-2">두 범주형 변수가 서로 관련이 있는지(독립적인지) 검정합니다.</p>
+                    <div class="bg-slate-50 p-4 rounded-lg text-sm">
+                        <p><strong>귀무가설(H0):</strong> 두 변수는 서로 독립이다.</p>
+                        <p><strong>대립가설(H1):</strong> 두 변수는 서로 독립이 아니다.</p>
+                    </div>
+                    <pre class="mt-4"><code>tab gender meetings, chi2 exp</code></pre>
+                    <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                        <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                        <pre><code>           |        meetings
+    gender |         0          1 |     Total
+-----------+----------------------+----------
+         0 |        42         18 |        60 
+           |     41.57      18.43 |     60.00 
+-----------+----------------------+----------
+         1 |        64         29 |        93 
+           |     64.43      28.57 |     93.00 
+-----------+----------------------+----------
+     Total |       106         47 |       153 
+           |    106.00      47.00 |    153.00 
+
+Pearson chi2(1) =   0.0385   Pr = 0.844</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: 카이제곱 검정 수학적 개념 -->
+            <div id="slide-8" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-4">카이제곱 검정: 수학적 개념</h2>
+                    <p class="text-slate-600 mb-2">관측된 빈도(Observed)와 독립을 가정할 때 기대되는 빈도(Expected)의 차이를 이용하여 검정 통계량을 계산합니다.</p>
+                    <div class="text-center text-slate-800">$$ \chi^2 = \sum \frac{(O_{ij} - E_{ij})^2}{E_{ij}} $$</div>
+                    <ul class="list-disc pl-5 mt-4 text-slate-600 text-sm space-y-2">
+                        <li>$O_{ij}$: i행, j열에서의 관측도수</li>
+                        <li>$E_{ij}$: i행, j열에서의 기대도수. $E_{ij} = \frac{(i행의 합) \times (j열의 합)}{전체 합}$</li>
+                        <li>계산된 $\chi^2$ 값이 크면 기대값과의 차이가 크다는 의미이므로, 귀무가설을 기각하고 두 변수가 연관이 있다고 결론 내립니다.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Slide 9: ci, cii (신뢰구간) -->
+            <div id="slide-9" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">5. 신뢰구간(Confidence Interval) 추정</h2>
+                     <p class="text-slate-600 mb-4">모평균이나 모비율이 존재할 것이라고 기대되는 구간을 추정합니다.</p>
+                     <div>
+                        <h3 class="font-semibold text-slate-700">ci: 데이터를 이용한 추정</h3>
+                        <pre><code>ci means lived</code></pre>
+                        <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                            <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                            <pre><code>  Variable |        Obs        Mean    Std. err.       [95% conf. interval]
+-----------+----------------------------------------------------------------
+     lived |        153    19.26797    1.371842        16.56535    21.97059</code></pre>
+                        </div>
+                     </div>
+                     <div class="mt-4">
+                        <h3 class="font-semibold text-slate-700">cii: 요약 통계량을 이용한 추정</h3>
+                        <pre><code>cii 153 19.268 16.954</code></pre>
+                        <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                            <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                            <pre><code>  Variable |        Obs        Mean    Std. err.       [95% conf. interval]
+-----------+----------------------------------------------------------------
+           |        153      19.268    1.372138        16.56279    21.97321</code></pre>
+                        </div>
+                     </div>
+                </div>
+            </div>
+
+             <!-- Slide 10: 신뢰구간 수학적 개념 -->
+            <div id="slide-10" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-4">신뢰구간: 수학적 개념</h2>
+                    <p class="text-slate-600 mb-2">모평균($\mu$)에 대한 $(1-\alpha) \times 100\%$ 신뢰구간은 다음과 같이 계산됩니다.</p>
+                    <div class="text-center text-slate-800">$$ \bar{x} \pm t_{\alpha/2, n-1} \frac{s}{\sqrt{n}} $$</div>
+                     <ul class="list-disc pl-5 mt-4 text-slate-600 text-sm space-y-2">
+                        <li>$\bar{x}$: 표본 평균</li>
+                        <li>$s$: 표본 표준편차</li>
+                        <li>$n$: 표본 크기</li>
+                        <li>$t_{\alpha/2, n-1}$: 자유도가 $n-1$인 t-분포에서 상위 $\alpha/2$에 해당하는 값</li>
+                        <li>$\frac{s}{\sqrt{n}}$: 표준 오차 (Standard Error)</li>
+                    </ul>
+                    <p class="mt-4 text-sm bg-blue-50 text-blue-800 p-3 rounded-lg">의미: "같은 방법으로 표본을 100번 뽑아 신뢰구간을 만들면, 그 중 95개는 실제 모평균을 포함할 것이다."</p>
+                </div>
+            </div>
+            
+            <!-- Slide 11: t-test -->
+            <div id="slide-11" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">6. 모평균에 대한 t-검정</h2>
+                     <p class="text-slate-600 mb-4">한 집단의 평균을 특정 값과 비교하거나, 두 집단의 평균을 비교할 때 사용합니다.</p>
+                    <ul class="list-disc pl-5 text-slate-700 space-y-3">
+                        <li><strong>단일표본 t-검정 (One-sample t-test):</strong><br>한 집단의 평균이 특정 값($\mu_0$)과 같은지 검정.</li>
+                        <li><strong>대응표본 t-검정 (Paired t-test):</strong><br>동일한 집단에 대한 두 측정값(사전-사후 등)의 평균 차이를 검정.</li>
+                        <li><strong>독립표본 t-검정 (Two-sample t-test):</strong><br>서로 다른 두 집단의 평균 차이를 검정.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Slide 12: t-검정 수학적 개념 -->
+            <div id="slide-12" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-4">t-검정: 수학적 개념</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">단일표본 t-검정 통계량 ($H_0: \mu = \mu_0$)</h3>
+                            <div class="text-center text-slate-800">$$ t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}} $$</div>
+                        </div>
+                         <div>
+                            <h3 class="font-semibold text-slate-700">독립표본 t-검정 통계량 ($H_0: \mu_1 = \mu_2$)</h3>
+                            <p class="text-slate-600 text-xs">(등분산 가정 시)</p>
+                            <div class="text-center text-slate-800">$$ t = \frac{(\bar{x}_1 - \bar{x}_2)}{s_p \sqrt{\frac{1}{n_1} + \frac{1}{n_2}}} \quad \text{where} \quad s_p^2 = \frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2} $$</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 13: t-검정 예제 1 -->
+            <div id="slide-13" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">t-검정 예제 (1)</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">단일표본 t-검정 (One-sample)</h3>
+                            <p class="text-slate-600 text-sm">남성 소득(inc_male)의 평균이 3000과 같은지 검정</p>
+                            <pre><code>ttest inc_male == 3000</code></pre>
+                             <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                                <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                                <pre><code>One-sample t test
+------------------------------------------------------------------------------
+Variable |     Obs        Mean    Std. err.   Std. dev.   [95% conf. interval]
+---------+--------------------------------------------------------------------
+inc_male |      74    5530.135    572.2393    4920.473    4388.895     6671.376
+------------------------------------------------------------------------------
+Ho: mean = 3000                                    t =   4.4211
+Ha: mean < 3000                 Ha: mean != 3000                Ha: mean > 3000
+Pr(T < t) = 0.9999              Pr(|T| > |t|) = 0.0000          Pr(T > t) = 0.0000</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-700">대응표본 t-검정 (Paired)</h3>
+                            <p class="text-slate-600 text-sm">남편(husband)과 부인(wife)의 값에 차이가 없는지 검정</p>
+                            <pre><code>ttest husband == wife</code></pre>
+                             <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                                <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                                <pre><code>Paired t test
+------------------------------------------------------------------------------
+Variable |     Obs        Mean    Std. err.   Std. dev.   [95% conf. interval]
+---------+--------------------------------------------------------------------
+ husband |      20       28.25    1.956747     8.75076    24.15286    32.34714
+    wife |      20        27.5    1.862424    8.328966    23.60627    31.39373
+---------+--------------------------------------------------------------------
+    diff |      20        .75     .739819    3.308679   - .801121    2.301121
+------------------------------------------------------------------------------
+Ho: mean(diff) = 0                                 t =   1.0138
+Ha: diff < 0                 Ha: diff != 0                  Ha: diff > 0
+Pr(T < t) = 0.8384           Pr(|T| > |t|) = 0.3232           Pr(T > t) = 0.1616</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 14: t-검정 예제 2 -->
+            <div id="slide-14" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">t-검정 예제 (2): 독립표본</h2>
+                     <div class="space-y-6">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">Wide-type 데이터</h3>
+                            <p class="text-slate-600 text-sm">여성 소득과 남성 소득 평균 비교 (이분산 가정)</p>
+                            <pre><code>ttest inc_female == inc_male, unpaired unequal</code></pre>
+                             <div class="mt-2 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 output-box">
+                                <p class="font-semibold text-slate-600 mb-2 text-xs">▶︎ 실행 결과 예시</p>
+                                <pre><code>Two-sample t test with unequal variances
+------------------------------------------------------------------------------
+   Group |     Obs        Mean    Std. err.   Std. dev.   [95% conf. interval]
+---------+--------------------------------------------------------------------
+inc_fema |      74    2671.014    258.9103    2227.098    2155.071    3186.956
+inc_male |      74    5530.135    572.2393    4920.473    4388.895    6671.376
+---------+--------------------------------------------------------------------
+combined |     148    4100.574    352.4172    4280.932    3404.298    4796.851
+---------+--------------------------------------------------------------------
+    diff |           -2859.122    628.1884               -4107.828   -1610.416
+------------------------------------------------------------------------------
+Ho: mean(inc_female) - mean(inc_male) = diff = 0
+Ha: diff < 0                 Ha: diff != 0                  Ha: diff > 0
+Pr(T < t) = 0.0000           Pr(|T| > |t|) = 0.0000           Pr(T > t) = 1.0000</code></pre>
+                            </div>
+                        </div>
+                     </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-between items-center">
+            <button id="prev-btn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+            <div id="slide-counter" class="text-sm text-slate-500"></div>
+            <button id="next-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ]
+            });
+
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                updateNavigation();
+            }
+
+            function updateNavigation() {
+                currentSlide = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+                slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === totalSlides - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                } else if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                }
+            });
+
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 06. 데이터관리 고급명령어</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+        }
+        .slide.active {
+            display: block;
+        }
+        /* Custom styles for code blocks */
+        code {
+            background-color: #f3f4f6; /* gray-100 */
+            color: #1e293b; /* slate-800 */
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.9em;
+            font-family: 'D2Coding', 'Courier New', monospace;
+        }
+        pre {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        .slide-content {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        ul {
+            list-style-position: inside;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <!-- Presentation Slides Container -->
+        <div id="presentation-container" class="relative p-8 md:p-12 min-h-[600px] flex items-center justify-center">
+            
+            <!-- Slide 1: Title -->
+            <div id="slide-1" class="slide active">
+                <div class="slide-content text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Chapter 06</h1>
+                    <p class="text-2xl md:text-3xl text-blue-600 font-semibold">데이터관리 고급명령어</p>
+                    <div class="mt-8 w-24 h-1.5 bg-blue-500 mx-auto rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Slide 2: tabulate, xi (더미변수) -->
+            <div id="slide-2" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">1. tabulate, xi</h2>
+                    <p class="text-slate-600 mb-4"><strong>더미변수(dummy variables)</strong>는 명목형 자료(범주형 변수)를 0과 1로 표현하는 방식입니다.</p>
+                    <div class="bg-slate-50 p-6 rounded-lg">
+                        <p class="text-slate-700">예) 인종 변수 → <code>race</code></p>
+                        <ul class="list-disc text-slate-600 mt-2">
+                            <li>백인인 경우 1, 아닌 경우 0</li>
+                            <li>흑인인 경우 1, 아닌 경우 0</li>
+                        </ul>
+                        <p class="mt-4 text-slate-700"><code>tabulate</code>와 <code>xi</code> 명령어를 이용해 쉽게 생성할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: tabulate로 더미변수 만들기 -->
+            <div id="slide-3" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">더미변수 만들기 I: tabulate</h2>
+                    <p class="text-slate-600 mb-2"><code>tabulate</code>는 빈도표를 만드는 명령어지만, <code>gen()</code> 옵션을 통해 더미변수를 생성할 수 있습니다.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">빈도표 확인</h3>
+                            <pre><code>sysuse nlsw88, clear
+tab race</code></pre>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-700">더미변수 생성</h3>
+                            <pre><code>tab race, gen(dum_race_)</code></pre>
+                            <p class="text-sm text-slate-500"><code>dum_race_1</code>, <code>dum_race_2</code>, <code>dum_race_3</code> 변수가 생성됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: xi로 더미변수 만들기 -->
+            <div id="slide-4" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">더미변수 만들기 II: xi</h2>
+                    <p class="text-slate-600 mb-2"><code>xi</code> 명령어는 더미변수 생성을 위해 사용됩니다.</p>
+                     <pre><code>sysuse nlsw88, clear
+xi i.race, noomit prefix(dum_)</code></pre>
+                    <ul class="list-disc space-y-2 mt-4 text-slate-600">
+                        <li><code>i.race</code>: race 변수를 기준으로 더미변수를 생성하라는 의미입니다. (i=indicator)</li>
+                        <li><code>noomit</code>: 모든 범주에 대한 더미변수를 생성합니다. (생략 시 기준범주 제외)</li>
+                        <li><code>prefix(dum_)</code>: 생성될 변수 이름의 접두사를 지정합니다.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Slide 5: egen -->
+            <div id="slide-5" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">2. egen (Extended Generate)</h2>
+                    <p class="text-slate-600 mb-4"><code>egen</code>은 <code>gen</code>의 확장형 명령어로, 그룹별 통계량 등 더 고차원적인 방법으로 새로운 변수를 생성할 때 사용합니다.</p>
+                    <div class="bg-slate-50 p-6 rounded-lg grid grid-cols-2 gap-4">
+                        <div>
+                           <h3 class="font-semibold text-blue-700">gen</h3>
+                           <p class="text-slate-600 text-sm">수학적 변형, 변수간 결합</p>
+                        </div>
+                        <div>
+                           <h3 class="font-semibold text-blue-700">egen</h3>
+                           <p class="text-slate-600 text-sm">그룹별 최대/최소, 평균, 비중 등</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: egen 함수 1 -->
+            <div id="slide-6" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">주요 egen 함수 (1)</h2>
+                    <p class="text-slate-600 mb-2">그룹별 최대값, 최소값, 평균, 중앙값을 구하는 예제입니다.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">회사별 최대 투자액 (Maximum)</h3>
+                            <pre><code>by company, sort: egen max_invest = max(invest)</code></pre>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-700">회사별 평균 투자액 (Mean)</h3>
+                             <pre><code>by company, sort: egen mean_invest = mean(invest)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: egen 함수 2 -->
+            <div id="slide-7" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">주요 egen 함수 (2)</h2>
+                    <p class="text-slate-600 mb-2">그룹 내에서 각 관측치가 차지하는 비중(%)을 구합니다.</p>
+                    <div>
+                        <h3 class="font-semibold text-slate-700">연도별 각 회사의 투자 비중 (Percent)</h3>
+                        <p class="text-slate-600 text-sm">각 연도의 총 투자액 중 특정 회사의 투자액이 차지하는 비율을 계산합니다.</p>
+                        <pre><code>by year, sort: egen percent_invest = pc(invest)</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+             <!-- Slide 8: 데이터 구조 예시 -->
+            <div id="slide-8" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-4">5. 데이터 구조 예시: Wide vs Long</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Wide Type -->
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-semibold text-blue-700 text-center">Wide Type</h3>
+                            <p class="mt-1 text-sm text-slate-600 h-12">각 관측치가 하나의 개체, 반복 측정값이 여러 변수(column)로 표현됩니다.</p>
+                            <table class="w-full mt-2 text-sm text-left text-slate-500 rounded-lg overflow-hidden">
+                                <thead class="text-xs text-slate-700 uppercase bg-slate-200">
+                                    <tr><th scope="col" class="px-3 py-2">id</th><th scope="col" class="px-3 py-2">score2023</th><th scope="col" class="px-3 py-2">score2024</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="bg-white border-b"><td class="px-3 py-2 font-medium">1</td><td class="px-3 py-2">85</td><td class="px-3 py-2">90</td></tr>
+                                    <tr class="bg-white"><td class="px-3 py-2 font-medium">2</td><td class="px-3 py-2">70</td><td class="px-3 py-2">75</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Long Type -->
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-semibold text-blue-700 text-center">Long Type</h3>
+                            <p class="mt-1 text-sm text-slate-600 h-12">각 관측치가 특정 시점의 측정값, 여러 행에 걸쳐 하나의 개체가 표현됩니다.</p>
+                            <table class="w-full mt-2 text-sm text-left text-slate-500 rounded-lg overflow-hidden">
+                                <thead class="text-xs text-slate-700 uppercase bg-slate-200">
+                                    <tr><th scope="col" class="px-3 py-2">id</th><th scope="col" class="px-3 py-2">year</th><th scope="col" class="px-3 py-2">score</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="bg-white border-b"><td class="px-3 py-2 font-medium">1</td><td class="px-3 py-2">2023</td><td class="px-3 py-2">85</td></tr>
+                                    <tr class="bg-white border-b"><td class="px-3 py-2 font-medium">1</td><td class="px-3 py-2">2024</td><td class="px-3 py-2">90</td></tr>
+                                    <tr class="bg-white border-b"><td class="px-3 py-2 font-medium">2</td><td class="px-3 py-2">2023</td><td class="px-3 py-2">70</td></tr>
+                                    <tr class="bg-white"><td class="px-3 py-2 font-medium">2</td><td class="px-3 py-2">2024</td><td class="px-3 py-2">75</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 9: 파일 결합 예시 (Improved) -->
+            <div id="slide-9" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 border-l-4 border-blue-500 pl-4">6. 파일 결합 예시: Append, Merge</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Append -->
+                        <div class="bg-slate-50 p-4 rounded-lg flex flex-col">
+                            <h3 class="text-lg font-semibold text-blue-700">Append: 세로 결합 (관측치 추가)</h3>
+                            <p class="mt-1 text-xs text-slate-600">두 데이터 파일(`data1`, `data2`)을 세로로 합칩니다.</p>
+                            <div class="flex-grow mt-2 text-xs">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <!-- data1 -->
+                                    <div>
+                                        <p class="font-mono text-center">data1.dta</p>
+                                        <table class="w-full text-left text-slate-500 rounded-lg overflow-hidden">
+                                            <thead class="text-xs text-slate-700 bg-slate-200">
+                                                <tr><th class="px-2 py-1">id</th><th class="px-2 py-1">score</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="bg-white border-b"><td class="px-2 py-1">1</td><td class="px-2 py-1">85</td></tr>
+                                                <tr class="bg-white"><td class="px-2 py-1">2</td><td class="px-2 py-1">70</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <!-- data2 -->
+                                    <div>
+                                        <p class="font-mono text-center">data2.dta</p>
+                                        <table class="w-full text-left text-slate-500 rounded-lg overflow-hidden">
+                                            <thead class="text-xs text-slate-700 bg-slate-200">
+                                                <tr><th class="px-2 py-1">id</th><th class="px-2 py-1">score</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="bg-white border-b"><td class="px-2 py-1">3</td><td class="px-2 py-1">92</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <pre class="text-xs mt-2"><code>use data1.dta, clear
+append using data2.dta</code></pre>
+                                <p class="text-center mt-2">▼ 결과 ▼</p>
+                                <table class="w-full text-left text-slate-500 rounded-lg overflow-hidden mt-1">
+                                     <thead class="text-xs text-slate-700 bg-green-200">
+                                        <tr><th class="px-2 py-1">id</th><th class="px-2 py-1">score</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="bg-white border-b"><td class="px-2 py-1">1</td><td class="px-2 py-1">85</td></tr>
+                                        <tr class="bg-white border-b"><td class="px-2 py-1">2</td><td class="px-2 py-1">70</td></tr>
+                                        <tr class="bg-white"><td class="px-2 py-1 text-red-500 font-bold">3</td><td class="px-2 py-1 text-red-500 font-bold">92</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Merge -->
+                        <div class="bg-slate-50 p-4 rounded-lg flex flex-col">
+                            <h3 class="text-lg font-semibold text-blue-700">Merge: 가로 결합 (변수 추가)</h3>
+                            <p class="mt-1 text-xs text-slate-600">기준 변수(`id`)로 두 파일을 가로로 합칩니다.</p>
+                            <div class="flex-grow mt-2 text-xs">
+                                 <div class="grid grid-cols-2 gap-2">
+                                    <!-- master -->
+                                    <div>
+                                        <p class="font-mono text-center">master.dta</p>
+                                        <table class="w-full text-left text-slate-500 rounded-lg overflow-hidden">
+                                            <thead class="text-xs text-slate-700 bg-slate-200">
+                                                <tr><th class="px-2 py-1">id</th><th class="px-2 py-1">name</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="bg-white border-b"><td class="px-2 py-1">1</td><td class="px-2 py-1">Kim</td></tr>
+                                                <tr class="bg-white"><td class="px-2 py-1">2</td><td class="px-2 py-1">Lee</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <!-- using -->
+                                    <div>
+                                        <p class="font-mono text-center">scores.dta</p>
+                                        <table class="w-full text-left text-slate-500 rounded-lg overflow-hidden">
+                                            <thead class="text-xs text-slate-700 bg-slate-200">
+                                                <tr><th class="px-2 py-1">id</th><th class="px-2 py-1">score</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr class="bg-white border-b"><td class="px-2 py-1">1</td><td class="px-2 py-1">85</td></tr>
+                                                <tr class="bg-white"><td class="px-2 py-1">2</td><td class="px-2 py-1">70</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <pre class="text-xs mt-2"><code>use master.dta, clear
+merge 1:1 id using scores.dta</code></pre>
+                                <p class="text-center mt-2">▼ 결과 ▼</p>
+                                 <table class="w-full text-left text-slate-500 rounded-lg overflow-hidden mt-1">
+                                     <thead class="text-xs text-slate-700 bg-green-200">
+                                        <tr><th class="px-2 py-1">id</th><th class="px-2 py-1">name</th><th class="px-2 py-1">score</th><th class="px-2 py-1">_merge</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="bg-white border-b"><td class="px-2 py-1">1</td><td class="px-2 py-1">Kim</td><td class="px-2 py-1 text-red-500 font-bold">85</td><td class="px-2 py-1 text-red-500 font-bold">3</td></tr>
+                                        <tr class="bg-white"><td class="px-2 py-1">2</td><td class="px-2 py-1">Lee</td><td class="px-2 py-1 text-red-500 font-bold">70</td><td class="px-2 py-1 text-red-500 font-bold">3</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-between items-center">
+            <button id="prev-btn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+            <div id="slide-counter" class="text-sm text-slate-500"></div>
+            <button id="next-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                updateNavigation();
+            }
+
+            function updateNavigation() {
+                currentSlide = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+                
+                // Update counter
+                slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+                
+                // Update buttons
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === totalSlides - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                } else if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                }
+            });
+
+            // Initial setup
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>
+
