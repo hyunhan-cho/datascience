@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>확률과 통계 스터디</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+        
+        .study-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+        
+        .study-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .study-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        
+        .study-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .study-card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            position: relative;
+        }
+        
+        .study-number {
+            font-size: 3em;
+            font-weight: bold;
+            opacity: 0.3;
+            position: absolute;
+            right: 20px;
+            top: 10px;
+        }
+        
+        .study-card-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .study-card-subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .study-card-body {
+            padding: 25px;
+        }
+        
+        .study-card-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .study-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tag {
+            background: #f8f9fa;
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .coming-soon {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .coming-soon .study-card-header {
+            background: linear-gradient(135deg, #999 0%, #666 100%);
+        }
+        
+        .coming-soon .study-card-title::after {
+            content: " (준비중)";
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.8;
+        }
+        .embed { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .embed-header { background: #111827; color: #e5e7eb; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+        .embed-header a { color: #93c5fd; text-decoration: none; font-weight: 700; }
+        .embed iframe { width: 100%; height: 680px; border: 0; display: block; }
+        .hidden { display: none; }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .study-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="back-button">← 메인으로 돌아가기</a>
+        <h1>📊 Probability & Statistics</h1>
+        <p>개발자를 위한 확률과 통계의 핵심 개념과 실무 활용법을 학습합니다</p>
+    </div>
+    
+    <div class="main-content">
+        <div class="study-grid">
+            <!-- 확률과 통계 스터디들 -->
+            <div class="study-card">
+                <a href="공분산.html" class="study-link">
+                    <div class="study-card-header">
+                        <div class="study-number">01</div>
+                        <div class="study-card-title">공분산과 상관계수</div>
+                        <div class="study-card-subtitle">Covariance & Correlation</div>
+                    </div>
+                    <div class="study-card-body">
+                        <div class="study-card-description">
+                            두 변수 간의 선형 관계를 측정하는 공분산과 상관계수의 개념을 학습합니다. 
+                            데이터 분석과 머신러닝에서의 활용 방법을 이해합니다.
+                        </div>
+                        <div class="study-tags">
+                            <span class="tag">Covariance</span>
+                            <span class="tag">Correlation</span>
+                            <span class="tag">Data Analysis</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            
+            <!-- 추가 스터디들은 여기에 계속 추가 -->
+            <div class="study-card coming-soon">
+                <div class="study-card-header">
+                    <div class="study-number">02</div>
+                    <div class="study-card-title">확률분포</div>
+                    <div class="study-card-subtitle">Probability Distributions</div>
+                </div>
+                <div class="study-card-body">
+                    <div class="study-card-description">
+                        다양한 확률분포의 특성과 활용법을 학습합니다.
+                    </div>
+                    <div class="study-tags">
+                        <span class="tag">Distribution</span>
+                        <span class="tag">Random Variable</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="study-card coming-soon">
+                <div class="study-card-header">
+                    <div class="study-number">03</div>
+                    <div class="study-card-title">가설검정</div>
+                    <div class="study-card-subtitle">Hypothesis Testing</div>
+                </div>
+                <div class="study-card-body">
+                    <div class="study-card-description">
+                        통계적 가설검정의 원리와 실무 적용 방법을 학습합니다.
+                    </div>
+                    <div class="study-tags">
+                        <span class="tag">Hypothesis</span>
+                        <span class="tag">Statistical Test</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 동적 임베드 컨테이너 -->
+        <section id="embed-container" class="embed hidden" aria-label="학습 자료 임베드 보기">
+            <div class="embed-header">
+                <strong id="embed-title">자료 바로 보기</strong>
+                <a id="embed-external" href="#" target="_blank" rel="noopener">새 창에서 보기 ↗</a>
+            </div>
+            <iframe id="embed-frame" src="" title="Probability Slides"></iframe>
+        </section>
+    </div>
+    
+    <div class="footer">
+        <p>© 2024 확률과 통계 스터디. 지속적인 학습과 성장을 위한 공간입니다.</p>
+    </div>
+    <script>
+        // 카드 클릭 시 아래 임베드 컨테이너에 로드
+        document.addEventListener('DOMContentLoaded', () => {
+            const links = document.querySelectorAll('.study-card .study-link');
+            const embed = document.getElementById('embed-container');
+            const embedFrame = document.getElementById('embed-frame');
+            const embedTitle = document.getElementById('embed-title');
+            const embedExternal = document.getElementById('embed-external');
+
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = link.getAttribute('href');
+                    const titleEl = link.querySelector('.study-card-title');
+                    const titleText = titleEl ? titleEl.textContent.trim() : '자료';
+
+                    embedFrame.src = href;
+                    embedTitle.textContent = `${titleText} · 자료 바로 보기`;
+                    embedExternal.href = href;
+                    embed.classList.remove('hidden');
+                    embed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

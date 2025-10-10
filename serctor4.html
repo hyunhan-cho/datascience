@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 04. 데이터파일 형식 전환</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+        }
+        .slide.active {
+            display: block;
+        }
+        /* Custom styles for code blocks */
+        code {
+            background-color: #f3f4f6; /* gray-100 */
+            color: #1e293b; /* slate-800 */
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.9em;
+            font-family: 'D2Coding', 'Courier New', monospace;
+        }
+        pre {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        .slide-content {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        ul {
+            list-style-position: inside;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <!-- Presentation Slides Container -->
+        <div id="presentation-container" class="relative p-8 md:p-12 min-h-[600px] flex items-center justify-center">
+            
+            <!-- Slide 1: Title -->
+            <div id="slide-1" class="slide active">
+                <div class="slide-content text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Chapter 04</h1>
+                    <p class="text-2xl md:text-3xl text-blue-600 font-semibold">데이터파일 형식 전환</p>
+                    <div class="mt-8 w-24 h-1.5 bg-blue-500 mx-auto rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Slide 2: 형식 전환의 필요성 -->
+            <div id="slide-2" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">파일 형식 전환이란?</h2>
+                    <p class="text-slate-600 mb-4">Stata의 기본 데이터 파일은 <code class="text-blue-600 font-semibold">*.dta</code> 형식입니다.</p>
+                    <div class="bg-slate-50 p-6 rounded-lg">
+                        <p class="text-slate-700">Excel, SPSS, SAS 등 다른 프로그램에서 생성된 파일을 Stata에서 사용하려면, Stata가 인식할 수 있는 <strong class="text-blue-600">*.dta 형식으로 변환</strong>하는 과정이 필요합니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: 형식 전환 방법 -->
+            <div id="slide-3" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">형식 전환 방법</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-blue-700">1. Stata Import 기능</h3>
+                            <p class="mt-2 text-slate-600">Stata에 내장된 기능으로 ASCII, Excel, SAS, SPSS 등의 파일을 불러올 수 있습니다.</p>
+                            <p class="mt-4 text-sm text-slate-500">(이 프레젠테이션에서는 이 방법을 중심으로 설명합니다.)</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-blue-700">2. Stat-Transfer 이용</h3>
+                            <p class="mt-2 text-slate-600">다양한 데이터 형식 간의 상호 변환을 지원하는 별도의 전문 소프트웨어입니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: 데이터 내보내기 (Export) -->
+            <div id="slide-4" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">5. 데이터 내보내기 (export)</h2>
+                    <p class="text-slate-600 mb-4">반대로, Stata의 <code>*.dta</code> 파일을 다른 형식으로 저장할 수도 있습니다.</p>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">Export 기능 사용법</h3>
+                            <p>메뉴에서 <code>File > Export</code>를 선택하여 원하는 파일 형식을 지정하면 됩니다. (예: .txt, .csv, .xlsx 등)</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">데이터 호환성</h3>
+                            <p>Stata는 SAS, SPSS 등 다른 주요 통계 프로그램의 데이터 파일을 불러들이는 기능을 지원하여 데이터 호환성이 좋습니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-between items-center">
+            <button id="prev-btn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+            <div id="slide-counter" class="text-sm text-slate-500"></div>
+            <button id="next-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                updateNavigation();
+            }
+
+            function updateNavigation() {
+                currentSlide = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+                
+                // Update counter
+                slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+                
+                // Update buttons
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === totalSlides - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                } else if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                }
+            });
+
+            // Initial setup
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>

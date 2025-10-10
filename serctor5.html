@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 05. 데이터관리 기본 명령어</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+        }
+        .slide.active {
+            display: block;
+        }
+        /* Custom styles for code blocks */
+        code {
+            background-color: #f3f4f6; /* gray-100 */
+            color: #1e293b; /* slate-800 */
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.9em;
+            font-family: 'D2Coding', 'Courier New', monospace;
+        }
+        pre {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        .slide-content {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <!-- Presentation Slides Container -->
+        <div id="presentation-container" class="relative p-8 md:p-12 min-h-[600px] flex items-center justify-center">
+            
+            <!-- Slide 1: Title -->
+            <div id="slide-1" class="slide active">
+                <div class="slide-content text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Chapter 05</h1>
+                    <p class="text-2xl md:text-3xl text-blue-600 font-semibold">데이터관리 기본 명령어</p>
+                    <div class="mt-8 w-24 h-1.5 bg-blue-500 mx-auto rounded-full"></div>
+                </div>
+            </div>
+
+            <!-- Slide 2: describe, codebook -->
+            <div id="slide-2" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">1. describe & codebook</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-blue-700">describe</h3>
+                            <p class="mt-2 text-slate-600">데이터 세트의 <strong class="font-semibold">형식상 속성</strong>을 요약합니다. (변수 개수, 저장 형태, 레이블 등)</p>
+                            <pre><code class="language-stata">sysuse auto, clear
+describe price mpg</code></pre>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-blue-700">codebook</h3>
+                            <p class="mt-2 text-slate-600">데이터의 <strong class="font-semibold">내용상 속성</strong>을 보여줍니다. (범위, 빈도, 결측치, 기술통계 등)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 3: display -->
+            <div id="slide-3" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">2. display</h2>
+                    <p class="text-lg text-slate-600 mb-4">결과를 보여주는 명령어로, 계산기처럼 유용하게 사용할 수 있습니다.</p>
+                    <ul class="space-y-3">
+                        <li><p class="text-slate-700">간단한 계산:</p> <pre><code>di 4*(2+3)</code></pre></li>
+                        <li><p class="text-slate-700">상수 값 확인 (원주율):</p> <pre><code>di _pi</code></pre></li>
+                        <li><p class="text-slate-700">포맷 지정:</p> <pre><code>di %12.10f _pi</code></pre></li>
+                        <li><p class="text-slate-700">확률 계산 (동전 6번 던져 앞면이 2번 나올 확률):</p> <pre><code>di comb(6,2)*0.5^2*0.5^4</code></pre></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Slide 4: list -->
+            <div id="slide-4" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">3. list</h2>
+                    <p class="text-lg text-slate-600 mb-4">데이터세트의 값을 Result창에 그대로 보여줍니다.</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">Options</h3>
+                            <ul class="list-disc list-inside mt-2 space-y-2 text-slate-600">
+                                <li><code>list, sep(10)</code><br>: 매 10번째 행에 구분선</li>
+                                <li><code>list, mean sum N</code><br>: 평균, 합계, 관측치 수 표시</li>
+                            </ul>
+                        </div>
+                        <div>
+                             <h3 class="font-semibold text-slate-700">Qualifier: <code>in</code></h3>
+                            <ul class="list-disc list-inside mt-2 space-y-2 text-slate-600">
+                                <li><code>list price in 1/10</code><br>: 1~10번째 관측치</li>
+                                <li><code>list price in -5/L</code><br>: 끝에서 5번째부터 마지막 관측치</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: rename -->
+            <div id="slide-5" class="slide">
+                 <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">4. rename</h2>
+                     <p class="text-lg text-slate-600 mb-4">주어진 변수 이름을 변경합니다.</p>
+                     <h3 class="font-semibold text-slate-700 mb-2">STATA 변수 이름 규칙:</h3>
+                     <ul class="list-decimal list-inside space-y-1 text-slate-600 bg-slate-50 p-4 rounded-md">
+                         <li>영문자, 숫자, '_' 조합으로만 구성</li>
+                         <li>최대 32글자</li>
+                         <li>한글 사용 불가</li>
+                         <li>숫자로 시작 불가</li>
+                         <li><code>-</code>, <code>*</code> 등 일부 특수문자 사용 불가</li>
+                         <li>공백(space) 사용 불가</li>
+                     </ul>
+                      <pre class="mt-4"><code class="language-stata">sysuse auto, clear
+rename price price1000</code></pre>
+                </div>
+            </div>
+
+            <!-- Slide 6: sort, gsort, bysort -->
+            <div id="slide-6" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">5. sort, gsort, bysort</h2>
+                     <p class="text-lg text-slate-600 mb-4">자료를 정렬하는 명령어입니다.</p>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">sort</h3>
+                            <p class="text-slate-600">오름차순 정렬만 가능. <code>sort price</code></p>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">gsort</h3>
+                            <p class="text-slate-600">내림차순(<code>-</code>), 오름차순(<code>+</code>) 정렬 가능. <code>gsort -price</code></p>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">bysort</h3>
+                            <p class="text-slate-600"><code>by</code>와 <code>sort</code>의 결합. 그룹별로 정렬 후 명령어를 실행. <br><code>bysort company : summarize invest</code></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: drop, keep, move, order -->
+            <div id="slide-7" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">6. drop, keep, move, order</h2>
+                     <p class="text-lg text-slate-600 mb-4">변수나 관찰치를 관리합니다.</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">drop</h3>
+                            <p class="text-slate-600">변수/관찰치 삭제<br><code>drop price mpg</code><br><code>drop in 1/10</code></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">keep</h3>
+                            <p class="text-slate-600">변수/관찰치 남기기<br><code>keep make price</code><br><code>keep if foreign==1</code></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">move</h3>
+                            <p class="text-slate-600">변수 위치 이동 (2개)<br><code>move price rep78</code></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-slate-700">order</h3>
+                            <p class="text-slate-600">여러 변수 위치 변경<br><code>order mpg rep78 price</code></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: Data Labels -->
+            <div id="slide-8" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">7. 데이터 레이블</h2>
+                    <p class="text-lg text-slate-600 mb-4">데이터세트나 변수에 설명을 붙이는 기능입니다.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="font-semibold text-slate-700">데이터세트 레이블</h3>
+                            <pre><code class="language-stata">label data "Stata연습용파일_5월_2일"</code></pre>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-slate-700">변수 레이블</h3>
+                            <pre><code class="language-stata">label variable price "자동차 가격"</code></pre>
+                        </div>
+                         <p class="text-slate-700 mt-4">👉 <code>describe</code> 명령어로 레이블을 확인할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: generate, replace -->
+            <div id="slide-9" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">8. generate & replace</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-blue-700">generate (gen)</h3>
+                            <p class="mt-2 text-slate-600">새로운 변수를 생성합니다.</p>
+                            <pre><code class="language-stata">gen gap = flife - mlife
+gen ln_pop = log(pop)
+gen var2 = _n</code></pre>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold text-blue-700">replace</h3>
+                            <p class="mt-2 text-slate-600">기존 변수의 값을 대체합니다.</p>
+                             <pre><code class="language-stata">replace pop = pop*1000
+replace var5=2 if unemp>=9.0</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: Command Summary -->
+            <div id="slide-10" class="slide">
+                <div class="slide-content w-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 border-l-4 border-blue-500 pl-4">명령어 요약 (Command Summary)</h2>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-slate-700">
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-blue-600 mb-2">데이터 확인</h3>
+                            <ul class="space-y-1">
+                                <li><code>describe</code></li>
+                                <li><code>codebook</code></li>
+                                <li><code>list</code></li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-blue-600 mb-2">데이터 정렬</h3>
+                             <ul class="space-y-1">
+                                <li><code>sort</code></li>
+                                <li><code>gsort</code></li>
+                                <li><code>bysort</code></li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                             <h3 class="font-bold text-blue-600 mb-2">변수/관측치 관리</h3>
+                             <ul class="space-y-1">
+                                <li><code>drop</code> / <code>keep</code></li>
+                                <li><code>move</code> / <code>order</code></li>
+                                <li><code>rename</code></li>
+                            </ul>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                             <h3 class="font-bold text-blue-600 mb-2">변수 생성/수정</h3>
+                              <ul class="space-y-1">
+                                <li><code>generate (gen)</code></li>
+                                <li><code>replace</code></li>
+                            </ul>
+                        </div>
+                         <div class="bg-slate-50 p-4 rounded-lg">
+                             <h3 class="font-bold text-blue-600 mb-2">레이블 & 기타</h3>
+                              <ul class="space-y-1">
+                                <li><code>label</code></li>
+                                <li><code>display</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-slate-50 border-t border-slate-200 p-4 flex justify-between items-center">
+            <button id="prev-btn" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+            <div id="slide-counter" class="text-sm text-slate-500"></div>
+            <button id="next-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                updateNavigation();
+            }
+
+            function updateNavigation() {
+                currentSlide = Array.from(slides).findIndex(slide => slide.classList.contains('active'));
+                
+                // Update counter
+                slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+                
+                // Update buttons
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === totalSlides - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                } else if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                }
+            });
+
+            // Initial setup
+            showSlide(0);
+        });
+    </script>
+</body>
+</html>
+

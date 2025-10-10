@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공분산과 상관계수</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <!-- MathJax 스크립트 추가 -->
+    <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow: hidden; /* 스크롤바 제거 */
+        }
+        .slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            align-items: flex-start; /* 슬라이드 컨텐츠를 위로 정렬 */
+            overflow-y: auto; /* 내용이 길어지면 슬라이드 내에서 스크롤 */
+        }
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+        .formula-box {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            margin-top: 0.5rem;
+        }
+        .step {
+            background-color: #f1f5f9;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center h-screen p-4">
+
+    <!-- 슬라이드 컨테이너 -->
+    <div id="presentation-container" class="w-full max-w-5xl h-full bg-white rounded-xl shadow-2xl flex flex-col relative overflow-hidden">
+        
+        <!-- 슬라이드 1: 제목 -->
+        <div class="slide active w-full h-full flex-col items-center justify-center text-center p-8">
+            <h1 class="text-5xl font-bold text-gray-800 mb-4">공분산과 상관계수</h1>
+            <p class="text-xl text-gray-600">두 변수 간의 관계를 파헤쳐 봅시다.</p>
+            <div class="mt-8 text-gray-500 text-sm">
+                <p>제공된 통계학 자료 기반 (예제 해설 보강)</p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 2: 공분산이란? -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">1. 공분산 (Covariance) 이란?</h2>
+            <div class="text-lg text-gray-700 space-y-4 w-full">
+                <p>두 확률변수가 <span class="font-bold text-blue-600">함께 변화하는 정도</span>를 나타내는 측도입니다. 각 변수가 평균으로부터 얼마나 떨어져 있는지를 곱하여 그 평균을 구합니다.</p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><span class="font-semibold">양수 (+) 값:</span> 두 변수가 같은 방향으로 움직이는 경향 (X가 평균보다 클 때 Y도 평균보다 큰 경향)</li>
+                    <li><span class="font-semibold">음수 (-) 값:</span> 두 변수가 반대 방향으로 움직이는 경향 (X가 평균보다 클 때 Y는 평균보다 작은 경향)</li>
+                    <li><span class="font-semibold">0에 가까운 값:</span> 두 변수 간에 선형적인 관계가 거의 없음</li>
+                </ul>
+                 <p class="mt-6 text-gray-500 text-base">*PDF 자료 2장 29p, 3장 72p 참조</p>
+            </div>
+        </div>
+        
+        <!-- 슬라이드 3: 공분산 공식 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">1. 공분산의 공식</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                <div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">모집단 공분산</h3>
+                    <div class="formula-box">
+                        <p class="text-base text-center">
+                           $\sigma_{12} = \frac{1}{N}\sum_{i=1}^{N}(c_{1i}-\mu_{1})(c_{2i}-\mu_{2})$
+                        </p>
+                    </div>
+                     <p class="mt-4 text-sm text-gray-600">
+                        N: 모집단 크기<br>
+                        $c_{1i}, c_{2i}$: 각 변수의 관측값<br>
+                        $\mu_1, \mu_2$: 각 변수의 모평균
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">표본 공분산</h3>
+                    <div class="formula-box">
+                       <p class="text-base text-center">
+                           $s_{12} = \frac{1}{n-1}\sum_{i=1}^{n}(x_{i}-\bar{x})(y_{i}-\bar{y})$
+                       </p>
+                    </div>
+                     <p class="mt-4 text-sm text-gray-600">
+                        n: 표본 크기<br>
+                        $x_i, y_i$: 각 변수의 표본값<br>
+                        $\bar{x}, \bar{y}$: 각 변수의 표본평균<br>
+                        *자유도를 고려하여 n이 아닌 n-1로 나눕니다.
+                    </p>
+                </div>
+            </div>
+             <div class="w-full mt-6">
+                 <h3 class="text-2xl font-semibold text-gray-700 mb-2">간편 계산법</h3>
+                 <div class="formula-box">
+                       <p class="text-base text-center">
+                           $Cov(X,Y) = E(XY) - E(X)E(Y)$
+                       </p>
+                 </div>
+                 <p class="mt-2 text-sm text-gray-600">*확률분포가 주어졌을 때 사용하면 편리합니다.</p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 4: 공분산 계산 예제 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">예제 1: 공분산 계산하기</h2>
+            <p class="mb-4 text-gray-600">다음과 같은 결합확률분포가 주어졌을 때, X와 Y의 공분산을 구해봅시다. (자료: 3장 74p)</p>
+            <!-- 테이블 -->
+            <table class="w-1/2 text-center text-sm mb-4 border">
+                <tr class="bg-gray-100"><td class="border p-2" colspan="2" rowspan="2"></td><td class="border p-2 font-bold" colspan="2">Y</td><td class="border p-2" rowspan="2">X의<br>주변확률</td></tr>
+                <tr class="bg-gray-100"><td class="border p-2 font-bold">0</td><td class="border p-2 font-bold">1</td></tr>
+                <tr><td class="bg-gray-100 font-bold" rowspan="2">X</td><td class="bg-gray-100 font-bold border p-2">0</td><td class="border p-2">1/8</td><td class="border p-2">2/8</td><td class="border p-2 bg-blue-50">3/8</td></tr>
+                <tr><td class="bg-gray-100 font-bold border p-2">1</td><td class="border p-2">1/8</td><td class="border p-2">4/8</td><td class="border p-2 bg-blue-50">5/8</td></tr>
+                <tr><td class="bg-gray-100 font-bold border p-2" colspan="2">Y의 주변확률</td><td class="border p-2 bg-green-50">2/8</td><td class="border p-2 bg-green-50">6/8</td><td class="border p-2">1</td></tr>
+            </table>
+            <div class="step">
+                <p><b>Step 1. 각 변수의 기댓값(평균) 계산:</b><br>
+                $E(X) = \sum xp(x) = (0 \times \frac{3}{8}) + (1 \times \frac{5}{8}) = \frac{5}{8}$<br>
+                $E(Y) = \sum yp(y) = (0 \times \frac{2}{8}) + (1 \times \frac{6}{8}) = \frac{6}{8}$</p>
+            </div>
+            <div class="step">
+                <p><b>Step 2. XY의 기댓값 계산:</b><br>
+                $E(XY) = \sum \sum xyp(x,y) = (0 \times 0 \times \frac{1}{8}) + (0 \times 1 \times \frac{2}{8}) + (1 \times 0 \times \frac{1}{8}) + (1 \times 1 \times \frac{4}{8}) = \frac{4}{8} = \frac{1}{2}$</p>
+            </div>
+            <div class="step">
+                <p><b>Step 3. 공분산 계산:</b><br>
+                $Cov(X,Y) = E(XY) - E(X)E(Y) = \frac{4}{8} - (\frac{5}{8} \times \frac{6}{8}) = \frac{32}{64} - \frac{30}{64} = \frac{2}{64} = \frac{1}{32} \approx 0.031$</p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 5: 예제 1 의미 해설 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">예제 1: 결과는 무엇을 의미할까요?</h2>
+            <p class="mb-4 text-gray-600">계산 결과, 공분산 $Cov(X,Y) \approx 0.031$ 이 나왔습니다.</p>
+            <div class="bg-blue-50 p-6 rounded-lg space-y-4">
+                <div>
+                    <h3 class="font-bold text-lg text-blue-800">1. 부호 해석 (방향성)</h3>
+                    <p>값이 <span class="font-semibold">양수(+)</span>이므로, X와 Y는 같은 방향으로 움직이는 경향이 있음을 알 수 있습니다. 즉, X의 값이 평균($5/8$)보다 클 때, Y의 값도 자신의 평균($6/8$)보다 클 가능성이 조금 더 높다는 뜻입니다.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-red-800">2. 크기 해석 (강도) - <span class="text-red-600">주의!</span></h3>
+                    <p>0.031이라는 값이 "얼마나 강한 관계"를 의미하는지는 <span class="font-semibold">알 수 없습니다.</span> X와 Y의 단위가 달라지면 공분산 값도 크게 변하기 때문입니다. 예를 들어 X와 Y에 각각 10을 곱하면 공분산은 100배가 됩니다. </p>
+                    <p class="mt-2 font-bold">이것이 바로 공분산의 한계이며, 관계의 '강도'를 알기 위해 상관계수가 필요한 이유입니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 6: 공분산의 한계 -->
+        <div class="slide w-full h-full flex-col items-center justify-center p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 self-start">공분산의 한계 요약</h2>
+            <div class="text-lg text-gray-700 space-y-4 w-full">
+                <p>공분산의 크기는 각 변수의 <span class="font-bold text-red-600">단위(scale)에 크게 의존</span>합니다.</p>
+                <div class="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-lg mt-4">
+                    <p class="font-semibold">예시:</p>
+                    <p class="mt-2">키(cm)와 몸무게(kg)의 공분산은, 키(m)와 몸무게(g)의 공분산과 값의 크기가 완전히 다릅니다.</p>
+                    <p class="mt-4 text-red-700 font-bold">따라서, 공분산의 절대적인 크기만으로는 관계의 강도를 직접적으로 비교하거나 해석하기 어렵습니다.</p>
+                </div>
+                <p class="mt-8">이러한 문제를 해결하기 위해 등장한 개념이 바로 '상관계수'입니다.</p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 7: 상관계수란? -->
+        <div class="slide w-full h-full flex-col items-center justify-center p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 self-start">2. 상관계수 (Correlation Coefficient) 란?</h2>
+            <div class="text-lg text-gray-700 space-y-4 w-full">
+                <p>공분산을 각 변수의 표준편차의 곱으로 나누어 <span class="font-bold text-green-600">표준화(정규화)</span>한 값입니다.</p>
+                 <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li>단위의 영향을 받지 않습니다.</li>
+                    <li>항상 <span class="font-semibold">-1과 1 사이의 값</span>을 가집니다.</li>
+                    <li>이를 통해 관계의 <span class="font-semibold">방향성</span>뿐만 아니라 <span class="font-semibold">강도</span>까지 측정할 수 있습니다.</li>
+                </ul>
+                <p class="mt-6 text-gray-500 text-base">*PDF 자료 2장 28p, 3장 71p 참조</p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 8: 상관계수 공식 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">2. 상관계수의 공식</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                <div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">모상관계수 ($\rho$)</h3>
+                    <div class="formula-box"><p class="text-lg text-center">$\rho = \frac{\sigma_{12}}{\sigma_{1}\sigma_{2}}$</p></div>
+                     <p class="mt-4 text-sm text-gray-600">$\sigma_{12}$: 모집단 공분산<br>$\sigma_1, \sigma_2$: 각 변수의 모표준편차</p>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">표본상관계수 ($r$)</h3>
+                    <div class="formula-box"><p class="text-lg text-center">$r = \frac{s_{12}}{s_{1}s_{2}}$</p></div>
+                     <p class="mt-4 text-sm text-gray-600">$s_{12}$: 표본 공분산<br>$s_1, s_2$: 각 변수의 표본표준편차</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 슬라이드 9: 상관계수 계산 예제 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">예제 1: 상관계수 계산하기</h2>
+            <p class="mb-4 text-gray-600">앞서 공분산을 구한 예제를 계속해서, 상관계수를 계산해봅시다.</p>
+             <div class="step">
+                <p><b>Step 1. X의 분산과 표준편차 계산:</b> (분산 = (제곱의 평균) - (평균의 제곱))<br>
+                $E(X^2) = (0^2 \times \frac{3}{8}) + (1^2 \times \frac{5}{8}) = \frac{5}{8}$ <br>
+                $Var(X) = \sigma_X^2 = E(X^2) - [E(X)]^2 = \frac{5}{8} - (\frac{5}{8})^2 = \frac{40}{64} - \frac{25}{64} = \frac{15}{64}$ <br>
+                $\sigma_X = \sqrt{\frac{15}{64}} \approx 0.484$
+                </p>
+            </div>
+            <div class="step">
+                <p><b>Step 2. Y의 분산과 표준편차 계산:</b><br>
+                $E(Y^2) = (0^2 \times \frac{2}{8}) + (1^2 \times \frac{6}{8}) = \frac{6}{8}$ <br>
+                $Var(Y) = \sigma_Y^2 = E(Y^2) - [E(Y)]^2 = \frac{6}{8} - (\frac{6}{8})^2 = \frac{48}{64} - \frac{36}{64} = \frac{12}{64}$ <br>
+                $\sigma_Y = \sqrt{\frac{12}{64}} \approx 0.433$
+                </p>
+            </div>
+            <div class="step">
+                <p><b>Step 3. 상관계수 계산:</b> ($Cov(X,Y) = \frac{2}{64}$)<br>
+                $\rho = \frac{Cov(X, Y)}{\sigma_X \sigma_Y} = \frac{2/64}{\sqrt{15/64} \times \sqrt{12/64}} = \frac{2/64}{\sqrt{180}/64} = \frac{2}{\sqrt{180}} \approx 0.149$
+                </p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 10: 예제 1 상관계수 의미 해설 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">예제 1: 상관계수는 무엇을 의미할까요?</h2>
+            <p class="mb-4 text-gray-600">계산 결과, 상관계수 $\rho \approx 0.149$ 가 나왔습니다.</p>
+            <div class="bg-green-50 p-6 rounded-lg space-y-4">
+                <p>이 값은 <span class="font-bold">-1과 1 사이</span>에 있으며, 0에 매우 가깝습니다. 이것은 공분산만으로는 알 수 없었던 <span class="font-semibold text-green-700">관계의 강도</span>를 명확하게 보여줍니다.</p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><b>방향성:</b> 부호가 양수(+)이므로, 두 변수는 같은 방향으로 움직이는 경향이 있습니다.</li>
+                    <li><b>강도:</b> 절대값이 0.149로 0에 매우 가깝습니다. 이는 두 변수 간의 <span class="font-bold">선형 관계가 매우 약하다</span>는 것을 의미합니다.</li>
+                </ul>
+                <p class="font-bold mt-4">결론: X와 Y 사이에는 "매우 약한 양의 선형 관계"가 있다고 해석할 수 있습니다.</p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 11: 실용 예제 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">예제 2: 키와 몸무게의 상관관계</h2>
+            <p class="mb-4 text-gray-600">20명 학생의 키(X)와 몸무게(Y) 데이터를 분석하여 표본상관계수를 구하는 과정입니다. (자료: 2장 72p)</p>
+            <div class="bg-blue-50 p-6 rounded-lg">
+                <h3 class="font-semibold text-lg mb-2">요약된 데이터 값</h3>
+                <ul class="list-disc list-inside">
+                    <li>표본평균 (키): $\bar{x}=168.45$ cm</li>
+                    <li>표본평균 (몸무게): $\bar{y}=60$ kg</li>
+                    <li>표본표준편차 (키): $s_1=10.30$</li>
+                    <li>표본표준편차 (몸무게): $s_2=11.88$</li>
+                    <li>표본 공분산: $s_{12} = 109.11$</li>
+                </ul>
+            </div>
+             <div class="step mt-6">
+                <p><b>계산 과정:</b><br>
+                표본상관계수 공식 $r = \frac{s_{12}}{s_{1}s_{2}}$ 에 주어진 값을 대입합니다.<br>
+                $r = \frac{109.11}{10.30 \times 11.88} = \frac{109.11}{122.364} \approx 0.892$
+                </p>
+            </div>
+        </div>
+
+        <!-- 슬라이드 12: 예제 2 의미 해설 -->
+        <div class="slide w-full h-full flex-col p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">예제 2: 결과는 무엇을 의미할까요?</h2>
+            <p class="mb-4 text-gray-600">계산 결과, 표본상관계수 $r \approx 0.892$ 가 나왔습니다.</p>
+            <div class="bg-blue-50 p-6 rounded-lg space-y-4">
+                <p>이 값은 +1에 매우 가깝습니다. 예제 1의 0.149와 비교했을 때 훨씬 큰 값으로, 두 변수 간의 관계가 훨씬 강하다는 것을 알 수 있습니다.</p>
+                <ul class="list-disc list-inside space-y-2 pl-4">
+                    <li><b>방향성:</b> 부호가 양수(+)이므로, 키와 몸무게는 같은 방향으로 움직이는 경향이 있습니다.</li>
+                    <li><b>강도:</b> 절대값이 0.892로 1에 매우 가깝습니다. 이는 두 변수 간의 <span class="font-bold">선형 관계가 매우 강하다</span>는 것을 의미합니다.</li>
+                </ul>
+                 <p class="font-bold mt-4">결론: 이 20명의 학생 집단에서는 "키가 클수록 몸무게도 많이 나가는" 경향이 매우 뚜렷하게 나타난다고 해석할 수 있습니다.</p>
+            </div>
+             
+            <p class="text-center text-sm text-gray-500 mt-2">상관계수가 0.892일 때의 산점도는 위와 같이 뚜렷한 우상향 직선 형태를 띕니다.</p>
+        </div>
+        
+        <!-- 슬라이드 13: 상관계수 해석 -->
+        <div class="slide w-full h-full flex-col items-center justify-center p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 self-start">상관계수 해석하기</h2>
+            <div class="w-full mt-4">
+                <div class="relative pt-1">
+                    <div class="overflow-hidden h-4 mb-4 text-xs flex rounded-full bg-gradient-to-r from-red-500 via-gray-300 to-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-between text-sm font-semibold">
+                    <span class="text-red-600">-1 (강한 음의 상관)</span>
+                    <span class="text-gray-600">0 (선형 관계 없음)</span>
+                    <span class="text-blue-600">+1 (강한 양의 상관)</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mt-8 text-center w-full">
+                <div>
+                    <h3 class="font-bold text-blue-600">양의 상관 ($\rho > 0$)</h3>
+                    <p class="text-sm">키가 클수록 몸무게가 많이 나가는 경향</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-600">상관 없음 ($\rho \approx 0$)</h3>
+                    <p class="text-sm">몸무게와 시력 사이에는 뚜렷한 선형 관계가 없음</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-red-600">음의 상관 ($\rho < 0$)</h3>
+                    <p class="text-sm">운동 시간이 많을수록 체지방률이 낮은 경향</p>
+                </div>
+            </div>
+             <p class="mt-8 text-sm text-gray-500">*주의: 상관관계는 인과관계를 의미하지 않습니다. 키가 크는 것이 몸무게 증가의 '원인'이라고 단정할 수는 없습니다.</p>
+        </div>
+
+        <!-- 슬라이드 14: 요약 -->
+        <div class="slide w-full h-full flex-col items-center justify-center p-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 self-start">요약: 공분산 vs 상관계수</h2>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr>
+                        <th class="border-b-2 border-gray-400 p-4 text-xl">구분</th>
+                        <th class="border-b-2 border-gray-400 p-4 text-xl">공분산 (Covariance)</th>
+                        <th class="border-b-2 border-gray-400 p-4 text-xl">상관계수 (Correlation)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-200">
+                        <td class="p-4 font-semibold">측정 대상</td>
+                        <td class="p-4">관계의 <span class="font-bold">방향성</span></td>
+                        <td class="p-4">관계의 <span class="font-bold">방향성</span>과 <span class="font-bold">강도</span></td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="p-4 font-semibold">값의 범위</td>
+                        <td class="p-4">모든 실수 ($-\infty$ ~ $+\infty$)</td>
+                        <td class="p-4">$-1$ ~ $+1$</td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="p-4 font-semibold">단위의 영향</td>
+                        <td class="p-4 text-red-600">받음 (해석 어려움)</td>
+                        <td class="p-4 text-green-600">받지 않음 (표준화됨)</td>
+                    </tr>
+                     <tr>
+                        <td class="p-4 font-semibold">주요 용도</td>
+                        <td class="p-4">상관계수 계산의 중간 단계</td>
+                        <td class="p-4">변수 간 관계 강도 비교 및 분석</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 네비게이션 & 진행 바 -->
+        <div class="absolute bottom-0 left-0 w-full p-4 bg-gray-50 border-t">
+            <div class="w-full max-w-4xl mx-auto flex items-center justify-between">
+                <span id="slide-counter" class="text-sm text-gray-600"></span>
+                <div class="w-1/2 bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+                <div>
+                    <button id="prev-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">이전</button>
+                    <button id="next-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">다음</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const slideCounter = document.getElementById('slide-counter');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                    // MathJax 렌더링 재실행
+                    if (window.MathJax && typeof MathJax.typeset === 'function') {
+                        MathJax.typeset([slide]);
+                    }
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+
+            // 버튼 활성화/비활성화
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+
+            // 진행 바 업데이트
+            const progressPercentage = ((currentSlide) / (totalSlides - 1)) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+
+            // 슬라이드 카운터 업데이트
+            slideCounter.textContent = `슬라이드 ${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        });
+
+        // 초기화
+        updateSlide();
+    </script>
+
+</body>
+</html>
+

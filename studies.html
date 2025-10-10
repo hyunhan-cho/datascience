@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>학습 자료 · 조현한</title>
+	<meta name="description" content="조현한의 데이터 사이언스 학습 자료: 확률과 통계, STATA">
+	<style>
+		:root {
+			--gradient-1: #667eea;
+			--gradient-2: #764ba2;
+			--gradient-3: #f093fb;
+			--text-dark: #1a202c;
+			--text-light: #4a5568;
+			--accent: #5a67d8;
+			--bg-light: #f7fafc;
+		}
+		
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		
+		body {
+			font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+			color: var(--text-dark);
+			line-height: 1.7;
+			background: var(--bg-light);
+		}
+
+		.header {
+			background: linear-gradient(135deg, var(--gradient-1) 0%, var(--gradient-2) 50%, var(--gradient-3) 100%);
+			color: white;
+			padding: 3rem 0;
+			position: relative;
+			overflow: hidden;
+		}
+
+		.header::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+			opacity: 0.3;
+		}
+
+		.header-content {
+			position: relative;
+			z-index: 1;
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 2rem;
+			text-align: center;
+		}
+
+		.back-button {
+			display: inline-block;
+			margin-bottom: 2rem;
+			padding: 0.75rem 1.5rem;
+			background: rgba(255,255,255,0.2);
+			color: white;
+			text-decoration: none;
+			border-radius: 2rem;
+			transition: all 0.3s ease;
+			border: 1px solid rgba(255,255,255,0.3);
+			backdrop-filter: blur(10px);
+		}
+
+		.back-button:hover {
+			background: rgba(255,255,255,0.3);
+			transform: translateY(-2px);
+		}
+
+		.header-title {
+			font-size: 3rem;
+			font-weight: 800;
+			margin-bottom: 1rem;
+		}
+
+		.header-subtitle {
+			font-size: 1.2rem;
+			opacity: 0.9;
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 0 2rem;
+		}
+
+		.study-section {
+			padding: 4rem 0;
+		}
+
+		.study-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+			gap: 3rem;
+		}
+
+		.study-card {
+			background: white;
+			border-radius: 1.5rem;
+			padding: 2.5rem;
+			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+			transition: all 0.4s ease;
+			border: 1px solid rgba(0, 0, 0, 0.05);
+			position: relative;
+			overflow: hidden;
+		}
+
+		.study-card::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 5px;
+			background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
+		}
+
+		.study-card:hover {
+			transform: translateY(-10px);
+			box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+		}
+
+		.study-card a {
+			text-decoration: none;
+			color: inherit;
+			display: block;
+		}
+
+		.study-icon {
+			width: 5rem;
+			height: 5rem;
+			background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+			border-radius: 1.5rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin-bottom: 2rem;
+			font-size: 2rem;
+			color: white;
+		}
+
+		.study-title {
+			font-size: 2rem;
+			font-weight: 800;
+			margin-bottom: 0.5rem;
+			color: var(--text-dark);
+		}
+
+		.study-subtitle {
+			font-size: 1.1rem;
+			color: var(--text-light);
+			margin-bottom: 1.5rem;
+			font-weight: 500;
+		}
+
+		.study-description {
+			color: var(--text-light);
+			margin-bottom: 2rem;
+			line-height: 1.7;
+			font-size: 1.05rem;
+		}
+
+		.study-tags {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.75rem;
+			margin-bottom: 2rem;
+		}
+
+		.study-tag {
+			background: rgba(90, 103, 216, 0.1);
+			color: var(--accent);
+			padding: 0.5rem 1rem;
+			border-radius: 1.5rem;
+			font-size: 0.9rem;
+			font-weight: 600;
+		}
+
+		.study-btn {
+			background: linear-gradient(135deg, var(--gradient-1), var(--gradient-2));
+			color: white;
+			padding: 1rem 2rem;
+			border-radius: 0.75rem;
+			text-decoration: none;
+			font-weight: 700;
+			display: inline-block;
+			transition: all 0.3s ease;
+		}
+
+		.study-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+		}
+
+		.footer {
+			background: var(--text-dark);
+			color: white;
+			padding: 2rem 0;
+			text-align: center;
+		}
+
+		.footer a {
+			color: rgba(255, 255, 255, 0.7);
+			text-decoration: none;
+		}
+
+		.footer a:hover {
+			color: white;
+		}
+
+		@media (max-width: 768px) {
+			.header-title {
+				font-size: 2.5rem;
+			}
+			
+			.study-grid {
+				grid-template-columns: 1fr;
+				gap: 2rem;
+			}
+
+			.study-card {
+				padding: 2rem;
+			}
+		}
+	</style>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+	<!-- Header -->
+	<header class="header">
+		<div class="header-content">
+			<a href="index.html" class="back-button">← 메인으로 돌아가기</a>
+			<h1 class="header-title">학습 자료</h1>
+			<p class="header-subtitle">체계적으로 정리된 데이터 사이언스 학습 노트와 실습 예제</p>
+		</div>
+	</header>
+
+	<!-- Studies Section -->
+	<section class="study-section">
+		<div class="container">
+			<div class="study-grid">
+				<div class="study-card">
+					<a href="probability.html">
+						<div class="study-icon">📈</div>
+						<h2 class="study-title">확률과 통계</h2>
+						<p class="study-subtitle">Probability & Statistics</p>
+						<p class="study-description">
+							데이터 분석과 머신러닝의 기초가 되는 핵심 통계 개념들을 정리합니다. 
+							실무에서 자주 접하는 분포, 가설검정, 상관관계 등을 학습할 수 있습니다.
+							공분산과 상관계수부터 시작해서 확률분포, 가설검정까지 단계별로 구성되어 있습니다.
+						</p>
+						<div class="study-tags">
+							<span class="study-tag">기초 이론</span>
+							<span class="study-tag">확률분포</span>
+							<span class="study-tag">가설검정</span>
+							<span class="study-tag">상관관계</span>
+							<span class="study-tag">공분산</span>
+						</div>
+						<span class="study-btn">학습 시작하기 →</span>
+					</a>
+				</div>
+
+				<div class="study-card">
+					<a href="stata.html">
+						<div class="study-icon">💻</div>
+						<h2 class="study-title">STATA</h2>
+						<p class="study-subtitle">데이터 관리 · 통계 분석</p>
+						<p class="study-description">
+							실무에서 자주 사용하는 STATA 명령어와 워크플로우를 슬라이드 형태로 학습합니다. 
+							데이터 전처리부터 고급 분석까지 단계별로 정리되어 있습니다.
+							Chapter 01부터 05까지 체계적으로 구성되어 클릭 한 번으로 슬라이드를 바로 볼 수 있습니다.
+						</p>
+						<div class="study-tags">
+							<span class="study-tag">Data Management</span>
+							<span class="study-tag">통계 분석</span>
+							<span class="study-tag">슬라이드</span>
+							<span class="study-tag">실습</span>
+							<span class="study-tag">명령어</span>
+						</div>
+						<span class="study-btn">학습 시작하기 →</span>
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Footer -->
+	<footer class="footer">
+		<div class="container">
+			<p>© 2025 조현한 · Full Stack Developer & Data Scientist | <a href="index.html">메인 페이지</a></p>
+		</div>
+	</footer>
+</body>
+</html>

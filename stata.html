@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>STATA 스터디 · 조현한</title>
+	<style>
+		body {
+			font-family: 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+			margin: 0;
+			padding: 0;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			line-height: 1.6;
+		}
+		.header {
+			text-align: center;
+			padding: 60px 20px 30px;
+			color: white;
+		}
+		.header h1 {
+			font-size: 3.2em;
+			margin: 0;
+			text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+		}
+		.header p { font-size: 1.15em; margin-top: 10px; opacity: 0.95; }
+		.back-button {
+			display: inline-block; margin-bottom: 20px; padding: 10px 20px;
+			background: rgba(255,255,255,0.2); color: white; text-decoration: none;
+			border-radius: 25px; transition: all 0.3s ease;
+		}
+		.back-button:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+		.main-content { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
+		.study-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; padding: 20px 0; }
+		.study-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+		.study-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+		.study-link { display: block; text-decoration: none; color: inherit; }
+		.study-card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; position: relative; }
+		.study-number { font-size: 3em; font-weight: bold; opacity: 0.25; position: absolute; right: 20px; top: 10px; }
+		.study-card-title { font-size: 1.7em; font-weight: 800; margin-bottom: 6px; }
+		.study-card-subtitle { opacity: 0.92; font-size: 1.05em; }
+		.study-card-body { padding: 22px 25px; }
+		.study-card-description { color: #5b6470; margin-bottom: 14px; }
+		.study-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+		.tag { background: #f8f9fa; color: #667eea; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; font-weight: 600; }
+		.footer { text-align: center; padding: 40px 20px; color: white; opacity: 0.85; }
+		@media (max-width: 768px) {
+			.header h1 { font-size: 2.4em; }
+			.study-grid { grid-template-columns: 1fr; }
+		}
+		/* Embed section */
+		.embed { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); overflow: hidden; }
+		.embed-header { background: #111827; color: #e5e7eb; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+		.embed-header a { color: #93c5fd; text-decoration: none; font-weight: 700; }
+		.embed iframe { width: 100%; height: 680px; border: 0; display: block; }
+		.hidden { display: none; }
+	</style>
+</head>
+<body>
+	<div class="header">
+		<a href="index.html" class="back-button">← 메인으로 돌아가기</a>
+		<h1>📊 STATA Study</h1>
+		<p>데이터 관리와 통계 분석을 위한 STATA 핵심 명령어와 실습 예제를 정리합니다</p>
+	</div>
+
+	<div class="main-content">
+		<div class="study-grid">
+			<div class="study-card">
+				<a href="sector1.html" class="study-link">
+					<div class="study-card-header">
+						<div class="study-number">01</div>
+						<div class="study-card-title">Chapter 01. STATA 시작하기</div>
+						<div class="study-card-subtitle">소개, 창 구성, 데이터 불러오기 등</div>
+					</div>
+					<div class="study-card-body">
+						<div class="study-card-description">
+							Stata 소개부터 데이터 불러오기, 환경 설정까지 기본기를 슬라이드로 정리했습니다.
+						</div>
+						<div class="study-tags">
+							<span class="tag">Getting Started</span>
+							<span class="tag">Setup</span>
+						</div>
+					</div>
+				</a>
+			</div>
+			<div class="study-card">
+				<a href="sector2.html" class="study-link">
+					<div class="study-card-header">
+						<div class="study-number">02</div>
+						<div class="study-card-title">Chapter 02. 로그파일과 데이터파일</div>
+						<div class="study-card-subtitle">로그파일 관리, 데이터 형태, do-file</div>
+					</div>
+					<div class="study-card-body">
+						<div class="study-card-description">
+							로그파일 작성법과 데이터의 저장 형태, do-file 사용법을 슬라이드로 학습합니다.
+						</div>
+						<div class="study-tags">
+							<span class="tag">Log Files</span>
+							<span class="tag">Data Types</span>
+							<span class="tag">Do-files</span>
+						</div>
+					</div>
+				</a>
+			</div>
+			<div class="study-card">
+				<a href="serctor4.html" class="study-link">
+					<div class="study-card-header">
+						<div class="study-number">04</div>
+						<div class="study-card-title">Chapter 04. STATA 고급 기능</div>
+						<div class="study-card-subtitle">고급 데이터 처리 및 분석 기법</div>
+					</div>
+					<div class="study-card-body">
+						<div class="study-card-description">
+							STATA의 고급 기능과 데이터 처리 기법을 학습합니다. (내용 준비 중)
+						</div>
+						<div class="study-tags">
+							<span class="tag">Advanced</span>
+							<span class="tag">Data Processing</span>
+							<span class="tag">Analysis</span>
+						</div>
+					</div>
+				</a>
+			</div>
+			<div class="study-card">
+				<a href="serctor5.html" class="study-link">
+					<div class="study-card-header">
+						<div class="study-number">05</div>
+						<div class="study-card-title">Chapter 05. 데이터관리 기본 명령어</div>
+						<div class="study-card-subtitle">describe, list, sort, bysort, label, gen...</div>
+					</div>
+					<div class="study-card-body">
+						<div class="study-card-description">
+							자주 쓰는 데이터 관리 명령어를 슬라이드로 정리했습니다. 링크를 클릭해 전체 슬라이드를 봅니다.
+						</div>
+						<div class="study-tags">
+							<span class="tag">Stata</span>
+							<span class="tag">Data Management</span>
+							<span class="tag">Syntax</span>
+						</div>
+					</div>
+				</a>
+			</div>
+
+		</div>
+
+		<!-- 동적 임베드 컨테이너 -->
+		<section id="embed-container" class="embed hidden" aria-label="슬라이드 임베드 보기">
+			<div class="embed-header">
+				<strong id="embed-title">슬라이드 바로 보기</strong>
+				<a id="embed-external" href="#" target="_blank" rel="noopener">새 창에서 보기 ↗</a>
+			</div>
+			<iframe id="embed-frame" src="" title="STATA Slides"></iframe>
+		</section>
+	</div>
+
+	<div class="footer">
+		<p>© 2025 조현한 · STATA Study</p>
+	</div>
+	<script>
+		// 카드 클릭 시 아래에 임베드 표시 (한 번 클릭으로 노출)
+		document.addEventListener('DOMContentLoaded', () => {
+			const links = document.querySelectorAll('.study-card .study-link');
+			const embed = document.getElementById('embed-container');
+			const embedFrame = document.getElementById('embed-frame');
+			const embedTitle = document.getElementById('embed-title');
+			const embedExternal = document.getElementById('embed-external');
+
+			links.forEach(link => {
+				link.addEventListener('click', (e) => {
+					// 같은 탭에서 임베드 표시. 새 창으로 열고 싶으면 ctrl/cmd 클릭 사용.
+					e.preventDefault();
+					const href = link.getAttribute('href');
+					const titleEl = link.querySelector('.study-card-title');
+					const titleText = titleEl ? titleEl.textContent.trim() : '슬라이드';
+
+					embedFrame.src = href;
+					embedTitle.textContent = `${titleText} · 슬라이드 바로 보기`;
+					embedExternal.href = href;
+					embed.classList.remove('hidden');
+
+					// 임베드 영역으로 부드럽게 스크롤
+					embed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				});
+			});
+		});
+	</script>
+</body>
+</html>
