@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제4장 여러 가지 분포</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        main {
+            width: 100%;
+            max-width: 1000px;
+        }
+        .slide {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 40px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            page-break-after: always;
+        }
+        .slide:last-child {
+            page-break-after: avoid;
+        }
+        h1, h2, h3 {
+            color: #005a9c;
+            border-bottom: 2px solid #005a9c;
+            padding-bottom: 10px;
+        }
+        h1 { font-size: 2.5em; text-align: center; }
+        h2 { font-size: 2em; }
+        h3 { font-size: 1.5em; color: #0078d4; border-bottom-width: 1px; }
+        ul { list-style-type: disc; padding-left: 20px; }
+        li { margin-bottom: 10px; }
+        p { line-height: 1.6; }
+        .formula {
+            background-color: #eef7ff;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 5px solid #0078d4;
+            margin: 20px 0;
+            font-size: 1.2em;
+            overflow-x: auto;
+        }
+        .example {
+            border: 1px solid #e0e0e0;
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .example-title {
+            font-weight: bold;
+            color: #333;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 5px;
+        }
+        .image-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .image-container figure {
+            flex-basis: 300px;
+            max-width: 48%;
+            margin: 0;
+        }
+        .definition {
+            font-style: italic;
+            color: #555;
+            padding: 10px;
+            border-left: 3px solid #ccc;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #0078d4;
+            color: white;
+        }
+        @media print {
+            body { background-color: #fff; padding: 0; }
+            .slide { box-shadow: none; border: 1px solid #000; margin: 0; border-radius: 0;}
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMeaMurHVAN2pg7nggJOPdOnbpEMr9ZwEfCELpvTKmggZEHQC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ]
+            });
+        });
+    </script>
+</head>
+<body>
+    <main>
+        <section class="slide">
+            <h1>제4장 여러 가지 분포</h1>
+            <p style="text-align:center; font-size: 1.5em;">기초통계학</p>
+        </section>
+
+        <section class="slide">
+            <h2>목차</h2>
+            <ul>
+                <li>1. 이산확률분포 (베르누이, 초기하, 이항 분포)</li>
+                <li>2. 정규분포</li>
+                <li>3. 표본분포 (표본평균, 중심극한정리, t, $\chi^2$, F 분포)</li>
+                <li>4. 정규분포 분위수대조도 (Q-Q Plot)</li>
+            </ul>
+        </section>
+
+        <section class="slide">
+            <h2>1. 이산확률분포</h2>
+            <h3>1.1 베르누이 분포 (Bernoulli Distribution)</h3>
+            <p class="definition">어떤 시행의 결과가 '성공(success)'과 '실패(fail)' 두 가지 뿐인 시행을 <strong>베르누이 시행</strong>이라고 합니다.</p>
+            <ul>
+                <li>성공 확률을 $p$, 실패 확률을 $q = 1-p$로 표기합니다.</li>
+                <li>베르누이 확률변수는 성공을 1, 실패를 0으로 대응시킨 확률변수입니다.</li>
+            </ul>
+            <h4>확률질량함수 (PMF)</h4>
+            <div class="formula">$p(x) = p^x(1-p)^{1-x}, \quad x \in \{0, 1\}$</div>
+            <h4>기댓값 및 분산</h4>
+            <ul>
+                <li>기댓값: $E(X) = p$</li>
+                <li>분산: $Var(X) = p(1-p)$</li>
+            </ul>
+            <div class="example">
+                <p class="example-title">예제 4.1: 동전 던지기</p>
+                <p>동전의 앞면이 나올 경우를 성공(1)으로 할 때, 성공확률은 $p=1/2$ 입니다.</p>
+                <ul>
+                    <li>평균: $E(X) = p = 1/2$</li>
+                    <li>분산: $Var(X) = p(1-p) = \frac{1}{2}(1-\frac{1}{2}) = \frac{1}{4}$</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h3>1.2 초기하분포 (Hypergeometric Distribution)</h3>
+            <p class="definition">N개의 원소 중 D개가 특정 속성을 가질 때, n개의 표본을 <strong>비복원추출</strong>하는 경우, 표본에 포함된 특정 속성 원소의 개수(X)에 대한 분포입니다. 각 시행이 독립이 아니라는 특징이 있습니다.</p>
+            <h4>확률질량함수 (PMF)</h4>
+            <div class="formula">$p(x) = P(X=x) = \frac{\binom{D}{x}\binom{N-D}{n-x}}{\binom{N}{n}}$</div>
+            <h4>기댓값 및 분산</h4>
+            <ul>
+                <li>기댓값: $E(X) = np \quad (p=D/N)$</li>
+                <li>분산: $Var(X) = np(1-p) \left( \frac{N-n}{N-1} \right)$</li>
+            </ul>
+             <div class="example">
+                <p class="example-title">예제 4.2: 불량 전구</p>
+                <p>50개의 전구 중 3개가 불량품일 때, 5개를 비복원추출하여 표본에 포함된 불량품 개수 X의 분포는 초기하분포를 따릅니다.</p>
+                <p>이때 $N=50, D=3, n=5$ 이며 확률밀도함수는 다음과 같습니다.</p>
+                <div class="formula">$p(x) = P(X=x) = \frac{\binom{3}{x}\binom{47}{5-x}}{\binom{50}{5}}, \quad x=0, 1, 2, 3$</div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h3>1.3 이항분포 (Binomial Distribution)</h3>
+            <p class="definition">성공 확률이 $p$로 동일한 베르누이 시행을 $n$번 <strong>독립적으로 반복</strong>할 때, 성공 횟수 $X$의 확률분포입니다.</p>
+            <h4>확률질량함수 (PMF)</h4>
+            <div class="formula">$X \sim B(n,p)$ <br> $p(x) = \binom{n}{x}p^x(1-p)^{n-x}, \quad x=0, 1, \dots, n$</div>
+            <h4>기댓값 및 분산</h4>
+            <ul>
+                <li>기댓값: $E(X) = np$</li>
+                <li>분산: $Var(X) = np(1-p)$</li>
+            </ul>
+            <h4>p값에 따른 이항분포 그래프 ($n=7$)</h4>
+            <div class="image-container">
+                <figure>
+                    <!-- SVG for Binomial Distribution n=7, p=0.2 -->
+                    <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                        <title>B(7, 0.2)</title>
+                        <!-- Axes -->
+                        <line x1="20" y1="180" x2="280" y2="180" stroke="#333" stroke-width="1"/>
+                        <line x1="20" y1="20" x2="20" y2="180" stroke="#333" stroke-width="1"/>
+                        <!-- Y-axis labels -->
+                        <text x="5" y="180" font-size="10" fill="#333">0.0</text>
+                        <text x="5" y="100" font-size="10" fill="#333">0.2</text>
+                        <text x="5" y="20" font-size="10" fill="#333">0.4</text>
+                        <!-- X-axis labels -->
+                        <text x="45" y="195" font-size="10" fill="#333">0</text>
+                        <text x="75" y="195" font-size="10" fill="#333">1</text>
+                        <text x="105" y="195" font-size="10" fill="#333">2</text>
+                        <text x="135" y="195" font-size="10" fill="#333">3</text>
+                        <text x="165" y="195" font-size="10" fill="#333">4</text>
+                        <text x="195" y="195" font-size="10" fill="#333">5</text>
+                        <text x="225" y="195" font-size="10" fill="#333">6</text>
+                        <text x="255" y="195" font-size="10" fill="#333">7</text>
+                        <!-- Bars (Height scaled by 400: max prob 0.4 -> 160px) -->
+                        <rect x="35" y="96.1" width="20" height="83.9" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="65" y="32.5" width="20" height="147.5" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="95" y="69.9" width="20" height="110.1" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="125" y="134.1" width="20" height="45.9" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="155" y="168.5" width="20" height="11.5" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="185" y="177.3" width="20" height="2.7" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                    </svg>
+                    <figcaption style="text-align:center;">$p=0.2$</figcaption>
+                </figure>
+                <figure>
+                    <!-- SVG for Binomial Distribution n=7, p=0.5 -->
+                    <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                        <title>B(7, 0.5)</title>
+                        <!-- Axes -->
+                        <line x1="20" y1="180" x2="280" y2="180" stroke="#333" stroke-width="1"/>
+                        <line x1="20" y1="20" x2="20" y2="180" stroke="#333" stroke-width="1"/>
+                        <!-- Y-axis labels -->
+                        <text x="5" y="180" font-size="10" fill="#333">0.0</text>
+                        <text x="0" y="108" font-size="10" fill="#333">0.15</text>
+                        <text x="5" y="35" font-size="10" fill="#333">0.3</text>
+                        <!-- X-axis labels -->
+                        <text x="45" y="195" font-size="10" fill="#333">0</text>
+                        <text x="75" y="195" font-size="10" fill="#333">1</text>
+                        <text x="105" y="195" font-size="10" fill="#333">2</text>
+                        <text x="135" y="195" font-size="10" fill="#333">3</text>
+                        <text x="165" y="195" font-size="10" fill="#333">4</text>
+                        <text x="195" y="195" font-size="10" fill="#333">5</text>
+                        <text x="225" y="195" font-size="10" fill="#333">6</text>
+                        <text x="255" y="195" font-size="10" fill="#333">7</text>
+                        <!-- Bars (Height scaled by 500: max prob 0.27 -> 135px) -->
+                        <rect x="35" y="176.1" width="20" height="3.9" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="65" y="152.7" width="20" height="27.3" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="95" y="97.7" width="20" height="82.3" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="125" y="42.6" width="20" height="137.4" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="155" y="42.6" width="20" height="137.4" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="185" y="97.7" width="20" height="82.3" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="215" y="152.7" width="20" height="27.3" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="245" y="176.1" width="20" height="3.9" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                    </svg>
+                    <figcaption style="text-align:center;">$p=0.5$ (대칭)</figcaption>
+                </figure>
+                 <figure>
+                    <!-- SVG for Binomial Distribution n=7, p=0.8 -->
+                    <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+                        <title>B(7, 0.8)</title>
+                        <!-- Axes -->
+                        <line x1="20" y1="180" x2="280" y2="180" stroke="#333" stroke-width="1"/>
+                        <line x1="20" y1="20" x2="20" y2="180" stroke="#333" stroke-width="1"/>
+                        <!-- Y-axis labels -->
+                        <text x="5" y="180" font-size="10" fill="#333">0.0</text>
+                        <text x="5" y="100" font-size="10" fill="#333">0.2</text>
+                        <text x="5" y="20" font-size="10" fill="#333">0.4</text>
+                        <!-- X-axis labels (same as p=0.2) -->
+                        <text x="45" y="195" font-size="10" fill="#333">0</text>
+                        <text x="75" y="195" font-size="10" fill="#333">1</text>
+                        <text x="105" y="195" font-size="10" fill="#333">2</text>
+                        <text x="135" y="195" font-size="10" fill="#333">3</text>
+                        <text x="165" y="195" font-size="10" fill="#333">4</text>
+                        <text x="195" y="195" font-size="10" fill="#333">5</text>
+                        <text x="225" y="195" font-size="10" fill="#333">6</text>
+                        <text x="255" y="195" font-size="10" fill="#333">7</text>
+                        <!-- Bars (Reversed order of p=0.2) -->
+                        <rect x="125" y="168.5" width="20" height="11.5" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="155" y="134.1" width="20" height="45.9" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="185" y="69.9" width="20" height="110.1" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="215" y="32.5" width="20" height="147.5" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                        <rect x="245" y="96.1" width="20" height="83.9" fill="#d0e0f0" stroke="#a0b0c0" stroke-width="1"/>
+                    </svg>
+                    <figcaption style="text-align:center;">$p=0.8$</figcaption>
+                </figure>
+            </div>
+            <p>모집단 크기(N)가 표본 크기(n)에 비해 매우 클 때, 초기하분포는 이항분포로 근사할 수 있습니다.</p>
+        </section>
+
+        <section class="slide">
+            <h2>2. 정규분포 (Normal Distribution)</h2>
+            <p>통계학에서 가장 중요한 연속확률분포로, 많은 실제 현상에서 나타나며 다른 분포의 근사로도 사용됩니다.</p>
+            <h3>확률밀도함수 (PDF)</h3>
+            <div class="formula">$p(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2\sigma^2}(x-\mu)^2}$</div>
+            <!-- SVG for Normal Distribution -->
+            <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+                <title>Normal Distribution Curve</title>
+                <!-- X-axis -->
+                <line x1="20" y1="160" x2="380" y2="160" stroke="black" stroke-width="1"/>
+                <!-- Curve -->
+                <path d="M 40 159 C 110 159, 110 30, 200 30 C 290 30, 290 159, 360 159" stroke="#0078d4" stroke-width="2" fill="none"/>
+                <!-- Center line (Mean) -->
+                <line x1="200" y1="30" x2="200" y2="160" stroke="black" stroke-dasharray="4 2"/>
+                <text x="195" y="175" font-size="12">$\mu$</text>
+                <!-- Standard Deviations -->
+                <line x1="260" y1="88" x2="260" y2="160" stroke="black" stroke-dasharray="2 2"/>
+                <text x="250" y="175" font-size="12">$\mu+\sigma$</text>
+                <line x1="140" y1="88" x2="140" y2="160" stroke="black" stroke-dasharray="2 2"/>
+                <text x="125" y="175" font-size="12">$\mu-\sigma$</text>
+                <line x1="320" y1="142" x2="320" y2="160" stroke="black" stroke-dasharray="2 2"/>
+                <text x="305" y="175" font-size="12">$\mu+2\sigma$</text>
+                <line x1="80" y1="142" x2="80" y2="160" stroke="black" stroke-dasharray="2 2"/>
+                <text x="60" y="175" font-size="12">$\mu-2\sigma$</text>
+                <!-- 68% Area -->
+                <path d="M 140 160 V 88 C 160 88, 180 35, 200 30 C 220 35, 240 88, 260 88 V 160 Z" fill="#0078d4" fill-opacity="0.2"/>
+                <text x="190" y="120" font-size="12" fill="#005a9c">68%</text>
+            </svg>
+            <ul>
+                <li>평균 $\mu$를 중심으로 대칭인 종 모양을 가집니다.</li>
+                <li>데이터의 약 68%는 $\mu \pm \sigma$ 범위에, 95%는 $\mu \pm 2\sigma$ 범위에, 99.7%는 $\mu \pm 3\sigma$ 범위에 존재합니다.</li>
+            </ul>
+             <div class="example">
+                <p class="example-title">예제: 우유 용량</p>
+                <p>한 공장에서 생산하는 우유의 양이 평균 200mL, 표준편차 5mL인 정규분포 $N(200, 5^2)$를 따른다고 할 때, 우유 한 통의 양이 190mL보다 적을 확률을 구합니다.</p>
+                <p>1. 표준화: $Z = \frac{X-\mu}{\sigma} = \frac{190-200}{5} = -2$</p>
+                <p>2. 확률 계산: $P(X \le 190) = P(Z \le -2) \approx 0.0228$. 즉, 약 2.28%의 확률입니다.</p>
+            </div>
+        </section>
+
+        <section class="slide">
+            <h2>3. 표본분포 (Sampling Distribution)</h2>
+            <p class="definition">모집단에서 추출한 표본의 <strong>통계량(예: 표본평균)</strong>이 따르는 확률분포를 의미합니다.</p>
+            <h3>중심극한정리 (Central Limit Theorem)</h3>
+            <p>모집단의 분포와 상관없이, <strong>표본 크기 $n$이 충분히 크면 (일반적으로 n≥30)</strong> 표본평균 $\bar{X}$의 분포는 근사적으로 정규분포를 따릅니다.</p>
+            <ul>
+                <li>표본평균의 평균: $E(\bar{X}) = \mu$</li>
+                <li>표본평균의 분산: $Var(\bar{X}) = \sigma^2/n$</li>
+                <li>따라서, $\bar{X} \approx N(\mu, \sigma^2/n)$</li>
+            </ul>
+            <!-- SVG for Central Limit Theorem -->
+            <svg viewBox="0 0 450 220" xmlns="http://www.w3.org/2000/svg">
+                <title>Central Limit Theorem Visualization</title>
+                <!-- Plot 1: n=1 -->
+                <g transform="translate(10, 10)">
+                    <text x="50" y="10" font-size="12" text-anchor="middle">n=1</text>
+                    <rect x="10" y="40" width="80" height="50" fill="#d0e0f0" stroke="#a0b0c0"/>
+                    <line x1="0" y1="100" x2="100" y2="100" stroke="black"/>
+                    <path d="M 50 40 C 60 40, 70 20, 50 20 C 30 20, 40 40, 50 40" stroke="#333" fill="none" stroke-dasharray="2 2" d="M10,40 A40,20 0 0,1 90,40" stroke-width="0.5"/>
+                </g>
+                <!-- Plot 2: n=4 -->
+                <g transform="translate(120, 10)">
+                     <text x="50" y="10" font-size="12" text-anchor="middle">n=4</text>
+                    <path d="M 10 90 C 30 90, 30 20, 50 20 C 70 20, 70 90, 90 90" fill="#d0e0f0" stroke="#a0b0c0"/>
+                    <line x1="0" y1="100" x2="100" y2="100" stroke="black"/>
+                </g>
+                 <!-- Plot 3: n=10 -->
+                <g transform="translate(230, 10)">
+                    <text x="50" y="10" font-size="12" text-anchor="middle">n=10</text>
+                    <path d="M 20 95 C 35 95, 35 15, 50 15 C 65 15, 65 95, 80 95" fill="#d0e0f0" stroke="#a0b0c0"/>
+                    <line x1="0" y1="100" x2="100" y2="100" stroke="black"/>
+                </g>
+                 <!-- Plot 4: n=30 -->
+                <g transform="translate(340, 10)">
+                    <text x="50" y="10" font-size="12" text-anchor="middle">n=30</text>
+                    <path d="M 25 98 C 38 98, 38 10, 50 10 C 62 10, 62 98, 75 98" fill="#d0e0f0" stroke="#a0b0c0"/>
+                    <line x1="0" y1="100" x2="100" y2="100" stroke="black"/>
+                </g>
+                <text x="225" y="130" font-size="12" text-anchor="middle">표본 평균의 분포</text>
+            </svg>
+            <figcaption style="text-align:center;">[그림 4-7] 표본 크기가 커질수록 표본평균의 분포가 정규분포에 가까워짐을 보여줍니다.</figcaption>
+        </section>
+
+        <section class="slide">
+            <h3>주요 표본분포: t, $\chi^2$, F 분포</h3>
+            <h4>t-분포 (t-Distribution)</h4>
+            <p>모분산 $\sigma^2$을 모를 때 표본분산 $S^2$을 사용하여 모평균 $\mu$를 추론하는 데 사용됩니다. 정규분포와 유사하지만 꼬리가 더 두껍습니다. 표본 크기가 작을 때 유용합니다.</p>
+            <div class="formula">
+            $T = \frac{\bar{X}-\mu}{S/\sqrt{n}} \sim t(n-1)$
+            </div>
+
+            <h4>카이제곱분포 ($\chi^2$-Distribution)</h4>
+            <p>표준정규분포를 따르는 확률 변수들의 제곱의 합이 따르는 분포로, 주로 모분산 $\sigma^2$을 추론하는 데 사용됩니다.</p>
+            <div class="formula">
+            $\frac{(n-1)S^2}{\sigma^2} \sim \chi^2(n-1)$
+            </div>
+
+            <h4>F-분포 (F-Distribution)</h4>
+            <p>두 개의 독립적인 카이제곱 분포의 비율이 따르는 분포로, 두 정규모집단의 분산이 같은지 비교(분산비 검정)하는 데 사용됩니다.</p>
+            <div class="formula">
+            $F = \frac{S_1^2 / \sigma_1^2}{S_2^2 / \sigma_2^2} \sim F(n_1-1, n_2-1)$
+            </div>
+        </section>
+        
+        <section class="slide">
+            <h2>4. 정규분포 분위수대조도 (Q-Q Plot)</h2>
+            <p class="definition">"지정된 확률분포(예: 정규분포)의 분위수"와 "자료분포의 분위수"를 산점도로 나타내어, 수집된 자료가 특정 분포를 따르는지 시각적으로 검토하는 방법입니다.</p>
+            <ul>
+                <li><strong>해석</strong>: 산점도의 점들이 직선에 가깝게 분포하면 자료가 정규분포를 따른다고 볼 수 있습니다.</li>
+                <li>점들이 S자 곡선을 그리거나 직선에서 체계적으로 벗어나면 정규성 가정을 만족하지 않는다고 판단할 수 있습니다.</li>
+            </ul>
+            <!-- SVG for Q-Q Plots -->
+            <svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg">
+                 <title>Q-Q Plot Examples</title>
+                <!-- Plot 1: Normal -->
+                <g transform="translate(10, 10)">
+                    <rect x="0" y="0" width="180" height="180" fill="none" stroke="#ccc"/>
+                    <line x1="10" y1="170" x2="170" y2="10" stroke="red" stroke-dasharray="4 2"/>
+                    <circle cx="30" cy="150" r="2" fill="black"/>
+                    <circle cx="50" cy="130" r="2" fill="black"/>
+                    <circle cx="70" cy="110" r="2" fill="black"/>
+                    <circle cx="90" cy="90" r="2" fill="black"/>
+                    <circle cx="110" cy="70" r="2" fill="black"/>
+                    <circle cx="130" cy="50" r="2" fill="black"/>
+                    <circle cx="150" cy="30" r="2" fill="black"/>
+                    <text x="90" y="195" font-size="12" text-anchor="middle">정규분포</text>
+                </g>
+                <!-- Plot 2: Heavy Tails -->
+                <g transform="translate(210, 10)">
+                    <rect x="0" y="0" width="180" height="180" fill="none" stroke="#ccc"/>
+                    <line x1="10" y1="170" x2="170" y2="10" stroke="red" stroke-dasharray="4 2"/>
+                    <path d="M 30 160 C 70 140, 70 40, 90 90 C 110 140, 110 40, 150 20" fill="none" stroke="black" stroke-width="0.5"/>
+                    <circle cx="30" cy="160" r="2" fill="black"/>
+                    <circle cx="60" cy="125" r="2" fill="black"/>
+                    <circle cx="90" cy="90" r="2" fill="black"/>
+                    <circle cx="120" cy="55" r="2" fill="black"/>
+                    <circle cx="150" cy="20" r="2" fill="black"/>
+                    <text x="90" y="195" font-size="12" text-anchor="middle">두꺼운 꼬리 (t-분포)</text>
+                </g>
+                 <!-- Plot 3: Right Skewed -->
+                <g transform="translate(410, 10)">
+                    <rect x="0" y="0" width="180" height="180" fill="none" stroke="#ccc"/>
+                    <line x1="10" y1="170" x2="170" y2="10" stroke="red" stroke-dasharray="4 2"/>
+                    <path d="M 20 160 C 80 140, 100 80, 160 20" fill="none" stroke="black" stroke-width="0.5"/>
+                    <circle cx="20" cy="160" r="2" fill="black"/>
+                    <circle cx="60" cy="145" r="2" fill="black"/>
+                    <circle cx="90" cy="110" r="2" fill="black"/>
+                    <circle cx="120" cy="70" r="2" fill="black"/>
+                    <circle cx="160" cy="20" r="2" fill="black"/>
+                    <text x="90" y="195" font-size="12" text-anchor="middle">오른쪽 꼬리 ($\chi^2$-분포)</text>
+                </g>
+            </svg>
+            <figcaption style="text-align:center;">(좌) 정규분포를 따르는 데이터, (중) 꼬리가 두꺼운 데이터, (우) 오른쪽으로 치우친 데이터의 Q-Q Plot</figcaption>
+        </section>
+
+    </main>
+</body>
+</html>

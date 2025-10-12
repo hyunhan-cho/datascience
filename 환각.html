@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM 환각(Hallucination) PPT</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        
+        :root {
+            --primary-color: #3b82f6;
+            --background-color: #f1f5f9;
+            --slide-bg-color: #ffffff;
+            --text-color: #1e293b;
+            --title-color: #1d4ed8;
+            --accent-color: #6366f1;
+            --example-bg-color: #f0fdf4;
+            --example-border-color: #4ade80;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            max-width: 1400px;
+            max-height: 900px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            padding: 50px 60px;
+            box-sizing: border-box;
+            background-color: var(--slide-bg-color);
+            display: none;
+            flex-direction: column;
+            justify-content: flex-start;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .slide-title {
+            font-size: 2.5em;
+            color: var(--title-color);
+            margin: 0 0 25px 0;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .slide.title-slide {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
+            color: white;
+        }
+        .title-slide h1 {
+            font-size: 4.5em;
+            margin: 0;
+            font-weight: 700;
+        }
+        .title-slide p {
+            font-size: 1.5em;
+            opacity: 0.9;
+        }
+
+        h3 {
+            font-size: 1.6em;
+            color: var(--accent-color);
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+            width: 100%;
+        }
+
+        li {
+            background-color: #f8fafc;
+            border-left: 5px solid var(--primary-color);
+            padding: 12px 20px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            line-height: 1.7;
+            font-size: 1.05em;
+        }
+
+        .example-box {
+            background-color: var(--example-bg-color);
+            border-left: 5px solid var(--example-border-color);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 4px;
+            font-style: italic;
+        }
+        .example-box::before {
+            content: "예시)";
+            font-weight: 700;
+            margin-right: 10px;
+            color: #22c55e;
+        }
+
+        .quiz-box {
+            background-color: #fefce8;
+            border: 2px solid #facc15;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .quiz-box .question {
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        .quiz-box .options label {
+            display: block;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+        }
+        .quiz-box .options label:hover {
+            background-color: #f1f5f9;
+        }
+        .quiz-box .feedback {
+            margin-top: 10px;
+            font-weight: 500;
+            display: none;
+        }
+        .quiz-box .feedback.correct {
+            color: #16a34a;
+        }
+        .quiz-box .feedback.incorrect {
+            color: #dc2626;
+        }
+
+
+        strong {
+            color: #ef4444;
+            font-weight: 700;
+        }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .grid-item {
+            background-color: #eef2ff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #c7d2fe;
+        }
+        .grid-item h4 {
+            margin-top: 0;
+            color: var(--accent-color);
+            font-size: 1.2em;
+        }
+        .grid-item p {
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+
+        .navigation {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 50px;
+            z-index: 1000;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .nav-btn:disabled {
+            color: #999;
+            cursor: not-allowed;
+        }
+        .slide-counter {
+            color: white;
+            font-size: 1em;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .slide::-webkit-scrollbar {
+            width: 8px;
+        }
+        .slide::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .slide::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .slide::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .presentation-container {
+                max-height: none;
+                border-radius: 0;
+            }
+            .slide {
+                padding: 40px 25px 80px 25px;
+            }
+            .slide-title {
+                font-size: 2em;
+            }
+            .title-slide h1 {
+                font-size: 3em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="presentation-container">
+    <!-- 슬라이드 1: 제목 -->
+    <div class="slide title-slide active">
+        <h1>환각(Hallucination)</h1>
+        <p>LLM의 신뢰성 문제와 저널리즘에서의 대응 방안</p>
+    </div>
+
+    <!-- 슬라이드 2: 저널리즘과 LLM -->
+    <div class="slide">
+        <h2 class="slide-title">저널리즘과 LLM: 기대와 현실</h2>
+        <h3>✅ 저널리즘 영역에서의 기대 역할</h3>
+        <ul>
+            <li><strong>기사 초안 작성:</strong> 인터뷰, 보도자료 등을 기반으로 신속하게 초안을 생성하여 생산성 향상.</li>
+            <li><strong>자료 요약:</strong> 방대한 문서, 회의록, 논문을 요약하여 핵심 정보를 빠르게 파악.</li>
+            <li><strong>데이터 분석/시각화:</strong> 정형 데이터를 분석하고 결과를 텍스트로 기술하여 데이터 저널리즘에 기여.</li>
+        </ul>
+        <h3>❌ 현실의 한계와 구조적 문제</h3>
+        <ul>
+            <li><strong>'신뢰' 위협:</strong> 환각은 팩트체크 비용을 증가시키고, 언론사 브랜드 신뢰도를 하락시키며, 법적/윤리적 리스크를 야기하는 구조적 문제입니다.</li>
+        </ul>
+        <div class="example-box">
+            A언론사가 LLM으로 지역별 재난 데이터를 자동 기사화했으나, 실제 재난 당국 수치와 달라 정정 보도를 내는 등 신뢰성 논란이 발생했습니다.
+        </div>
+    </div>
+
+    <!-- 슬라이드 3: 환각의 원인 1 -->
+    <div class="slide">
+        <h2 class="slide-title">원인 1: 모델의 근본적 한계</h2>
+        
+        <!-- LLM 구조 시각화 -->
+        <div style="text-align: center; margin: 20px 0;">
+            <svg width="600" height="180" viewBox="0 0 600 180" xmlns="http://www.w3.org/2000/svg">
+                <!-- 뇌 모양 (LLM) -->
+                <ellipse cx="100" cy="90" rx="60" ry="50" fill="#4f46e5" fill-opacity="0.2" stroke="#4f46e5" stroke-width="2"/>
+                <text x="100" y="95" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">LLM</text>
+                
+                <!-- 입력 텍스트 -->
+                <rect x="20" y="20" width="40" height="15" fill="#e5e7eb" rx="5"/>
+                <text x="40" y="30" text-anchor="middle" font-size="10" fill="#374151">질문</text>
+                
+                <!-- 화살표 -->
+                <path d="M65 27 L85 60" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowhead)"/>
+                
+                <!-- 내부 충돌 표시 -->
+                <circle cx="85" cy="70" r="8" fill="#ef4444" fill-opacity="0.3"/>
+                <text x="85" y="74" text-anchor="middle" font-size="8" fill="#dc2626">충돌</text>
+                <circle cx="115" cy="110" r="8" fill="#ef4444" fill-opacity="0.3"/>
+                <text x="115" y="114" text-anchor="middle" font-size="8" fill="#dc2626">충돌</text>
+                
+                <!-- 출력 -->
+                <rect x="180" y="80" width="80" height="20" fill="#fecaca" rx="5"/>
+                <text x="220" y="93" text-anchor="middle" font-size="11" fill="#dc2626" font-weight="bold">환각 출력</text>
+                
+                <!-- 화살표 -->
+                <path d="M160 90 L175 90" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowhead)"/>
+                
+                <!-- 문제점 라벨들 -->
+                <text x="300" y="30" font-size="12" fill="#7c2d12" font-weight="bold">❌ 정확성보다 자연스러움 우선</text>
+                <text x="300" y="60" font-size="12" fill="#7c2d12" font-weight="bold">❌ "모른다" 대신 추측 생성</text>
+                <text x="300" y="90" font-size="12" fill="#7c2d12" font-weight="bold">❌ 내부 지식 충돌</text>
+                <text x="300" y="120" font-size="12" fill="#7c2d12" font-weight="bold">❌ 시간 드리프트</text>
+                
+                <!-- 화살표 마커 정의 -->
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+        
+        <div class="grid-container">
+            <div class="grid-item">
+                <h4>토큰 예측기의 한계</h4>
+                <p>LLM은 <strong>'정확성'</strong>이 아닌 <strong>'자연스러움(우도)'</strong>을 목표로 학습합니다. 문맥상 그럴듯하면 사실이 아니어도 출력하는 '목표 함수 불일치'가 발생하며, 학습 데이터에 없던(OOD) 질문에 취약합니다.</p>
+            </div>
+            <div class="grid-item">
+                <h4>자신감과 환각의 동반</h4>
+                <p>RLHF 과정에서 '결단력 있는 어조'에 보상을 받도록 학습됩니다. 이로 인해 "모른다"고 답하기보다 근거 없는 단정문을 생성하는 경향이 생기며, 틀린 정보도 확신에 차서 전달하게 됩니다.</p>
+            </div>
+            <div class="grid-item">
+                <h4>내부 지식 충돌</h4>
+                <p>서로 모순되는 정보("서울 인구 천만 이상/미만")가 모델 내부에 공존하며, 프롬프트 맥락에 따라 임의로 활성화됩니다. 또한 훈련 시점 이후 변경된 정보를 반영하지 못하는 '시간 드리프트' 문제가 있습니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 슬라이드 4: 환각의 원인 2 -->
+    <div class="slide">
+        <h2 class="slide-title">원인 2: 잘못된 추론</h2>
+        <h3>대표적 추론 오류 유형</h3>
+        <ul>
+            <li><strong>상관-인과 혼동:</strong> 두 사건이 함께 발생했다는 이유로 원인-결과 관계로 단정.
+                <div class="example-box" style="margin-left: 20px; font-size: 0.9em; margin-top:10px;"> "여름철 아이스크림 판매량과 익사 사고율이 함께 증가하는 것을 보고, LLM이 '아이스크림 섭취가 익사 위험을 높인다'고 잘못된 결론을 내는 경우"</div>
+            </li>
+            <li><strong>과잉 일반화:</strong> 일부 표본(소수 댓글)을 전체(여론)의 특성인 것처럼 확대 해석.
+                <div class="example-box" style="margin-left: 20px; font-size: 0.9em; margin-top:10px;"> "특정 정책에 대한 기사에 달린 부정적 댓글 2개를 보고 '국민 대다수가 이 정책에 반대한다'고 요약하는 경우"</div>
+            </li>
+            <li><strong>증거 발명 (환각 인용):</strong> 존재하지 않는 인용, 논문, 판례를 있는 것처럼 각주/괄호로 포장.
+                 <div class="example-box" style="margin-left: 20px; font-size: 0.9em; margin-top:10px;"> "특정 약물의 효과에 대해 질문하자, '2023년 김박사의 연구에 따르면...'이라며 가상의 논문을 인용하는 경우"</div>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- 슬라이드 5: 환각 통제에 대한 시각 -->
+    <div class="slide">
+        <h2 class="slide-title">환각 통제, 가능한가?</h2>
+        
+        <!-- 세 가지 관점 시각화 -->
+        <div style="text-align: center; margin: 20px 0;">
+            <svg width="700" height="200" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+                <!-- 낙관론 (왼쪽) -->
+                <g transform="translate(50, 20)">
+                    <circle cx="80" cy="80" r="60" fill="#22c55e" fill-opacity="0.2" stroke="#22c55e" stroke-width="3"/>
+                    <text x="80" y="50" text-anchor="middle" font-size="28" fill="#22c55e">💡</text>
+                    <text x="80" y="75" text-anchor="middle" font-size="12" font-weight="bold" fill="#166534">낙관론</text>
+                    <text x="80" y="90" text-anchor="middle" font-size="10" fill="#166534">기술로 해결</text>
+                    <text x="80" y="105" text-anchor="middle" font-size="10" fill="#166534">RAG, CoVe</text>
+                    
+                    <!-- 성공률 바 -->
+                    <rect x="20" y="160" width="120" height="8" fill="#e5e7eb" rx="4"/>
+                    <rect x="20" y="160" width="96" height="8" fill="#22c55e" rx="4"/>
+                    <text x="80" y="180" text-anchor="middle" font-size="10" fill="#166534">성공률 80%</text>
+                </g>
+                
+                <!-- 회의론 (중앙) -->
+                <g transform="translate(250, 20)">
+                    <circle cx="80" cy="80" r="60" fill="#ef4444" fill-opacity="0.2" stroke="#ef4444" stroke-width="3"/>
+                    <text x="80" y="50" text-anchor="middle" font-size="28" fill="#ef4444">🤔</text>
+                    <text x="80" y="75" text-anchor="middle" font-size="12" font-weight="bold" fill="#dc2626">회의론</text>
+                    <text x="80" y="90" text-anchor="middle" font-size="10" fill="#dc2626">본질적 한계</text>
+                    <text x="80" y="105" text-anchor="middle" font-size="10" fill="#dc2626">창의성 vs 정확성</text>
+                    
+                    <!-- 성공률 바 -->
+                    <rect x="20" y="160" width="120" height="8" fill="#e5e7eb" rx="4"/>
+                    <rect x="20" y="160" width="36" height="8" fill="#ef4444" rx="4"/>
+                    <text x="80" y="180" text-anchor="middle" font-size="10" fill="#dc2626">성공률 30%</text>
+                </g>
+                
+                <!-- 절충론 (오른쪽) -->
+                <g transform="translate(450, 20)">
+                    <circle cx="80" cy="80" r="60" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="3"/>
+                    <text x="80" y="50" text-anchor="middle" font-size="28" fill="#f59e0b">🤝</text>
+                    <text x="80" y="75" text-anchor="middle" font-size="12" font-weight="bold" fill="#d97706">절충론</text>
+                    <text x="80" y="90" text-anchor="middle" font-size="10" fill="#d97706">리스크 기반</text>
+                    <text x="80" y="105" text-anchor="middle" font-size="10" fill="#d97706">단계별 검수</text>
+                    
+                    <!-- 성공률 바 -->
+                    <rect x="20" y="160" width="120" height="8" fill="#e5e7eb" rx="4"/>
+                    <rect x="20" y="160" width="72" height="8" fill="#f59e0b" rx="4"/>
+                    <text x="80" y="180" text-anchor="middle" font-size="10" fill="#d97706">성공률 60%</text>
+                </g>
+                
+                <!-- 화살표와 연결선 -->
+                <path d="M200 100 L250 100" stroke="#6b7280" stroke-width="2" fill="none"/>
+                <path d="M400 100 L450 100" stroke="#6b7280" stroke-width="2" fill="none"/>
+                
+                <!-- 스펙트럼 표시 -->
+                <text x="350" y="15" text-anchor="middle" font-size="11" fill="#6b7280" font-style="italic">환각 통제 가능성 스펙트럼</text>
+            </svg>
+        </div>
+        
+        <div class="grid-container">
+            <div class="grid-item">
+                <h4>💡 낙관론 (기술적 통제 가능)</h4>
+                <p>외부 근거를 강제하고(RAG), 생성된 답변을 스스로 검증(CoVe)하며, 규칙 기반 디코딩 제약("인용 없으면 답변 금지")을 통해 환각을 크게 줄일 수 있다는 입장입니다. FActScore, C2PA 같은 평가/관리 도구를 활용합니다.</p>
+            </div>
+            <div class="grid-item">
+                <h4>🤔 회의론 (본질적 한계)</h4>
+                <p>LLM은 '그럴듯함'을 최적화하므로 환각은 창의성과 함께 오는 불가피한 문제입니다. 과도한 억제는 '모른다'를 남발하는 과보수성, 창의성 약화 등 부작용을 낳을 수 있으며, 잘못된 근거를 바탕으로 오류를 정교화할 위험도 있습니다.</p>
+            </div>
+             <div class="grid-item">
+                <h4>🤝 절충론 (리스크 기반 관리)</h4>
+                <p>환각 제로는 불가능하므로, 리스크에 따라 워크플로우를 다르게 적용하는 것이 현실적입니다. 저위험(단순 집계)은 자동화, 중위험(해설 분석)은 1인 검수, 고위험(법률 해석)은 인간 주도 및 다중 검수를 적용합니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 슬라이드 6: 저감 기술 1 -->
+    <div class="slide">
+        <h2 class="slide-title">저감 기술 1: 근거 결합 (Grounding)</h2>
+        <h3>Retrieval-Augmented Generation (RAG)</h3>
+        <ul>
+            <li><strong>개념:</strong> 질문에 답하기 전, 신뢰 가능한 외부 DB에서 관련 문서를 검색하고 그 내용을 근거로 답변을 생성합니다.</li>
+        </ul>
+        <div class="example-box">
+            <b>질문:</b> "2025년 한국 최저시급은?" <br>
+            <b>RAG 미적용 시:</b> (훈련 데이터 기반으로) "2025년 최저시급은 약 1만 원으로 예상됩니다." (추측) <br>
+            <b>RAG 적용 시:</b> (최신 고용노동부 보도자료 검색 후) "고용노동부 발표[출처1]에 따르면, 2025년 최저시급은 10,030원으로 결정되었습니다." (사실 기반)
+        </div>
+        <h3>도구 호출 (Tool Use)</h3>
+        <ul>
+            <li><strong>개념:</strong> 답변 생성 중 필요할 때 계산기, 코드 실행기, API 등 외부 도구를 직접 호출하여 정확한 결과를 얻습니다.</li>
+        </ul>
+    </div>
+
+    <!-- 슬라이드 7: 저감 기술 2 -->
+    <div class="slide">
+        <h2 class="slide-title">저감 기술 2: 사후 검증 (Post-verification)</h2>
+        <h3>Chain-of-Verification (CoVe)</h3>
+        <ul>
+            <li><strong>개념:</strong> ①초안 생성 → ②검증 질문 설계 → ③질문별 답변 → ④최종 수정. 스스로 답안을 검토하는 과정입니다.</li>
+        </ul>
+        <div class="example-box">
+            <b>초안:</b> "프랑스의 수도인 로마의 에펠탑은..." <br>
+            <b>생성된 검증 질문:</b> 1. 프랑스의 수도는 어디인가? 2. 에펠탑은 어느 도시에 있는가? <br>
+            <b>최종 수정본:</b> "프랑스의 수도인 파리의 에펠탑은..."
+        </div>
+        <h3>Self-Consistency (자기 일관성)</h3>
+        <ul>
+            <li><strong>개념:</strong> 같은 질문에 여러 번 답변하게 한 후, 가장 많이 나온 일관된 답변을 최종 결과로 선택하는 다수결 방식입니다.</li>
+        </ul>
+    </div>
+
+    <!-- 슬라이드 8: 저감 기술 3 -->
+    <div class="slide">
+        <h2 class="slide-title">저감 기술 3: 학습 및 디코딩 조정</h2>
+        <h3>사실성 지향 학습</h3>
+        <ul>
+            <li><strong>Source-aware training:</strong> 학습 단계에서부터 문서 식별자를 결부시켜, 답변 시 출처를 함께 인용하도록 훈련.</li>
+            <li><strong>인용 보상 학습:</strong> 정답과 정확한 인용 모두에 보상을 부여하여 근거 있는 답변을 선호하도록 튜닝.</li>
+        </ul>
+        <h3>RLHF/DPO 기반 보상 설계</h3>
+        <ul>
+            <li>사람의 선호도나 사실성 기준에 따라 보상 모델을 설계하여, 모델이 사실적인 답변을 하도록 유도하고 틀렸을 때는 '모른다'고 답하도록 학습시킵니다.</li>
+        </ul>
+    </div>
+    
+    <!-- 슬라이드 9: 결론 -->
+    <div class="slide">
+        <h2 class="slide-title">결론: 뉴스룸을 위한 제언</h2>
+        <h3>필수 안전장치 체크리스트</h3>
+        <ul>
+            <li><strong>[근거]</strong> 인용 없는 문장 금지 (문장-근거 정합성 검사)</li>
+            <li><strong>[숫자]</strong> 모든 숫자/단위는 원문 스니펫 캡처로 증빙</li>
+            <li><strong>[불확실성]</strong> 모델 확신도가 임계값보다 낮으면 자동 기권 또는 인간에게 이관</li>
+            <li><strong>[평가]</strong> 주기적인 FActScore/RAGAS 리포트로 모델 성능 저하 감시</li>
+            <li><strong>[정책]</strong> "AI 사용 라벨링 및 검증 의무" 사내 가이드 공개 및 준수</li>
+        </ul>
+    </div>
+
+    <!-- 슬라이드 10: 예제 문제 -->
+    <div class="slide">
+        <h2 class="slide-title">예제 문제로 확인하기</h2>
+        <div class="quiz-box" id="quiz1">
+            <p class="question">Q1. LLM이 최신 사건에 대한 질문에 사실이 아닌 그럴듯한 답변을 만들어내는 가장 주된 원인은 무엇일까요?</p>
+            <div class="options">
+                <label><input type="radio" name="q1" value="a"> A) 내부 지식 충돌</label>
+                <label><input type="radio" name="q1" value="b"> B) 분포 외(OOD) 데이터 취약성</label>
+                <label><input type="radio" name="q1" value="c"> C) 과잉 일반화</label>
+            </div>
+            <p class="feedback correct">정답! B) 최신 사건은 모델의 학습 데이터에 없었을(OOD) 가능성이 높기 때문에, 상상에 의존하여 답변을 생성하게 됩니다.</p>
+            <p class="feedback incorrect">오답입니다. 다시 생각해 보세요.</p>
+        </div>
+        <div class="quiz-box" id="quiz2">
+            <p class="question">Q2. 답변의 신뢰도를 높이기 위해, LLM이 답변 생성 전 외부 데이터베이스에서 관련 정보를 찾아 참고하는 기술은 무엇일까요?</p>
+            <div class="options">
+                <label><input type="radio" name="q2" value="a"> A) Chain-of-Verification (CoVe)</label>
+                <label><input type="radio" name="q2" value="b"> B) Self-Consistency</label>
+                <label><input type="radio" name="q2" value="c"> C) Retrieval-Augmented Generation (RAG)</label>
+            </div>
+            <p class="feedback correct">정답! C) RAG는 외부의 최신 정보를 '검색(Retrieval)'하여 답변 생성을 '보강(Augmented)'하는 핵심적인 환각 저감 기술입니다.</p>
+            <p class="feedback incorrect">오답입니다. 다시 생각해 보세요.</p>
+        </div>
+    </div>
+</div>
+
+<!-- 네비게이션 UI -->
+<div class="navigation">
+    <button id="prev-btn" class="nav-btn" title="이전 슬라이드">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+    <span id="slide-counter" class="slide-counter"></span>
+    <button id="next-btn" class="nav-btn" title="다음 슬라이드">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </button>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const slideCounter = document.getElementById('slide-counter');
+        
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            slideCounter.textContent = `${index + 1} / ${totalSlides}`;
+            prevBtn.disabled = index === 0;
+            nextBtn.disabled = index === totalSlides - 1;
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' && !nextBtn.disabled) {
+                nextBtn.click();
+            } else if (e.key === 'ArrowLeft' && !prevBtn.disabled) {
+                prevBtn.click();
+            }
+        });
+
+        // 퀴즈 기능
+        function setupQuiz(quizId, correctAnswer) {
+            const quiz = document.getElementById(quizId);
+            const radios = quiz.querySelectorAll('input[type="radio"]');
+            const correctFeedback = quiz.querySelector('.feedback.correct');
+            const incorrectFeedback = quiz.querySelector('.feedback.incorrect');
+
+            radios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    // 피드백 초기화
+                    correctFeedback.style.display = 'none';
+                    incorrectFeedback.style.display = 'none';
+
+                    if (radio.value === correctAnswer) {
+                        correctFeedback.style.display = 'block';
+                    } else {
+                        incorrectFeedback.style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        setupQuiz('quiz1', 'b');
+        setupQuiz('quiz2', 'c');
+
+        showSlide(currentSlide);
+    });
+</script>
+
+</body>
+</html>
+
