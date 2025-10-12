@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2장: 자료의 정리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* 추가적인 스타일링 */
+        body {
+            font-family: 'Inter', 'Pretendard', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            height: 100vh; /* 전체 화면 높이 */
+        }
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        .slide-content {
+            background-color: white;
+            padding: 2rem 3rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .formula {
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e9ecef;
+            font-size: 1.25rem;
+            text-align: center;
+            overflow-x: auto;
+        }
+        svg text {
+            font-size: 12px;
+            fill: #4a5568;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+
+    <!-- 슬라이드 컨테이너 -->
+    <div id="presentation-container" class="w-full h-full">
+        <!-- Slide 1: Title -->
+        <div class="slide active flex-col items-center justify-center p-4">
+            <div class="slide-content text-center">
+                <h1 class="text-6xl font-extrabold text-gray-800 mb-4">2장: 자료의 정리</h1>
+                <p class="text-2xl text-gray-600">통계학의 기초 다지기</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: 모집단의 분포 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h2 class="text-4xl font-bold text-blue-700 mb-6">2.1 모집단의 분포</h2>
+                <p class="text-xl text-gray-700 mb-4"><strong>분포(Distribution)</strong>란 모집단에서 특성값이 흩어져 있는 상태를 나타냅니다.</p>
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <p class="text-lg mb-2"><strong>예시: 가구원 수의 분포</strong></p>
+                    <p class="text-gray-600 mb-4">2005년 인구주택총조사 결과, 가구원 수에 따른 가구의 비율을 시각화한 것입니다.</p>
+                    <div class="flex justify-center items-end h-64 w-full">
+                        <svg width="100%" height="100%" viewBox="0 0 350 210">
+                            <!-- Y Axis and Grid Lines -->
+                            <line x1="30" y1="180" x2="330" y2="180" stroke="#9ca3af"></line>
+                            <line x1="30" y1="180" x2="30" y2="20" stroke="#9ca3af"></line>
+                            <text x="5" y="185" font-size="10">0.0</text>
+                            <line x1="25" y1="130" x2="330" y2="130" stroke="#e5e7eb" stroke-dasharray="2"></line> <text x="0" y="134" font-size="10">0.1</text>
+                            <line x1="25" y1="80" x2="330" y2="80" stroke="#e5e7eb" stroke-dasharray="2"></line> <text x="0" y="84" font-size="10">0.2</text>
+                            <line x1="25" y1="30" x2="330" y2="30" stroke="#e5e7eb" stroke-dasharray="2"></line>
+                            <text x="0" y="34" font-size="10">0.3</text>
+                            
+                            <g class="bars">
+                                <!-- Data: 0.200, 0.222, 0.209, 0.270, 0.077, 0.017, 0.006 -->
+                                <!-- Scale: Max Y is 0.3. Graph height is 160px (180-20). -->
+                                <rect x="40" y="73.3" width="30" height="106.7" fill="#60a5fa" rx="2"></rect><text x="50" y="195">1</text>
+                                <rect x="80" y="61.6" width="30" height="118.4" fill="#60a5fa" rx="2"></rect><text x="90" y="195">2</text>
+                                <rect x="120" y="68.5" width="30" height="111.5" fill="#60a5fa" rx="2"></rect><text x="130" y="195">3</text>
+                                <rect x="160" y="36" width="30" height="144" fill="#60a5fa" rx="2"></rect><text x="170" y="195">4</text>
+                                <rect x="200" y="138.9" width="30" height="41.1" fill="#60a5fa" rx="2"></rect><text x="210" y="195">5</text>
+                                <rect x="240" y="170.9" width="30" height="9.1" fill="#60a5fa" rx="2"></rect><text x="250" y="195">6</text>
+                                <rect x="280" y="176.8" width="30" height="3.2" fill="#60a5fa" rx="2"></rect><text x="290" y="195">7</text>
+                            </g>
+                             <text x="180" y="205" font-size="12" fill="#374151" text-anchor="middle">가구원 수</text>
+                             <text x="10" y="100" font-size="12" fill="#374151" transform="rotate(-90 10 100)">상대도수</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: 확률밀도함수 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h2 class="text-4xl font-bold text-blue-700 mb-6">확률밀도함수 (PDF)</h2>
+                <p class="text-xl text-gray-700 mb-4">분포를 수학적으로 표현하는 함수입니다. 이 함수의 아래 총면적은 항상 1이 됩니다.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="formula">
+                        <h3 class="text-2xl font-semibold mb-3">이산적인 경우</h3>
+                        <p>\( p(x) \ge 0 \)</p>
+                        <p>\( \sum p(x) = 1 \)</p>
+                    </div>
+                    <div class="formula">
+                        <h3 class="text-2xl font-semibold mb-3">연속적인 경우</h3>
+                        <p>\( p(x) \ge 0 \)</p>
+                        <p>\( \int_{-\infty}^{\infty} p(x) dx = 1 \)</p>
+                    </div>
+                </div>
+                <div class="text-center mt-6">
+                     <svg width="80%" height="150" viewBox="0 0 300 100">
+                        <path d="M 10 90 C 40 90, 80 20, 150 20 C 220 20, 260 90, 290 90" stroke="#3b82f6" fill="none" stroke-width="2"></path>
+                        <path d="M 180 90 L 180 44 L 220 69 L 220 90 Z" fill="#60a5fa" fill-opacity="0.5"></path>
+                        <line x1="0" y1="90" x2="300" y2="90" stroke="#4a5568"></line>
+                        <text x="175" y="98">a</text>
+                        <text x="215" y="98">b</text>
+                        <text x="100" y="15" font-size="10">곡선 아래의 넓이 = 1</text>
+                        <text x="190" y="60" font-size="10">a와 b 사이의 확률</text>
+                    </svg>
+                    <p class="mt-2 text-sm text-gray-500">곡선 아래의 넓이는 1이며, a와 b 사이의 넓이는 해당 구간의 확률을 의미합니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 모집단의 대푯값 (중심 위치) -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h2 class="text-4xl font-bold text-green-700 mb-6">2.2 모집단의 대푯값 (중심 위치)</h2>
+                <p class="text-xl text-gray-700 mb-4">자료의 중심을 나타내는 값들입니다.</p>
+                <ul class="list-disc list-inside text-lg space-y-3">
+                    <li><strong>모평균 (Population Mean, \(\mu\)):</strong> 모든 값을 더해 개수로 나눈 값. 분포의 균형점.</li>
+                    <li><strong>중앙값 (Median):</strong> 자료를 크기순으로 나열했을 때 정중앙에 위치하는 값.</li>
+                    <li><strong>최빈값 (Mode):</strong> 가장 빈번하게 나타나는 값.</li>
+                    <li><strong>백분위수 (Percentile):</strong> 전체 자료를 100개의 동일한 부분으로 나누는 값.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 5: 모평균 공식 및 예제 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h3 class="text-3xl font-semibold text-green-700 mb-4">모평균 (\(\mu\)) 공식</h3>
+                 <div class="formula mb-6">
+                    <p>\( \mu = \frac{1}{N} \sum_{i=1}^{N} c_i = \sum_{i=1}^{k} (c_i^* \times \frac{f_i}{N}) \)</p>
+                    <p class="text-base mt-2">\(c_i\): 각 특성값, \(N\): 전체 개수, \(f_i/N\): 상대도수</p>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg">
+                    <p class="text-lg mb-2"><strong>예제 2.1: 가구당 평균 인원수</strong></p>
+                    <p class="text-gray-700 mb-3">각 가구원 수에 해당하는 상대도수를 곱하여 모두 더합니다.</p>
+                    <p class="text-lg font-mono">\( \mu = (1 \times 0.200) + (2 \times 0.222) + \dots + (7 \times 0.006) = 2.88명 \)</p>
+                    <div class="text-center mt-4">
+                        <svg width="100%" height="150" viewBox="0 0 400 100">
+                             <!-- Dots -->
+                            <circle cx="50" cy="80" r="3" fill="#10b981"/><circle cx="50" cy="73" r="3" fill="#10b981"/><circle cx="50" cy="66" r="3" fill="#10b981"/><circle cx="50" cy="59" r="3" fill="#10b981"/>
+                            <circle cx="100" cy="80" r="3" fill="#10b981"/><circle cx="100" cy="73" r="3" fill="#10b981"/><circle cx="100" cy="66" r="3" fill="#10b981"/><circle cx="100" cy="59" r="3" fill="#10b981"/><circle cx="100" cy="52" r="3" fill="#10b981"/>
+                            <circle cx="150" cy="80" r="3" fill="#10b981"/><circle cx="150" cy="73" r="3" fill="#10b981"/><circle cx="150" cy="66" r="3" fill="#10b981"/><circle cx="150" cy="59" r="3" fill="#10b981"/>
+                            <circle cx="200" cy="80" r="3" fill="#10b981"/><circle cx="200" cy="73" r="3" fill="#10b981"/><circle cx="200" cy="66" r="3" fill="#10b981"/><circle cx="200" cy="59" r="3" fill="#10b981"/><circle cx="200" cy="52" r="3" fill="#10b981"/><circle cx="200" cy="45" r="3" fill="#10b981"/>
+                            <circle cx="250" cy="80" r="3" fill="#10b981"/><circle cx="250" cy="73" r="3" fill="#10b981"/>
+                            <circle cx="300" cy="80" r="3" fill="#10b981"/>
+                            <circle cx="350" cy="80" r="3" fill="#10b981"/>
+                            <!-- Axis -->
+                            <line x1="20" y1="85" x2="380" y2="85" stroke="#4b5563"></line>
+                             <!-- Ticks -->
+                            <text x="48" y="98">1</text><text x="98" y="98">2</text><text x="148" y="98">3</text><text x="198" y="98">4</text><text x="248" y="98">5</text><text x="298" y="98">6</text><text x="348" y="98">7</text>
+                            <!-- Fulcrum -->
+                            <polygon points="144,85 154,85 149,95" fill="#ef4444"></polygon>
+                            <text x="140" y="105" fill="#ef4444" font-size="10">2.88</text>
+                        </svg>
+                        <p class="text-sm text-gray-500">평균은 분포의 균형점 역할을 합니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 분포의 형태 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h3 class="text-3xl font-semibold text-green-700 mb-4">분포의 형태와 대푯값</h3>
+                <p class="text-lg text-gray-700 mb-6">분포의 모양에 따라 평균, 중앙값, 최빈값의 위치가 달라집니다.</p>
+                <div class="flex justify-around items-center w-full">
+                     <svg width="100%" height="220" viewBox="0 0 900 220">
+                        <!-- Base line -->
+                        <line x1="20" y1="180" x2="880" y2="180" stroke="#a1a1aa"></line>
+                        <!-- 1. Left Skew (왼쪽으로 치우친 분포) -->
+                        <g>
+                            <path d="M 50 180 C 150 180, 220 50, 270 50 C 320 50, 300 180, 300 180 Z" stroke="#34d399" fill="#a7f3d0" stroke-width="2"></path>
+                            <line x1="235" y1="180" x2="235" y2="100" stroke="#ef4444" stroke-dasharray="4"></line><text x="225" y="95" fill="#ef4444">평균</text>
+                            <line x1="250" y1="180" x2="250" y2="80" stroke="#3b82f6" stroke-dasharray="4"></line><text x="240" y="75" fill="#3b82f6">중앙값</text>
+                            <line x1="270" y1="180" x2="270" y2="50" stroke="#f97316" stroke-dasharray="4"></line><text x="260" y="45" fill="#f97316">최빈값</text>
+                            <text x="175" y="200" text-anchor="middle" class="font-bold">왼쪽으로 치우친 분포</text>
+                        </g>
+                        <!-- 2. Symmetrical (대칭 분포) -->
+                        <g>
+                            <path d="M 350 180 C 380 180, 380 50, 450 50 C 520 50, 520 180, 550 180 Z" stroke="#34d399" fill="#a7f3d0" stroke-width="2"></path>
+                            <line x1="450" y1="180" x2="450" y2="50" stroke="#3b82f6" stroke-dasharray="4"></line>
+                            <text x="410" y="45" fill="#3b82f6">평균=중앙값=최빈값</text>
+                            <text x="450" y="200" text-anchor="middle" class="font-bold">대칭 분포</text>
+                        </g>
+                        <!-- 3. Right Skew (오른쪽으로 치우친 분포) -->
+                        <g>
+                            <path d="M 600 180 C 600 180, 680 50, 730 50 C 780 50, 850 180, 850 180 Z" stroke="#34d399" fill="#a7f3d0" stroke-width="2"></path>
+                            <line x1="730" y1="180" x2="730" y2="50" stroke="#f97316" stroke-dasharray="4"></line><text x="720" y="45" fill="#f97316">최빈값</text>
+                            <line x1="750" y1="180" x2="750" y2="80" stroke="#3b82f6" stroke-dasharray="4"></line><text x="740" y="75" fill="#3b82f6">중앙값</text>
+                            <line x1="765" y1="180" x2="765" y2="100" stroke="#ef4444" stroke-dasharray="4"></line><text x="755" y="95" fill="#ef4444">평균</text>
+                            <text x="725" y="200" text-anchor="middle" class="font-bold">오른쪽으로 치우친 분포</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 백분위수와 사분위수 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h3 class="text-3xl font-semibold text-green-700 mb-4">백분위수와 사분위수</h3>
+                <p class="text-lg text-gray-700 mb-4"><strong>제p 백분위수:</strong> 자료를 작은 값부터 순서대로 나열했을 때, p%가 그 값보다 작거나 같게 되는 위치의 값입니다.</p>
+                <p class="text-lg text-gray-700 mb-4"><strong>사분위수(Quartile)</strong>는 자료를 4등분하는 값입니다.</p>
+                <ul class="list-disc list-inside text-lg space-y-2 ml-4">
+                    <li><strong>제1사분위수 (\(Q_1\)):</strong> 제25 백분위수 (하위 25%)</li>
+                    <li><strong>제2사분위수 (\(Q_2\)):</strong> 제50 백분위수 (중앙값)</li>
+                    <li><strong>제3사분위수 (\(Q_3\)):</strong> 제75 백분위수 (상위 25%)</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <svg width="80%" height="150" viewBox="0 0 400 100">
+                        <path d="M 20 80 C 50 80, 100 20, 200 20 C 300 20, 350 80, 380 80" stroke="#34d399" fill="#a7f3d0" stroke-width="2"></path>
+                        <line x1="135" y1="80" x2="135" y2="47" stroke="#3b82f6" stroke-dasharray="3"></line><text x="130" y="95">Q1</text>
+                        <line x1="200" y1="80" x2="200" y2="20" stroke="#3b82f6" stroke-dasharray="3"></line><text x="195" y="95">Q2</text>
+                        <line x1="265" y1="80" x2="265" y2="47" stroke="#3b82f6" stroke-dasharray="3"></line><text x="260" y="95">Q3</text>
+                        <text x="70" y="70" font-size="10">25%</text>
+                        <text x="160" y="70" font-size="10">25%</text>
+                        <text x="225" y="70" font-size="10">25%</text>
+                        <text x="310" y="70" font-size="10">25%</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: 모집단의 대푯값 (산포) -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h2 class="text-4xl font-bold text-purple-700 mb-6">모집단의 대푯값 (산포)</h2>
+                <p class="text-xl text-gray-700 mb-4">자료가 흩어져 있는 정도(퍼짐)를 나타내는 값입니다.</p>
+                <ul class="list-disc list-inside text-lg space-y-3">
+                    <li><strong>범위 (Range):</strong> 최대값 - 최소값.</li>
+                    <li><strong>사분위수범위 (IQR):</strong> 제3사분위수(\(Q_3\)) - 제1사분위수(\(Q_1\)). <span class="text-sm text-red-600">(시험 출제!)</span></li>
+                    <li><strong>모분산 (\(\sigma^2\)):</strong> 편차(값-평균) 제곱의 평균.</li>
+                    <li><strong>모표준편차 (\(\sigma\)):</strong> 분산의 양의 제곱근.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Slide 9: IQR과 상자 그림 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h3 class="text-3xl font-semibold text-purple-700 mb-4">사분위수범위(IQR)와 상자 그림</h3>
+                <p class="text-lg text-gray-700 mb-4"><strong>사분위수범위(Interquartile Range, IQR)</strong>는 자료의 중앙 50%가 분포하는 범위로, 극단값(이상점)의 영향을 덜 받는 견고한 산포 측도입니다.</p>
+                <div class="formula mb-6">
+                     <p>\(IQR = Q_3 - Q_1\)</p>
+                </div>
+                <p class="text-lg text-gray-700 mb-4"><strong>상자 그림(Box Plot)</strong>은 다섯 숫자 요약(최소값, Q1, 중앙값, Q3, 최대값)을 사용하여 자료의 분포를 시각화합니다.</p>
+                 <div class="text-center mt-4 p-4 bg-purple-50 rounded-lg">
+                    <svg width="100%" height="150" viewBox="0 0 500 150">
+                        <line x1="50" y1="75" x2="450" y2="75" stroke="#a1a1aa" />
+                        <!-- Ticks -->
+                        <line x1="50" y1="70" x2="50" y2="80" stroke="#a1a1aa" /><text x="50" y="95" text-anchor="middle">최소값</text>
+                        <line x1="450" y1="70" x2="450" y2="80" stroke="#a1a1aa" /><text x="450" y="95" text-anchor="middle">최대값</text>
+                        <!-- Box -->
+                        <rect x="150" y="50" width="200" height="50" fill="#c084fc" stroke="#8b5cf6" stroke-width="2" fill-opacity="0.3"></rect>
+                        <text x="150" y="40" text-anchor="middle">Q1</text>
+                        <text x="350" y="40" text-anchor="middle">Q3</text>
+                        <!-- Median Line -->
+                        <line x1="250" y1="50" x2="250" y2="100" stroke="#8b5cf6" stroke-width="2"></line>
+                        <text x="250" y="40" text-anchor="middle">중앙값(Q2)</text>
+                        <!-- Whiskers -->
+                        <line x1="50" y1="75" x2="150" y2="75" stroke="#8b5cf6" stroke-width="2"></line>
+                        <line x1="350" y1="75" x2="450" y2="75" stroke="#8b5cf6" stroke-width="2"></line>
+                        <!-- IQR Arrow -->
+                        <path d="M 150 115 L 350 115" stroke="#ef4444" stroke-width="1.5" marker-start="url(#arrow-start)" marker-end="url(#arrow-end)"></path>
+                        <text x="250" y="130" text-anchor="middle" fill="#ef4444">IQR = Q3 - Q1</text>
+                        <defs>
+                            <marker id="arrow-start" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto"><polygon points="10 0, 10 7, 0 3.5" fill="#ef4444" /></marker>
+                            <marker id="arrow-end" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#ef4444" /></marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: 모분산 & 모표준편차 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h3 class="text-3xl font-semibold text-purple-700 mb-4">모분산과 모표준편차 공식</h3>
+                <div class="formula mb-6">
+                    <p class="mb-4"><strong>모분산: </strong> \( \sigma^2 = \frac{1}{N} \sum_{i=1}^{N} (c_i - \mu)^2 \)</p>
+                    <p><strong>모표준편차: </strong> \( \sigma = \sqrt{\sigma^2} \)</p>
+                </div>
+                 <div class="p-4 bg-purple-50 rounded-lg">
+                    <p class="text-lg mb-2"><strong>예제 2.3: 모표준편차 계산</strong></p>
+                    <p class="text-gray-700 mb-3">주어진 확률분포에서 평균(\(\mu=1.4\))을 구한 뒤, 각 값의 편차 제곱에 확률을 곱해 더하여 분산을 구합니다.</p>
+                    <p class="text-lg font-mono">\( \sigma^2 = (0-1.4)^2(0.1) + (1-1.4)^2(0.5) + \dots = 0.64 \)</p>
+                    <p class="text-lg font-mono">\( \sigma = \sqrt{0.64} = 0.8 \)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: 결합분포와 상관계수 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                 <h2 class="text-4xl font-bold text-red-700 mb-6">결합분포와 상관관계</h2>
+                 <p class="text-xl text-gray-700 mb-4">두 개 이상의 특성값 사이의 연관성을 나타냅니다.</p>
+                 <ul class="list-disc list-inside text-lg space-y-3">
+                    <li><strong>공분산 (\(\sigma_{12}\)):</strong> 두 변수가 함께 변하는 정도. 부호가 중요.</li>
+                    <li><strong>상관계수 (\(\rho\)):</strong> 공분산을 표준화한 값. 두 변수 간 직선 관계의 강도를 측정.</li>
+                </ul>
+                <div class="formula mt-6">
+                    <p>\( \rho = \frac{\sigma_{12}}{\sigma_1 \sigma_2} \)</p>
+                    <p class="text-base mt-2">(\(-1 \le \rho \le 1\))</p>
+                    <p class="text-base mt-2">\(\rho > 0\): 양의 상관관계 (비례)</p>
+                    <p class="text-base mt-2">\(\rho < 0\): 음의 상관관계 (반비례)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: 자료의 도표화 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h2 class="text-4xl font-bold text-orange-700 mb-6">2.3 자료의 도표화</h2>
+                <p class="text-xl text-gray-700 mb-4">자료를 그래프나 도표로 표현하여 분포 상태를 시각적으로 빠르게 전달하는 방법입니다.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="p-4 bg-orange-50 rounded-lg text-center">
+                        <h3 class="font-semibold text-lg">질적 자료</h3>
+                        <p>막대그래프, 원그래프, 파레토도표</p>
+                         <svg width="150" height="150" viewBox="0 0 100 100" id="pie-chart-svg"></svg>
+                    </div>
+                    <div class="p-4 bg-orange-50 rounded-lg text-center">
+                        <h3 class="font-semibold text-lg">양적 자료</h3>
+                        <p>히스토그램, 줄기-잎 그림, 산점도, 꺾은선 그래프</p>
+                         <svg width="200" height="150" viewBox="0 0 100 80">
+                            <rect x="5" y="60" width="15" height="15" fill="#f97316" fill-opacity="0.7" rx="1"></rect>
+                            <rect x="22" y="40" width="15" height="35" fill="#f97316" fill-opacity="0.7" rx="1"></rect>
+                            <rect x="39" y="20" width="15" height="55" fill="#f97316" fill-opacity="0.7" rx="1"></rect>
+                            <rect x="56" y="50" width="15" height="25" fill="#f97316" fill-opacity="0.7" rx="1"></rect>
+                            <rect x="73" y="65" width="15" height="10" fill="#f97316" fill-opacity="0.7" rx="1"></rect>
+                            <line x1="0" y1="75" x2="100" y2="75" stroke="#4b5563"></line>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: 산점도 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h3 class="text-3xl font-semibold text-orange-700 mb-4">산점도 (Scatter Plot)</h3>
+                <p class="text-xl text-gray-700 mb-6">두 양적 변수(특성) 사이의 관계를 파악하기 위해 좌표평면 위에 점으로 나타낸 그래프입니다.</p>
+                <div class="text-center p-4 bg-orange-50 rounded-lg">
+                    <p class="text-lg mb-2"><strong>예시: 키와 몸무게의 산점도</strong></p>
+                    <div class="flex justify-center items-center h-80 w-full">
+                       <svg id="scatter-plot" width="100%" height="100%" viewBox="0 0 500 300"></svg>
+                    </div>
+                    <p class="mt-2 text-gray-600">키가 클수록 몸무게도 무거워지는 경향(양의 상관관계)을 시각적으로 확인할 수 있습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 14: 표본의 대푯값 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h2 class="text-4xl font-bold text-teal-700 mb-6">2.4 표본의 대푯값</h2>
+                <p class="text-xl text-gray-700 mb-4">모집단에서 추출한 일부 자료(표본)의 특성을 요약하는 값입니다.</p>
+                <ul class="list-disc list-inside text-lg space-y-3">
+                    <li><strong>모수 (Parameter):</strong> 모평균, 모분산 등 모집단의 대푯값.</li>
+                    <li><strong>통계량 (Statistic):</strong> 표본평균, 표본분산 등 표본의 대푯값. 모수를 추정하는 데 사용됩니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 15: 표본분산 -->
+        <div class="slide flex-col items-center justify-center p-4">
+            <div class="slide-content">
+                <h3 class="text-3xl font-semibold text-teal-700 mb-4">표본평균과 표본분산</h3>
+                <div class="formula mb-6">
+                    <p class="mb-4"><strong>표본평균: </strong> \( \bar{x} = \frac{1}{n} \sum_{i=1}^{n} x_i \)</p>
+                    <p><strong>표본분산: </strong> \( s^2 = \frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2 \)</p>
+                </div>
+                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                    <p class="font-bold text-red-800">중요!</p>
+                    <p class="text-red-700">표본분산을 계산할 때는 전체 개수(n)가 아닌 'n-1'로 나눕니다. 이는 모분산을 더 잘 추정하기 위함입니다.</p>
+                </div>
+                 <div class="p-4 bg-teal-50 rounded-lg mt-6">
+                    <p class="text-lg mb-2"><strong>표본상관계수(r):</strong> 표본 자료를 이용해 계산한 상관계수입니다.</p>
+                    <p class="text-lg font-mono">\( r = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum (x_i - \bar{x})^2 \sum (y_i - \bar{y})^2}} \)</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 네비게이션 버튼 -->
+    <div class="fixed bottom-5 left-5">
+        <button id="prevBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            이전
+        </button>
+    </div>
+    <div class="fixed bottom-5 right-5">
+        <button id="nextBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            다음
+        </button>
+    </div>
+    <div id="slide-counter" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-sm text-gray-700 text-sm font-medium py-2 px-4 rounded-full shadow-md">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+
+            function showSlide(n) {
+                slides.forEach(slide => slide.classList.remove('active'));
+                slides[n].classList.add('active');
+                prevBtn.style.display = n === 0 ? 'none' : 'block';
+                nextBtn.style.display = n === slides.length - 1 ? 'none' : 'block';
+                slideCounter.textContent = `${n + 1} / ${slides.length}`;
+            }
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            function drawPieChart() {
+                const svg = document.getElementById('pie-chart-svg');
+                if (svg.children.length > 0) return;
+                const data = [
+                    { value: 0.40, color: "#ef4444" },
+                    { value: 0.30, color: "#3b82f6" },
+                    { value: 0.20, color: "#facc15" },
+                    { value: 0.10, color: "#22d3ee" }
+                ];
+                const svgNS = "http://www.w3.org/2000/svg";
+                const cx = 50, cy = 50, r = 40;
+                let startAngle = -90;
+
+                data.forEach(slice => {
+                    const sliceAngle = slice.value * 360;
+                    const endAngle = startAngle + sliceAngle;
+                    const x1 = cx + r * Math.cos(Math.PI * startAngle / 180);
+                    const y1 = cy + r * Math.sin(Math.PI * startAngle / 180);
+                    const x2 = cx + r * Math.cos(Math.PI * endAngle / 180);
+                    const y2 = cy + r * Math.sin(Math.PI * endAngle / 180);
+                    const largeArcFlag = sliceAngle > 180 ? 1 : 0;
+                    const d = `M ${cx},${cy} L ${x1},${y1} A ${r},${r} 0 ${largeArcFlag},1 ${x2},${y2} Z`;
+                    const path = document.createElementNS(svgNS, 'path');
+                    path.setAttribute('d', d);
+                    path.setAttribute('fill', slice.color);
+                    svg.appendChild(path);
+                    startAngle = endAngle;
+                });
+            }
+
+            function drawScatterPlot() {
+                const svg = document.getElementById('scatter-plot');
+                if (svg.children.length > 0) return; // Prevent redrawing
+                
+                const data = [
+                    { h: 183, w: 82 }, { h: 168, w: 52 }, { h: 160, w: 48 }, { h: 160, w: 50 },
+                    { h: 180, w: 79 }, { h: 183, w: 73 }, { h: 170, w: 60 }, { h: 170, w: 66 },
+                    { h: 185, w: 74 }, { h: 165, w: 57 }, { h: 170, w: 54 }, { h: 152, w: 50 },
+                    { h: 173, w: 60 }, { h: 163, w: 63 }, { h: 163, w: 57 }, { h: 178, w: 77 },
+                    { h: 163, w: 50 }, { h: 168, w: 57 }, { h: 170, w: 54 }, { h: 145, w: 37 }
+                ];
+
+                const svgNS = "http://www.w3.org/2000/svg";
+                const padding = 40;
+                const width = 500;
+                const height = 300;
+
+                const hMin = 140, hMax = 190;
+                const wMin = 30, wMax = 90;
+
+                const xScale = (h) => ((h - hMin) / (hMax - hMin)) * (width - 2 * padding) + padding;
+                const yScale = (w) => height - (((w - wMin) / (wMax - wMin)) * (height - 2 * padding) + padding);
+
+                // Axes
+                const xAxis = document.createElementNS(svgNS, 'line');
+                xAxis.setAttribute('x1', padding); xAxis.setAttribute('y1', height - padding);
+                xAxis.setAttribute('x2', width - padding); xAxis.setAttribute('y2', height - padding);
+                xAxis.setAttribute('stroke', '#9ca3af'); svg.appendChild(xAxis);
+
+                const yAxis = document.createElementNS(svgNS, 'line');
+                yAxis.setAttribute('x1', padding); yAxis.setAttribute('y1', height - padding);
+                yAxis.setAttribute('x2', padding); yAxis.setAttribute('y2', padding);
+                yAxis.setAttribute('stroke', '#9ca3af'); svg.appendChild(yAxis);
+
+                // Labels and Ticks
+                for (let i = hMin; i <= hMax; i += 10) {
+                    const x = xScale(i);
+                    const tick = document.createElementNS(svgNS, 'line');
+                    tick.setAttribute('x1', x); tick.setAttribute('y1', height - padding);
+                    tick.setAttribute('x2', x); tick.setAttribute('y2', height - padding + 5);
+                    tick.setAttribute('stroke', '#9ca3af'); svg.appendChild(tick);
+                    const label = document.createElementNS(svgNS, 'text');
+                    label.setAttribute('x', x); label.setAttribute('y', height - padding + 20);
+                    label.textContent = i; label.setAttribute('text-anchor', 'middle');
+                    svg.appendChild(label);
+                }
+                 for (let i = wMin; i <= wMax; i += 10) {
+                    const y = yScale(i);
+                    const tick = document.createElementNS(svgNS, 'line');
+                    tick.setAttribute('x1', padding); tick.setAttribute('y1', y);
+                    tick.setAttribute('x2', padding - 5); tick.setAttribute('y2', y);
+                    tick.setAttribute('stroke', '#9ca3af'); svg.appendChild(tick);
+                    const label = document.createElementNS(svgNS, 'text');
+                    label.setAttribute('x', padding - 10); label.setAttribute('y', y + 4);
+                    label.textContent = i; label.setAttribute('text-anchor', 'end');
+                    svg.appendChild(label);
+                }
+                const xLabel = document.createElementNS(svgNS, 'text');
+                xLabel.setAttribute('x', width/2); xLabel.setAttribute('y', height - 5);
+                xLabel.textContent = "키 (cm)"; xLabel.setAttribute('text-anchor', 'middle');
+                svg.appendChild(xLabel);
+                
+                const yLabel = document.createElementNS(svgNS, 'text');
+                yLabel.setAttribute('transform', `rotate(-90)`); yLabel.setAttribute('x', -height/2);
+                yLabel.setAttribute('y', 15); yLabel.textContent = "몸무게 (kg)";
+                yLabel.setAttribute('text-anchor', 'middle'); svg.appendChild(yLabel);
+
+
+                // Points
+                data.forEach(d => {
+                    const point = document.createElementNS(svgNS, 'circle');
+                    point.setAttribute('cx', xScale(d.h));
+                    point.setAttribute('cy', yScale(d.w));
+                    point.setAttribute('r', '4');
+                    point.setAttribute('fill', '#f97316');
+                    point.setAttribute('opacity', '0.8');
+                    svg.appendChild(point);
+                });
+            }
+
+            // 초기 슬라이드 표시 및 그래프 그리기
+            showSlide(currentSlide);
+            drawPieChart();
+            drawScatterPlot();
+        });
+    </script>
+</body>
+</html>
+
