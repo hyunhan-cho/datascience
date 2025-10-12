@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>지식: 인간과 AI 프레젠테이션 (상세 최종본)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            overscroll-behavior: none;
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .slide {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none; /* Active가 아닐 때 터치 이벤트 방지 */
+        }
+        .slide.active {
+            opacity: 1;
+            z-index: 10;
+            pointer-events: auto;
+        }
+        .slide-content-wrapper {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto; /* 내용이 길면 스크롤 */
+            padding: 2.5rem 2rem; /* 위아래, 좌우 패딩 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-200">
+
+    <div id="presentation-container" class="w-full h-full bg-white text-gray-800 flex flex-col">
+        
+        <main id="slides-wrapper" class="flex-grow relative overflow-hidden">
+            
+            <!-- Slide 1: 표지 -->
+            <div class="slide active">
+                <div class="slide-content-wrapper text-center">
+                    <div class="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-6 text-blue-500"></div>
+                    <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-gray-800">지식: 인간과 AI</h1>
+                    <p class="mt-4 text-lg sm:text-xl text-gray-500">인식론의 여정과 AI 시대의 질문</p>
+                </div>
+            </div>
+
+            <!-- Slide 2: 질문의 시작 -->
+            <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">무엇이 지식인가?</h2>
+                    <div class="space-y-4">
+                        <div class="bg-gray-100 p-5 rounded-lg border-l-4 border-blue-400">
+                            <h3 class="font-bold text-lg text-blue-600">인간의 지식</h3>
+                            <p class="text-gray-600 mt-1">오랜 시간 동안 '무엇이 참된 지식인지'를 탐구해 온 철학적, 사회적 과정의 산물</p>
+                        </div>
+                        <div class="bg-gray-100 p-5 rounded-lg border-l-4 border-teal-400">
+                            <h3 class="font-bold text-lg text-teal-600">AI의 '지식'</h3>
+                            <p class="text-gray-600 mt-1">방대한 데이터에서 패턴을 학습하여 인간의 지식과 유사한 형태의 '결과'를 생성</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: 고대~중세 -->
+            <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식관의 여정 ①</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">고대와 중세: 권위로부터의 지식</p>
+                    <p class="mb-4">신앙이나 교회의 권위가 지식의 원천으로 여겨졌습니다. 신의 뜻과 권위자의 말을 의심 없이 받아들이는 것이 일반적이었습니다.</p>
+                    <div class="bg-gray-100 p-5 rounded-lg">
+                        <p class="font-bold text-gray-700">플라톤 (Plato)의 예외</p>
+                        <p class="mt-2 text-gray-600">최초로 지식을 <span class="font-bold text-blue-600">'정당화된 참된 믿음'</span>으로 정의하며, 맹목적 믿음이 아닌 이성적 근거의 중요성을 강조했습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: 근대 -->
+            <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식관의 여정 ②</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">근대: 이성과 경험의 시대</p>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <p class="font-bold text-blue-700">합리론 (데카르트)</p>
+                            <p class="text-sm text-gray-600 mt-1">인간의 이성적 사고와 논리적 추론을 통해 진리에 도달할 수 있다고 봄.</p>
+                        </div>
+                        <div class="p-4 bg-teal-50 rounded-lg">
+                             <p class="font-bold text-teal-700">경험론 (베이컨)</p>
+                            <p class="text-sm text-gray-600 mt-1">오직 관찰과 실험 같은 경험적 증거만이 참된 지식의 원천이라고 봄.</p>
+                        </div>
+                    </div>
+                    <p class="mt-6 text-center font-semibold text-gray-700">→ 이 두 흐름은 '과학 혁명'을 이끌며, 지식은 <span class="font-bold">검증 가능</span>해야 한다는 생각을 확산시켰습니다.</p>
+                </div>
+            </div>
+
+             <!-- Slide 5: 실증주의 -->
+            <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식관의 여정 ③</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">실증주의: 과학적 지식의 확립</p>
+                    <p class="mb-4">'실제로 증명되고 검증된 것'만이 진정한 지식이라는 입장. 관찰 불가능한 형이상학적 논의는 배제되었습니다.</p>
+                    <div class="bg-gray-100 p-5 rounded-lg">
+                        <p class="font-bold text-gray-700">오귀스트 콩트 (A. Comte)</p>
+                        <p class="mt-2 text-gray-600">인간 지식이 '신학적 → 형이상학적 → <span class="font-bold text-blue-600">실증적 단계</span>'로 발전한다고 주장.</p>
+                    </div>
+                     <div class="bg-gray-100 p-5 rounded-lg mt-4">
+                        <p class="font-bold text-gray-700">논리 실증주의 (A. J. Ayer)</p>
+                        <p class="mt-2 text-gray-600">경험적으로 검증 불가능한 문장은 '의미 없는' 주장으로 간주.</p>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Slide 6: 쿤의 패러다임 -->
+            <div class="slide">
+                <div class="slide-content-wrapper text-center">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식관의 전환 ①</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">토마스 쿤: 패러다임의 전환</p>
+                    <div class="w-20 h-20 mx-auto mb-4 text-purple-500"></div>
+                    <p class="mb-4">"과학의 발전은 점진적 축적이 아니라, 기존의 틀(패러다임)이 완전히 새로운 틀로 대체되는 <span class="font-bold text-purple-600">혁명적 과정</span>이다."</p>
+                    <p class="text-gray-600">예: 천동설 → 지동설</p>
+                    <p class="mt-6 font-semibold">지식이란 절대적 진리가 아니라, 특정 시대의 과학 공동체가 공유하는 관점에 따라 상대적일 수 있음을 시사.</p>
+                </div>
+            </div>
+
+            <!-- Slide 7: 구성주의 -->
+            <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식관의 전환 ②</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">구성주의: 지식은 만들어지는 것</p>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <p class="font-bold text-blue-700">인지 구성주의 (피아제)</p>
+                            <p class="text-sm text-gray-600 mt-1">개인이 기존의 지식과 상호작용하며 능동적으로 지식을 구성.</p>
+                        </div>
+                        <div class="p-4 bg-teal-50 rounded-lg">
+                             <p class="font-bold text-teal-700">사회 구성주의 (비고츠키)</p>
+                            <p class="text-sm text-gray-600 mt-1">지식은 타인과의 상호작용, 사회적 맥락 속에서 공동으로 구성.</p>
+                        </div>
+                    </div>
+                    <p class="mt-6 text-center font-semibold text-gray-700">→ 우리가 당연하게 여기는 현실과 진리조차 <span class="font-bold">사회적 합의의 산물</span>이라는 관점.</p>
+                </div>
+            </div>
+
+            <!-- Slide 8: 지식과 권력 -->
+            <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식관의 전환 ③</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">지식과 권력의 관계</p>
+                     <p class="mb-4">지식은 결코 중립적이거나 객관적이지 않으며, 그 시대의 권력 관계와 밀접하게 연관되어 있다는 비판적 시각.</p>
+                    <div class="space-y-4">
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <p class="font-bold text-red-600">미셸 푸코 (M. Foucault)</p>
+                            <p class="mt-1 text-gray-600">지식은 사회 통제를 위한 권력의 도구로 작동 (예: 정신의학).</p>
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                             <p class="font-bold text-red-600">피에르 부르디외 (P. Bourdieu)</p>
+                            <p class="mt-1 text-gray-600">'정통 지식'은 지배 계급의 문화를 반영하며 사회 구조를 재생산.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: 현대적 시각 -->
+            <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">현대적 시각</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">균형을 찾으려는 노력</p>
+                    <p class="mb-4">"모든 지식은 사회적 구성물이다" 라는 극단적 상대주의의 한계를 극복하려는 시도가 나타납니다.</p>
+                    <div class="bg-gray-100 p-5 rounded-lg">
+                        <p class="font-bold text-gray-700">비판적 실재론 (로이 바스카)</p>
+                        <p class="mt-2 text-gray-600">"현실 세계는 독립적으로 존재하지만, 우리는 사회적으로 구성된 개념의 틀을 통해서만 그 세계를 이해할 수 있다."</p>
+                        <p class="mt-4 font-semibold text-blue-600">→ 지식의 사회적/상대적 측면을 인정하면서도, 현실을 더 잘 반영하는 지식이 존재함을 설명하려는 시도.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: 기술적 접근 1 -->
+             <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식과 기술의 만남 ①</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">1990년대: 시스템화와 저장</p>
+                    <div class="text-center mb-6"><div class="w-20 h-20 mx-auto text-blue-400"></div></div>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><span class="font-bold">관점:</span> 지식은 체계화/저장/재사용 가능</li>
+                        <li><span class="font-bold">기술:</span> ERP, 인트라넷, 데이터베이스 구축</li>
+                        <li><span class="font-bold">한계:</span> 표준화된 지식의 활용성 제약, <span class="text-red-600">맥락성</span>과 <span class="text-red-600">암묵지</span>(경험)를 담지 못함</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Slide 11: 기술적 접근 2 -->
+             <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식과 기술의 만남 ②</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">2000년대: 통합과 공유</p>
+                     <div class="text-center mb-6"><div class="w-20 h-20 mx-auto text-purple-400"></div></div>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><span class="font-bold">관점:</span> 암묵지와 경험지의 중요성 인식</li>
+                        <li><span class="font-bold">기술:</span> ECM(기업 콘텐츠 관리), 커뮤니티 기반 협업 도구</li>
+                        <li><span class="font-bold">변화:</span> 정형화된 데이터뿐 아니라 비정형 데이터(이메일, 이미지 등)를 통합하고, 공동체를 통해 암묵지를 공유하려는 시도</li>
+                    </ul>
+                </div>
+            </div>
+
+             <!-- Slide 12: 기술적 접근 3 -->
+             <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">지식과 기술의 만남 ③</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">2010년대: 맥락과 순환</p>
+                     <div class="text-center mb-6">
+                        <svg class="w-20 h-20 mx-auto text-teal-400" viewBox="0 0 100 100" fill="currentColor">
+                            <!-- Facebook icon -->
+                            <rect x="10" y="20" width="25" height="25" rx="3" fill="currentColor" opacity="0.8"/>
+                            <path d="M25 27h3v-2h-3v-2c0-1 0-2 2-2h1v-3h-2c-3 0-4 2-4 4v3h-2v3h2v12h3V27z" fill="white"/>
+                            
+                            <!-- Twitter/X icon -->
+                            <circle cx="50" cy="32.5" r="12.5" fill="currentColor" opacity="0.9"/>
+                            <path d="M45 28l8 8-8 8m-6-8h12" stroke="white" stroke-width="2" fill="none"/>
+                            
+                            <!-- LinkedIn icon -->
+                            <rect x="65" y="20" width="25" height="25" rx="3" fill="currentColor" opacity="0.7"/>
+                            <rect x="70" y="30" width="2" height="8" fill="white"/>
+                            <circle cx="71" cy="27" r="1" fill="white"/>
+                            <rect x="74" y="30" width="2" height="8" fill="white"/>
+                            <rect x="77" y="32" width="2" height="6" fill="white"/>
+                            
+                            <!-- Network connections -->
+                            <line x1="22" y1="50" x2="48" y2="50" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                            <line x1="52" y1="50" x2="78" y2="50" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                            <circle cx="22" cy="50" r="2" fill="currentColor"/>
+                            <circle cx="50" cy="50" r="2" fill="currentColor"/>
+                            <circle cx="78" cy="50" r="2" fill="currentColor"/>
+                            
+                            <!-- Knowledge sharing arrows -->
+                            <path d="M30 60 Q50 70 70 60" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+                            <path d="M70 65 Q50 75 30 65" stroke="currentColor" stroke-width="2" fill="none" opacity="0.6"/>
+                            <polygon points="68,62 72,60 68,58" fill="currentColor" opacity="0.6"/>
+                            <polygon points="32,67 28,65 32,63" fill="currentColor" opacity="0.6"/>
+                        </svg>
+                    </div>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><span class="font-bold">관점:</span> 지식은 맥락과 행위 속에서 생산되고 순환</li>
+                        <li><span class="font-bold">기술:</span> 소셜 미디어 플랫폼을 협업 도구로 활용</li>
+                        <li><span class="font-bold">변화:</span> 지식의 맥락적 생산, 공유, 순환을 통해 유기적인 지식 생태계를 만들고자 함</li>
+                    </ul>
+                </div>
+            </div>
+
+             <!-- Slide 13: LLM의 등장 -->
+             <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2">그리고, LLM의 등장</h2>
+                    <p class="text-lg font-semibold text-gray-500 mb-6">2020년대: 거대한 회귀인가, 진보인가?</p>
+                     <div class="text-center mb-6"><div class="w-20 h-20 mx-auto text-gray-500"></div></div>
+                    <p class="mb-4">대규모 언어 모델(LLM)은 90년대처럼 다시 <span class="font-bold">지식의 체계화와 표준화</span> 가능성을 보여주는 듯합니다.</p>
+                    <p class="font-semibold text-red-600">하지만, 지난 20년간의 고민이었던 '맥락성', '암묵지', '경험지'의 문제는 여전히 해결되지 않았습니다.</p>
+                </div>
+            </div>
+            
+             <!-- Slide 14: LLM의 과제 -->
+             <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-6">LLM의 현재와 기술적 과제</h2>
+                     <p class="mb-4">LLM은 '누가, 어떤 목적으로' 지식을 생성하고 활용하는지에 대한 <span class="font-bold">주체성</span>이 없습니다. 이는 무맥락적인 정보 재생산을 강화할 수 있습니다.</p>
+                     <div class="bg-gray-100 p-5 rounded-lg">
+                        <p class="font-bold text-gray-700">기술적 해결 노력</p>
+                        <p class="mt-2 text-gray-600"><span class="font-bold text-blue-600">RAG (검색 증강 생성):</span> 외부 최신 정보를 LLM에 연결하여 맥락을 보강.</p>
+                        <p class="mt-2 text-gray-600"><span class="font-bold text-blue-600">대용량 메모리:</span> 긴 대화의 맥락을 기억하여 일관성을 유지.</p>
+                        <p class="mt-4 text-sm text-red-600 font-semibold">*하지만 여전히 비언어적, 상황 의존적인 암묵지와 경험지는 반영하기 어렵습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 15: 결론 1 -->
+             <div class="slide">
+                <div class="slide-content-wrapper">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-center">결론: 본질적 차이</h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="bg-blue-50 border-t-4 border-blue-400 p-4 rounded-lg text-center">
+                            <h3 class="font-bold text-lg text-blue-700">인간의 지식</h3>
+                            <p class="text-gray-600 mt-1">맥락 의존적, 사회적 합의, 경험적, 주체적</p>
+                        </div>
+                        <div class="bg-teal-50 border-t-4 border-teal-400 p-4 rounded-lg text-center">
+                             <h3 class="font-bold text-lg text-teal-700">AI의 '지식'</h3>
+                             <p class="text-gray-600 mt-1">통계적 확률, 비맥락적, 재생산적, 비주체적</p>
+                        </div>
+                     </div>
+                </div>
+            </div>
+
+            <!-- Slide 16: 결론 2 -->
+             <div class="slide">
+                <div class="slide-content-wrapper text-center">
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-6">우리가 나아갈 길</h2>
+                     <div class="w-20 h-20 mx-auto mb-6 text-green-500"></div>
+                    <p class="text-xl font-semibold leading-relaxed">AI가 생성하는 그럴듯한 '답변'을 맹신하는 대신,<br>그것이 어떤 한계를 가지는지 명확히 이해하고<br><span class="font-bold bg-yellow-200 px-2 py-1 rounded">주체적인 지식 관리의 '도구'</span>로<br>현명하게 활용해야 합니다.</p>
+                </div>
+            </div>
+            
+        </main>
+        
+        <footer class="flex-shrink-0 bg-white/80 backdrop-blur-sm p-4 border-t border-gray-200">
+            <div class="w-full h-1.5 bg-gray-200 rounded-full mb-3">
+                <div id="progress-bar" class="bg-blue-500 h-1.5 rounded-full transition-all duration-300 ease-linear"></div>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="prev-btn" class="nav-button rounded-lg p-3 text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <div id="slide-counter" class="text-sm font-medium text-gray-600">1 / 16</div>
+                <button id="next-btn" class="nav-button rounded-lg p-3 text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = [...document.querySelectorAll('.slide')];
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const progressBar = document.getElementById('progress-bar');
+            const slideCounter = document.getElementById('slide-counter');
+            const slidesWrapper = document.getElementById('slides-wrapper');
+            let currentSlide = 0;
+            let touchStartX = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.remove('active');
+                });
+                slides[index].classList.add('active');
+                
+                const progressPercentage = (index / (totalSlides - 1)) * 100;
+                progressBar.style.width = `${progressPercentage}%`;
+                slideCounter.textContent = `${index + 1} / ${totalSlides}`;
+                prevBtn.disabled = index === 0;
+                nextBtn.disabled = index === totalSlides - 1;
+                
+                // 스크롤이 필요한 슬라이드의 경우, 맨 위로 스크롤 초기화
+                const currentContentWrapper = slides[index].querySelector('.slide-content-wrapper');
+                if(currentContentWrapper) currentContentWrapper.scrollTop = 0;
+            }
+            
+            function navigate(direction) {
+                const newIndex = currentSlide + direction;
+                if (newIndex >= 0 && newIndex < totalSlides) {
+                    currentSlide = newIndex;
+                    showSlide(currentSlide);
+                }
+            }
+
+            nextBtn.addEventListener('click', () => navigate(1));
+            prevBtn.addEventListener('click', () => navigate(-1));
+            
+            document.addEventListener('keydown', (e) => {
+                if(e.key === 'ArrowRight' || e.key === ' ') navigate(1);
+                else if (e.key === 'ArrowLeft') navigate(-1);
+            });
+
+            slidesWrapper.addEventListener('touchstart', e => {
+                touchStartX = e.touches[0].clientX;
+            }, { passive: true });
+
+            slidesWrapper.addEventListener('touchend', e => {
+                const touchEndX = e.changedTouches[0].clientX;
+                if (touchStartX - touchEndX > 50) { 
+                    navigate(1);
+                } else if (touchEndX - touchStartX > 50) {
+                    navigate(-1);
+                }
+            }, { passive: true });
+
+            showSlide(currentSlide);
+        });
+    </script>
+</body>
+</html>
