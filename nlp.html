@@ -12,6 +12,8 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             line-height: 1.6;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         .header {
             text-align: center;
@@ -43,7 +45,7 @@
             transform: translateY(-2px);
         }
         .main-content { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
-        .study-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px; padding: 20px 0; }
+        .study-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; padding: 20px 0; max-width: 100%; }
         .study-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease; }
         .study-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
         .study-link { display: block; text-decoration: none; color: inherit; }
@@ -59,6 +61,13 @@
         @media (max-width: 768px) {
             .header h1 { font-size: 2.4em; }
             .study-grid { grid-template-columns: 1fr; }
+            .main-content { padding: 0 15px 40px; }
+        }
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .study-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (min-width: 1200px) {
+            .study-grid { grid-template-columns: repeat(2, 1fr); max-width: 1000px; margin: 0 auto; }
         }
         /* Embed section */
         .embed { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); overflow: hidden; }
