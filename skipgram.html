@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 3: Word2Vec & Skip-gram</title>
+    <!-- MathJax Configuration for LaTeX Rendering -->
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Lato:wght@300;400;700&display=swap');
+
+        :root {
+            --bg-color: #1a1a1a;
+            --slide-bg: #222222;
+            --primary-text: #f0f0f0;
+            --secondary-text: #c0c0c0;
+            --header-text: #ffffff;
+            --accent-color: #00bcd4; /* Professional Cyan */
+            --accent-hover: #0097a7;
+            --code-bg: #2d2d2d;
+            --border-color: #444;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Noto Sans KR', 'Lato', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            padding: 5vh 8vw;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(145deg, var(--slide-bg) 0%, #2c2c2c 100%);
+            transition: opacity 0.7s ease-in-out, transform 0.7s ease-in-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+            z-index: 10;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide.active > * {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .slide-title {
+            font-size: clamp(2.5em, 5vw, 3.8em);
+            font-weight: 700;
+            color: var(--header-text);
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        .slide-subtitle {
+            font-size: clamp(1.2em, 2vw, 1.8em);
+            font-weight: 300;
+            color: var(--secondary-text);
+            margin-bottom: 40px;
+        }
+
+        .slide-content {
+            display: flex;
+            width: 100%;
+            max-width: 1500px;
+            justify-content: space-around;
+            align-items: center;
+            gap: 50px;
+            text-align: left;
+            margin-top: 30px;
+        }
+        
+        .content-box {
+            flex: 1.1;
+            padding: 30px;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border-left: 5px solid var(--accent-color);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
+        
+        .image-container {
+            flex: 0.9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .image-container svg {
+            width: 100%;
+            max-width: 450px;
+            height: auto;
+            border-radius: 10px;
+            background-color: #fdfdfd;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        h1 { font-size: 3em; color: var(--header-text); margin-bottom: 15px; }
+        h2 { font-size: 2.2em; color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; margin-top: 0; font-weight: 500; }
+        p { font-size: 1.2em; line-height: 1.8; color: var(--primary-text); }
+        ul { list-style-type: none; padding-left: 0; margin-top: 20px; }
+        li { font-size: 1.2em; margin-bottom: 18px; position: relative; padding-left: 30px; }
+        li::before {
+            content: '•';
+            color: var(--accent-color);
+            position: absolute;
+            left: 0;
+            font-size: 1.5em;
+            line-height: 1;
+            font-weight: bold;
+        }
+
+        .formula {
+            background-color: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 1.4em;
+            margin: 25px 0;
+            color: #f0f0f0;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: auto;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.1em;
+            color: var(--secondary-text);
+            z-index: 20;
+            background-color: rgba(0,0,0,0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 188, 212, 0.2);
+            color: white;
+            border: 1px solid rgba(0, 188, 212, 0.5);
+            width: 50px;
+            height: 50px;
+            font-size: 2em;
+            cursor: pointer;
+            z-index: 1000;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .nav-button:hover { 
+            background-color: var(--accent-hover);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 0 15px var(--accent-hover);
+        }
+        #prevBtn { left: 30px; }
+        #nextBtn { right: 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <h1 class="slide-title">Word2Vec과 Skip-gram 모델</h1>
+            <p class="slide-subtitle">언어와 AI 제 3강: 단어의 벡터화와 의미 표현</p>
+        </div>
+
+        <!-- Slide 2: Distributional Semantics -->
+        <div class="slide">
+            <h1>1. 분포 의미론 (Distributional Semantics)</h1>
+            <p class="slide-subtitle">단어의 의미는 그 단어의 주변 단어들(문맥)에 의해 결정된다는 가설</p>
+            <div class="slide-content" style="max-width: 1200px; text-align: center; flex-direction: column;">
+                <p style="font-size: 1.5em; font-style: italic;">"You shall know a word by the company it keeps" - John Rupert Firth, 1957</p>
+                <p style="margin-top: 40px;">'tezgüino'라는 단어의 의미를 모를 때, 문맥을 통해 추론할 수 있습니다:</p>
+                <ul style="text-align:left; margin-top: 20px; font-size: 1.2em; list-style-type: square; padding-left: 40px;">
+                    <li>A bottle of <b>tezgüino</b> is on the table.</li>
+                    <li>Everybody likes <b>tezgüino</b>.</li>
+                    <li>We make <b>tezgüino</b> out of corn.</li>
+                </ul>
+                <p style="margin-top: 20px;">이 문맥들을 통해 'tezgüino'는 'wine'이나 'beer'와 유사한 속성을 가질 것이라 유추 가능합니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Vector Calculus - Addition -->
+        <div class="slide">
+            <h1>2. 벡터 연산의 시각화</h1>
+            <p class="slide-subtitle">단어 벡터 간의 관계를 이해하기 위한 기초 수학</p>
+            <div class="slide-content">
+                <div class="content-box">
+                    <h2>벡터 덧셈과 뺄셈</h2>
+                    <p>벡터의 덧셈은 각 차원의 성분을 더하는 것으로, 기하학적으로는 한 벡터의 끝에 다른 벡터의 시작을 이어 붙이는 것과 같습니다.</p>
+                    <div class="formula">$$ \mathbf{v} + \mathbf{w} = 
+                        \begin{bmatrix} v_1 \\ v_2 \end{bmatrix} + 
+                        \begin{bmatrix} w_1 \\ w_2 \end{bmatrix} = 
+                        \begin{bmatrix} v_1 + w_1 \\ v_2 + w_2 \end{bmatrix} $$
+                    </div>
+                     <p>단어 임베딩에서 이는 의미의 조합을 나타낼 수 있습니다. (e.g., $\vec{king} - \vec{man} + \vec{woman} \approx \vec{queen}$)</p>
+                </div>
+                <div class="image-container">
+                    <svg viewBox="-50 -50 400 350" xmlns="http://www.w3.org/2000/svg" font-family="Lato, sans-serif" font-size="16">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+                            </marker>
+                        </defs>
+                        <!-- Grid -->
+                        <path d="M 0 0 H 300 M 0 50 H 300 M 0 100 H 300 M 0 150 H 300 M 0 200 H 300 M 0 250 H 300" stroke="#e0e0e0" stroke-width="0.5"/>
+                        <path d="M 0 0 V 250 M 50 0 V 250 M 100 0 V 250 M 150 0 V 250 M 200 0 V 250 M 250 0 V 250 M 300 0 V 250" stroke="#e0e0e0" stroke-width="0.5"/>
+                        <!-- Axes -->
+                        <line x1="0" y1="250" x2="320" y2="250" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+                        <line x1="0" y1="250" x2="0" y2="-20" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)" />
+                        <text x="325" y="255" fill="#333">x</text>
+                        <text x="5" y="-10" fill="#333">y</text>
+                        <!-- Vector v -->
+                        <line x1="0" y1="250" x2="200" y2="150" stroke="#d32f2f" stroke-width="3" marker-end="url(#arrowhead)" />
+                        <text x="100" y="120" fill="#d32f2f" font-size="18" font-weight="bold">v = [4, 2]</text>
+                        <!-- Vector w -->
+                        <line x1="0" y1="250" x2="50" y2="50" stroke="#1976d2" stroke-width="3" marker-end="url(#arrowhead)" />
+                        <text x="-35" y="150" fill="#1976d2" font-size="18" font-weight="bold">w = [1, 4]</text>
+                        <!-- Parallelogram construction -->
+                        <line x1="200" y1="150" x2="250" y2="50" stroke="#1976d2" stroke-width="2" stroke-dasharray="5,5" />
+                        <line x1="50" y1="50" x2="250" y2="50" stroke="#d32f2f" stroke-width="2" stroke-dasharray="5,5" />
+                        <!-- Vector v+w -->
+                        <line x1="0" y1="250" x2="250" y2="50" stroke="#388e3c" stroke-width="4" marker-end="url(#arrowhead)" />
+                        <text x="130" y="40" fill="#388e3c" font-size="22" font-weight="bold">v + w = [5, 6]</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Vector Calculus - Dot Product & Norm -->
+        <div class="slide">
+            <h1>3. 벡터의 내적과 크기 (Dot Product & Norm)</h1>
+             <p class="slide-subtitle">벡터 간의 유사도와 개별 벡터의 강도를 측정하는 방법</p>
+            <div class="slide-content">
+                <div class="image-container">
+                   <svg viewBox="-50 -50 350 350" xmlns="http://www.w3.org/2000/svg" font-family="Lato, sans-serif" font-size="16">
+                        <defs>
+                            <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+                            </marker>
+                        </defs>
+                        <!-- Axes -->
+                        <line x1="0" y1="250" x2="270" y2="250" stroke="#333" stroke-width="2" marker-end="url(#arrowhead2)" />
+                        <line x1="0" y1="250" x2="0" y2="0" stroke="#333" stroke-width="2" marker-end="url(#arrowhead2)" />
+                         <text x="275" y="255" fill="#333">x</text>
+                        <text x="5" y="-5" fill="#333">y</text>
+                        <!-- Vector v -->
+                        <line x1="0" y1="250" x2="150" y2="50" stroke="#00bcd4" stroke-width="4" marker-end="url(#arrowhead2)" />
+                        <text x="80" y="40" fill="#00bcd4" font-size="20" font-weight="bold">v</text>
+                        <!-- Dashed lines for components -->
+                        <line x1="150" y1="50" x2="150" y2="250" stroke="#333" stroke-width="2" stroke-dasharray="5,5" />
+                        <line x1="0" y1="50" x2="150" y2="50" stroke="#333" stroke-width="2" stroke-dasharray="5,5" />
+                        <!-- Component Labels -->
+                        <text x="75" y="270" fill="#d32f2f" font-weight="bold" font-size="18"> $v_1 = 3$ </text>
+                        <text x="-45" y="150" fill="#1976d2" font-weight="bold" font-size="18"> $v_2 = 4$ </text>
+                        <!-- Norm Label -->
+                        <text x="20" y="130" fill="#333" font-size="20" font-weight="bold" transform="rotate(-53, 75, 150)">$\|\mathbf{v}\| = \sqrt{3^2 + 4^2} = 5$</text>
+                   </svg>
+                </div>
+                <div class="content-box">
+                    <h2>내적과 Norm</h2>
+                    <p><b>내적(Dot Product)</b>은 두 벡터가 얼마나 같은 방향을 향하는지를 나타내는 스칼라 값입니다.</p>
+                    <div class="formula">$$ \mathbf{v} \cdot \mathbf{w} = \sum_{i=1}^{n} v_i w_i $$</div>
+                    <p><b>Norm (크기 또는 길이)</b>은 벡터 공간에서 원점으로부터 벡터까지의 거리이며, 벡터 자체의 내적에 제곱근을 취해 계산합니다.</p>
+                    <div class="formula">$$ \|\mathbf{v}\| = \sqrt{\mathbf{v} \cdot \mathbf{v}} = \sqrt{\sum_{i=1}^{n} v_i^2} $$</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Cosine Similarity -->
+        <div class="slide">
+            <h1>4. 코사인 유사도 (Cosine Similarity)</h1>
+            <p class="slide-subtitle">단어 벡터 간의 의미적 유사도를 측정하는 핵심 지표</p>
+            <div class="slide-content">
+                <div class="content-box">
+                    <h2>방향성의 유사도</h2>
+                    <p>코사인 유사도는 두 벡터의 크기가 아닌, 두 벡터가 이루는 각도($\theta$)의 코사인 값을 이용하여 유사도를 측정합니다. 이 값은 -1과 1 사이이며, 1에 가까울수록 유사성이 높음을 의미합니다.</p>
+                    <div class="formula">$$ \text{similarity}(\mathbf{v}, \mathbf{w}) = \cos(\theta) = \frac{\mathbf{v} \cdot \mathbf{w}}{\|\mathbf{v}\| \|\mathbf{w}\|} $$</div>
+                    <ul>
+                        <li>$\cos(\theta) = 1$: 완전 동일한 방향 ($\theta = 0^\circ$)</li>
+                        <li>$\cos(\theta) = 0$: 직교 관계, 관련성 없음 ($\theta = 90^\circ$)</li>
+                        <li>$\cos(\theta) = -1$: 완전 반대 방향 ($\theta = 180^\circ$)</li>
+                    </ul>
+                </div>
+                <div class="image-container">
+                    <svg viewBox="-20 -20 340 290" xmlns="http://www.w3.org/2000/svg" font-family="Lato, sans-serif" font-size="16">
+                        <defs>
+                            <marker id="arrowhead3" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+                            </marker>
+                        </defs>
+                        <!-- Axes -->
+                        <line x1="0" y1="250" x2="320" y2="250" stroke="#333" stroke-width="2" marker-end="url(#arrowhead3)" />
+                        <line x1="0" y1="250" x2="0" y2="0" stroke="#333" stroke-width="2" marker-end="url(#arrowhead3)" />
+                        <!-- Vector v -->
+                        <line x1="0" y1="250" x2="280" y2="100" stroke="#d32f2f" stroke-width="3" marker-end="url(#arrowhead3)" />
+                        <text x="290" y="95" fill="#d32f2f" font-size="20" font-weight="bold">v</text>
+                        <!-- Vector w -->
+                        <line x1="0" y1="250" x2="200" y2="20" stroke="#1976d2" stroke-width="3" marker-end="url(#arrowhead3)" />
+                        <text x="205" y="20" fill="#1976d2" font-size="20" font-weight="bold">w</text>
+                        <!-- Angle arc -->
+                        <path d="M 80 250 A 80 80, 0, 0, 1, 142.6, 203.4" stroke="#333" stroke-width="2" fill="none" />
+                        <text x="90" y="210" fill="#333" font-size="24" font-weight="bold">θ</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 6: Word2Vec Skip-gram Model -->
+        <div class="slide">
+            <h1>5. Word2vec: Skip-gram 모델</h1>
+            <p class="slide-subtitle">중심 단어(Center Word)를 통해 주변 단어(Context Words)를 예측하는 신경망 모델</p>
+            <div class="slide-content">
+                 <div class="image-container">
+                    <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg" font-family="Lato, sans-serif">
+                        <style>
+                            .node { fill: #fff; stroke: #333; stroke-width: 2; }
+                            .layer-box { fill: rgba(0, 188, 212, 0.1); stroke: #00bcd4; stroke-width: 2; rx: 10; }
+                            .arrow { stroke: #555; stroke-width: 2; marker-end: url(#arrowhead-svg); }
+                            .label { font-size: 16px; font-weight: bold; fill: #333; text-anchor: middle; }
+                        </style>
+                        <defs>
+                            <marker id="arrowhead-svg" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#555" />
+                            </marker>
+                        </defs>
+                        <!-- Input Layer -->
+                        <g>
+                            <circle cx="100" cy="200" r="25" class="node" />
+                            <text x="100" y="260" class="label">Center Word</text>
+                            <text x="100" y="280" class="label" font-size="14">$w_t$</text>
+                        </g>
+                        <!-- Hidden Layer -->
+                        <g>
+                            <rect x="220" y="100" width="60" height="200" class="layer-box" />
+                            <text x="250" y="80" class="label">Embedding</text>
+                             <text x="250" y="320" class="label">Layer ($d$ dim)</text>
+                        </g>
+                        <!-- Output Layer -->
+                        <g>
+                            <text x="400" y="30" class="label">Context Words</text>
+                            <circle cx="400" cy="70" r="20" class="node" /><text x="450" y="75" class="label">$w_{t-2}$</text>
+                            <circle cx="400" cy="140" r="20" class="node" /><text x="450" y="145" class="label">$w_{t-1}$</text>
+                            <circle cx="400" cy="210" r="20" class="node" /><text x="450" y="215" class="label">$w_{t+1}$</text>
+                            <circle cx="400" cy="280" r="20" class="node" /><text x="450" y="285" class="label">$w_{t+2}$</text>
+                        </g>
+                        <!-- Arrows -->
+                        <line x1="125" y1="200" x2="220" y2="200" class="arrow" />
+                        <line x1="280" y1="200" x2="380" y2="70" class="arrow" />
+                        <line x1="280" y1="200" x2="380" y2="140" class="arrow" />
+                        <line x1="280" y1="200" x2="380" y2="210" class="arrow" />
+                        <line x1="280" y1="200" x2="380" y2="280" class="arrow" />
+                    </svg>
+                </div>
+                <div class="content-box">
+                    <h2>학습 과정</h2>
+                    <p>모델은 중심 단어 $w_t$가 주어졌을 때, 특정 윈도우(window) 내의 주변 단어($w_{t-2}, w_{t-1}, w_{t+1}, \dots$)가 나타날 확률을 최대화하도록 학습합니다.</p>
+                    <p>이 과정에서 신경망의 가중치 행렬이 학습되며, 이 행렬의 각 행이 바로 해당 단어의 <b>임베딩 벡터</b>가 됩니다.</p>
+                    <div class="formula">$$ J(\theta) = -\frac{1}{T} \sum_{t=1}^{T} \sum_{-c \le j \le c, j \ne 0} \log P(w_{t+j} | w_t; \theta) $$</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: NEW - Objective Function Explanation -->
+        <div class="slide">
+            <h1>6. Skip-gram 목표 함수 해설</h1>
+            <p class="slide-subtitle">수식 $J(\theta)$는 모델이 달성해야 할 최종 목표를 의미합니다.</p>
+            <div class="slide-content">
+                <div class="content-box">
+                    <h2>"전체 문맥을 맞출 평균 확률을 최대로"</h2>
+                    <p>이 수식의 목표는 말뭉치(Corpus) 전체를 훑으면서, 모든 중심 단어에 대해 실제 주변 단어가 나타날 확률을 가장 높게 만드는 것입니다.</p>
+                    <ul>
+                        <li>$J(\theta)$: 모델 파라미터 $\theta$로 계산한 전체 손실(cost). 이 값을 최소화해야 합니다.</li>
+                        <li>$-\frac{1}{T}$: 전체 단어 수 $T$로 나누어 평균 손실을 구합니다. $(-)$는 확률을 최대화하기 위함입니다.</li>
+                        <li>$\sum_{t=1}^{T}$: 말뭉치의 첫 단어부터 마지막 단어까지 하나씩 중심 단어로 설정하며 모두 더합니다.</li>
+                        <li>$\sum_{-c \le j \le c, j \ne 0}$: 중심 단어 $w_t$의 주변(window size $c$)에 있는 단어들을 모두 더합니다.</li>
+                        <li>$\log P(w_{t+j} | w_t; \theta)$: 중심 단어 $w_t$가 주어졌을 때, 주변 단어 $w_{t+j}$가 나타날 로그 확률. 이 값을 키워야 합니다.</li>
+                    </ul>
+                </div>
+                <div class="image-container">
+                     <svg viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg" font-family="monospace">
+                        <text x="250" y="30" text-anchor="middle" font-size="18" font-weight="bold">Corpus (T words)</text>
+                        <text x="35" y="85">... a</text>
+                        <rect x="70" y="60" width="70" height="50" fill="#ddd" rx="5"/>
+                        <text x="105" y="88" text-anchor="middle">quick</text>
+                        <rect x="150" y="60" width="70" height="50" fill="#00bcd4" fill-opacity="0.3" stroke="#00bcd4" stroke-width="2" rx="5"/>
+                        <text x="185" y="88" text-anchor="middle">brown</text>
+                        <rect x="230" y="60" width="70" height="50" fill="#ddd" rx="5"/>
+                        <text x="265" y="88" text-anchor="middle">fox</text>
+                        <text x="315" y="85">jumps ...</text>
+                        
+                        <!-- Window -->
+                        <rect x="65" y="55" width="240" height="60" fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="5,5" rx="10"/>
+                        <text x="185" y="45" text-anchor="middle" fill="#f44336" font-size="14">Window (c=2)</text>
+                        <text x="185" y="130" text-anchor="middle" fill="#00bcd4" font-size="16">Center word $w_t$ ('brown')</text>
+                        
+                        <!-- Summation annotation -->
+                        <text x="250" y="180" text-anchor="middle" font-size="16" font-weight="bold">Objective: Maximize $\log P(\text{quick}| \text{brown}) + \log P(\text{fox}| \text{brown})$</text>
+                        <text x="250" y="205" text-anchor="middle" font-size="16" font-weight="bold">(for this window)</text>
+                        <text x="250" y="250" text-anchor="middle" font-size="14">...then sum over all words (t=1...T)</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Skip-gram Example -->
+        <div class="slide">
+            <h1>7. Skip-gram 예시: 문장 속 학습 과정</h1>
+            <p class="slide-subtitle">"the quick brown fox jumps" 문장을 예시로 살펴보기 (window size=2)</p>
+            <div class="slide-content">
+                <div class="content-box">
+                    <h2>학습 데이터 생성</h2>
+                    <p>중심 단어가 'brown'일 때, window 크기 2 내의 주변 단어들이 짝을 이룹니다.</p>
+                    <ul>
+                        <li style="color:#4caf50;"><b>Positive Samples (정답):</b><br> (brown, the), (brown, quick), (brown, fox), (brown, jumps)</li>
+                        <li style="color:#f44336; margin-top: 20px;"><b>Negative Samples (오답):</b><br> 어휘 목록에서 무작위로 단어를 선택합니다.<br> (brown, car), (brown, apple), (brown, music)...</li>
+                    </ul>
+                    <p style="margin-top:20px;">모델은 Positive 샘플의 확률은 높이고, Negative 샘플의 확률은 낮추는 방향으로 학습됩니다.</p>
+                </div>
+                <div class="image-container">
+                    <svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="20">
+                        <style>.word-box { fill: #f0f0f0; stroke: #999; rx: 5; } .center-word { fill: #00bcd4; stroke: #00796b; stroke-width:2; } .context-word { fill: #fff; } .arrow-example { stroke: #555; stroke-width: 2; marker-end: url(#arrowhead-ex); stroke-dasharray: 4; } </style>
+                        <defs><marker id="arrowhead-ex" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#555" /></marker></defs>
+                        <!-- Sentence -->
+                        <rect x="20" y="50" width="90" height="40" class="word-box context-word" /><text x="65" y="75" text-anchor="middle">the</text>
+                        <rect x="120" y="50" width="90" height="40" class="word-box context-word" /><text x="165" y="75" text-anchor="middle">quick</text>
+                        <rect x="220" y="50" width="90" height="40" class="word-box center-word" /><text x="265" y="75" text-anchor="middle" fill="#fff">brown</text>
+                        <rect x="320" y="50" width="90" height="40" class="word-box context-word" /><text x="365" y="75" text-anchor="middle">fox</text>
+                        <rect x="420" y="50" width="90" height="40" class="word-box context-word" /><text x="465" y="75" text-anchor="middle">jumps</text>
+                        
+                        <!-- Arrows to context words -->
+                        <path d="M 265 100 C 265 120, 165 120, 165 100" fill="none" class="arrow-example"/>
+                        <path d="M 265 100 C 265 140, 65 140, 65 100" fill="none" class="arrow-example"/>
+                        <path d="M 265 100 C 265 120, 365 120, 365 100" fill="none" class="arrow-example"/>
+                        <path d="M 265 100 C 265 140, 465 140, 465 100" fill="none" class="arrow-example"/>
+
+                        <!-- Training Pairs -->
+                        <text x="300" y="180" text-anchor="middle" font-size="18" font-weight="bold">Training Pairs (Center: "brown")</text>
+                        <text x="150" y="220" text-anchor="middle" fill="#4caf50">(brown, quick)</text>
+                        <text x="450" y="220" text-anchor="middle" fill="#4caf50">(brown, fox)</text>
+                        <text x="150" y="260" text-anchor="middle" fill="#f44336">(brown, apple) [neg]</text>
+                        <text x="450" y="260" text-anchor="middle" fill="#f44336">(brown, car) [neg]</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Skip-gram Training Detail -->
+        <div class="slide">
+            <h1>8. Skip-gram 모델의 학습과 최적화</h1>
+            <p class="slide-subtitle">확률 계산과 손실 함수, 그리고 경사 하강법</p>
+            <div class="slide-content">
+                <div class="content-box">
+                    <h2>확률 모델링과 손실 함수</h2>
+                    <p>중심 단어 $w$와 주변 단어 $u$가 함께 등장할 확률은 두 단어 벡터의 내적을 시그모이드 함수에 통과시켜 계산합니다.</p>
+                    <div class="formula">$$ P(+|w, u) = \sigma(\mathbf{e}_t(w) \cdot \mathbf{e}_c(u)) = \frac{1}{1 + \exp(-\mathbf{e}_t(w) \cdot \mathbf{e}_c(u))} $$</div>
+                    <p>학습은 실제 문맥 단어(positive)와 임의의 단어(negative)들을 구별하도록 진행되며, 이 과정에서 Cross-Entropy 손실 함수를 최소화합니다.</p>
+                     <div class="formula" style="font-size: 1.1em;">$$ L_{CE} = -\log\sigma(\mathbf{e}_t(w) \cdot \mathbf{e}_c(u)) - \sum_{k=1}^{K} \log(1-\sigma(\mathbf{e}_t(w) \cdot \mathbf{e}_c(v_k))) $$</div>
+                </div>
+                 <div class="image-container">
+                    <svg viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg" font-family="Lato, sans-serif">
+                        <defs>
+                          <marker id="arrowhead4" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" fill="#333">
+                            <path d="M0,0 L8,3 L0,6 Z" />
+                          </marker>
+                        </defs>
+                        <!-- Axes -->
+                        <line x1="50" y1="300" x2="450" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrowhead4)"/>
+                        <text x="460" y="305" font-size="16" fill="#333">Parameter ($\theta$)</text>
+                        <line x1="50" y1="300" x2="50" y2="20" stroke="#333" stroke-width="2" marker-end="url(#arrowhead4)"/>
+                        <text x="30" y="20" font-size="16" fill="#333" writing-mode="vertical-rl" text-anchor="middle">Loss $J(\theta)$</text>
+                        <!-- Loss Curve -->
+                        <path d="M 100 250 Q 250 50 400 250" stroke="#00bcd4" stroke-width="3" fill="none"/>
+                        <!-- Gradient Descent Steps -->
+                        <circle cx="120" cy="208" r="8" fill="#d32f2f"/>
+                        <path d="M 120 208 L 140 170" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrowhead4)"/>
+                        <circle cx="140" cy="170" r="7" fill="#d32f2f" opacity="0.9"/>
+                        <path d="M 140 170 L 165 135" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrowhead4)"/>
+                        <circle cx="165" cy="135" r="6" fill="#d32f2f" opacity="0.8"/>
+                        <path d="M 165 135 L 195 105" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrowhead4)"/>
+                        <circle cx="195" cy="105" r="5" fill="#d32f2f" opacity="0.7"/>
+                        <path d="M 195 105 L 230 83" stroke="#d32f2f" stroke-width="2.5" marker-end="url(#arrowhead4)"/>
+                         <circle cx="230" cy="83" r="4" fill="#d32f2f" opacity="0.6"/>
+                        <!-- Minimum -->
+                        <circle cx="250" cy="79" r="8" fill="#fbc02d"/>
+                        <text x="250" y="60" font-size="16" fill="#333" text-anchor="middle">Minimum</text>
+                        <text x="100" y="280" font-size="16" fill="#333" text-anchor="middle">Start</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: NEW - Cross Entropy Explanation -->
+        <div class="slide">
+            <h1>9. 이해하기 쉬운 Cross-Entropy 손실 함수</h1>
+            <p class="slide-subtitle">모델의 예측이 정답과 얼마나 다른지(놀라운지) 측정하는 방법</p>
+            <div class="slide-content">
+                <div class="content-box">
+                    <h2>Cross-Entropy: '예측의 놀라움'</h2>
+                    <p>모델이 정답을 높은 확률로 예측하면 손실(놀라움)은 작아지고, 낮은 확률로 예측하면 손실(놀라움)은 커집니다.</p>
+                    <ul>
+                        <li><b>정답 맞힘 (높은 확신):</b><br>
+                        모델이 (brown, fox)가 정답(Positive)일 확률을 95%로 예측 $\rightarrow P(+)=0.95$<br>
+                        손실: $-\log(0.95) \approx 0.05$ (매우 낮음)
+                        </li>
+                        <li style="margin-top:20px;"><b>정답 놓침 (낮은 확신):</b><br>
+                        모델이 (brown, fox)가 정답일 확률을 5%로 예측 $\rightarrow P(+)=0.05$<br>
+                        손실: $-\log(0.05) \approx 3.0$ (매우 높음)
+                        </li>
+                    </ul>
+                     <p style="margin-top:20px;">모델의 목표는 모든 정답 샘플에 대해 이 '놀라움'의 총합, 즉 Cross-Entropy Loss를 최소화하는 것입니다.</p>
+                </div>
+                <div class="image-container">
+                    <svg viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg" font-family="Lato, sans-serif">
+                        <defs><marker id="arrowhead-ce" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" fill="#333"><path d="M0,0 L8,3 L0,6 Z" /></marker></defs>
+                        <!-- Axes -->
+                        <line x1="50" y1="300" x2="480" y2="300" stroke="#333" stroke-width="2" marker-end="url(#arrowhead-ce)"/>
+                        <text x="250" y="325" font-size="16" fill="#333" text-anchor="middle">예측 확률 P(정답)</text>
+                        <line x1="50" y1="300" x2="50" y2="20" stroke="#333" stroke-width="2" marker-end="url(#arrowhead-ce)"/>
+                        <text x="30" y="150" font-size="16" fill="#333" writing-mode="vertical-rl" text-anchor="middle">Loss (-log(P))</text>
+                        <!-- Curve -->
+                        <path d="M 450 290 C 250 280, 100 100, 70 50" stroke="#d32f2f" stroke-width="3.5" fill="none"/>
+                        <!-- Points and Labels -->
+                        <circle cx="430" cy="273" r="6" fill="#4caf50" /><text x="390" y="260" font-size="15" fill="#333">P=0.95, Loss≈0.05</text>
+                        <circle cx="80" cy="98" r="6" fill="#f44336" /><text x="90" y="85" font-size="15" fill="#333">P=0.05, Loss≈3.0</text>
+                        <!-- Axis Ticks -->
+                        <text x="450" y="315" text-anchor="middle" font-size="14" fill="#333">1.0</text>
+                        <text x="50" y="315" text-anchor="middle" font-size="14" fill="#333">0.0</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Stochastic Gradient Descent -->
+        <div class="slide">
+            <h1>10. 최적화: 확률적 경사 하강법 (SGD)</h1>
+            <p class="slide-subtitle">손실 함수를 최소화하는 최적의 임베딩 벡터를 찾는 방법</p>
+            <div class="slide-content">
+                <div class="image-container">
+                    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" font-family="Lato, sans-serif">
+                        <defs>
+                            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0097a7;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#fbc02d;stop-opacity:1" />
+                            </linearGradient>
+                            <marker id="arrowhead5" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                              <path d="M 0 0 L 10 5 L 0 10 z" fill="#d32f2f" />
+                            </marker>
+                        </defs>
+                        <!-- Contour Lines -->
+                        <ellipse cx="200" cy="200" rx="180" ry="140" stroke="#ccc" stroke-width="1" fill="rgba(0,188,212,0.1)"/>
+                        <ellipse cx="200" cy="200" rx="140" ry="110" stroke="#aaa" stroke-width="1" fill="rgba(0,188,212,0.2)"/>
+                        <ellipse cx="200" cy="200" rx="100" ry="80" stroke="#888" stroke-width="1" fill="rgba(0,188,212,0.3)"/>
+                        <ellipse cx="200" cy="200" rx="60" ry="45" stroke="#666" stroke-width="1.5" fill="rgba(0,188,212,0.4)"/>
+                        <ellipse cx="200" cy="200" rx="20" ry="15" stroke="#444" stroke-width="2" fill="url(#grad1)"/>
+                        
+                        <!-- Gradient Descent Path -->
+                        <path d="M 50 80 C 120 150, 180 180, 200 195" stroke="#d32f2f" stroke-width="3" fill="none" marker-end="url(#arrowhead5)"/>
+                        <circle cx="50" cy="80" r="7" fill="#d32f2f"/>
+                        <text x="30" y="70" fill="#333" font-size="16" font-weight="bold">Start</text>
+                        <text x="200" y="230" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">Minimum</text>
+
+                        <!-- Axes Labels -->
+                        <text x="380" y="180" fill="#333" font-size="18">$\theta_1$</text>
+                        <text x="220" y="30" fill="#333" font-size="18">$\theta_2$</text>
+                    </svg>
+                </div>
+                <div class="content-box">
+                    <h2>가장 가파른 길을 따라 하산하기</h2>
+                    <p>SGD는 손실 함수라는 '산'에서 현재 위치의 경사(gradient)가 가장 가파른 방향으로 조금씩 이동하여 최저점(minimum)을 찾아가는 과정입니다.</p>
+                    <p>각 학습 단계마다 파라미터(단어 벡터)는 손실을 줄이는 방향으로 업데이트됩니다. 여기서 $\alpha$는 학습률(learning rate)입니다.</p>
+                    <div class="formula">$$ \theta^{\text{new}} = \theta^{\text{old}} - \alpha \nabla_{\theta} J(\theta) $$</div>
+                    <p>이 반복적인 업데이트를 통해, 문맥적으로 유사한 단어들은 벡터 공간에서 서로 가까운 위치에 배치됩니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Q&A -->
+        <div class="slide">
+            <h1 class="slide-title">Q & A</h1>
+            <p class="slide-subtitle">질의 및 응답</p>
+        </div>
+
+        <!-- Navigation -->
+        <button id="prevBtn" class="nav-button">&#10094;</button>
+        <button id="nextBtn" class="nav-button">&#10095;</button>
+        <div class="footer">
+            <span id="slide-counter"></span>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(slideIndex) {
+                const newIndex = (slideIndex + totalSlides) % totalSlides;
+                slides.forEach((slide, index) => {
+                    slide.classList.toggle('active', index === newIndex);
+                });
+                currentSlide = newIndex;
+                updateCounter();
+            }
+
+            function updateCounter() {
+                if(slideCounter) {
+                    slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+                }
+            }
+
+            function nextSlide() { showSlide(currentSlide + 1); }
+            function prevSlide() { showSlide(currentSlide - 1); }
+
+            nextBtn.addEventListener('click', nextSlide);
+            prevBtn.addEventListener('click', prevSlide);
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'ArrowRight' || event.key === ' ' || event.key === 'PageDown') {
+                    event.preventDefault();
+                    nextSlide();
+                } else if (event.key === 'ArrowLeft' || event.key === 'PageUp') {
+                    event.preventDefault();
+                    prevSlide();
+                }
+            });
+
+            showSlide(currentSlide);
+        });
+    </script>
+</body>
+</html>
+
