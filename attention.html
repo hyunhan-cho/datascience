@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>어텐션 메커니즘 심층 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVEMckDpbDM7QIjQRubAOKAIaxcFiaLotxbbTMW" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzYCEHPNKAev8tduzqlIfrFv4EbvrLGIkrg" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          delimiters: [
+              {left: '$$', right: '$$', display: true},
+              {left: '$', right: '$', display: false},
+              {left: '\\(', right: '\\)', display: false},
+              {left: '\\[', right: '\\]', display: true}
+          ],
+          throwOnError : false
+        });
+    });
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            color: #212529;
+        }
+        .presentation-container {
+            width: 90%;
+            max-width: 1200px;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .slide {
+            min-height: 75vh;
+            padding: 3rem;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: opacity 0.5s ease-in-out;
+            width: 100%;
+        }
+        .slide.active {
+            display: flex;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .slide-content {
+            max-width: 950px;
+            width: 100%;
+            margin: auto;
+        }
+        h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            color: #212529;
+            margin-bottom: 1rem;
+        }
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 2rem;
+        }
+        p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #495057;
+            margin-bottom: 1rem;
+        }
+        .key-concept {
+            background-color: #e9ecef;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-weight: 500;
+            color: #343a40;
+            border: 1px solid #ced4da;
+        }
+        .navigation {
+            width: 100%;
+            padding: 1.5rem 3rem;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 9999px;
+            height: 8px;
+            margin-bottom: 1rem;
+        }
+        .progress-bar {
+            background-color: #0d6efd;
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        .nav-button {
+            padding: 0.75rem 1.5rem;
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            flex-grow: 1;
+            text-align: center;
+            border: none;
+        }
+        .nav-button:hover {
+            background-color: #0b5ed7;
+        }
+        .nav-button:disabled {
+            background-color: #adb5bd;
+            cursor: not-allowed;
+        }
+        .slide-image {
+            width: 100%;
+            max-width: 480px;
+            height: auto;
+            border-radius: 0.5rem;
+        }
+        .formula-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+        }
+        ul { list-style: none; padding: 0; }
+        @media (max-width: 768px) {
+            h1 { font-size: 2.2rem; }
+            h2 { font-size: 1.8rem; }
+            p { font-size: 1.05rem; }
+            .slide { padding: 1.5rem; min-height: 80vh; }
+            .navigation { padding: 1rem 1.5rem; }
+            .navigation-buttons { flex-direction: column; }
+            .formula-box { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div id="slides-wrapper" class="relative w-full h-full flex-grow">
+            <!-- Slide 1: Introduction -->
+            <div class="slide active" id="slide-0">
+                <div class="slide-content text-center">
+                    <h1 class="bg-clip-text text-transparent bg-gradient-to-r from-gray-700 to-black">어텐션 메커니즘 심층 분석</h1>
+                    <p class="text-xl mt-4 text-gray-600">Transformer 모델의 핵심, 어텐션의 기본 원리를 알아봅시다.</p>
+                </div>
+            </div>
+
+            <!-- Slide 2: 텐서의 기본 성질: 정보 유지 -->
+            <div class="slide" id="slide-1">
+                <div class="slide-content">
+                    <h2>텐서의 기본 성질 ①: 정보 유지</h2>
+                    <div class="md:flex md:items-center md:gap-12 mt-8">
+                        <div class="md:w-1/2 text-left">
+                            <p>정보를 담고 있는 텐서는 가중치 행렬(Weight Matrix)과의 선형 변환을 거쳐도 <b>원래의 정보 특성을 보존합니다.</b></p>
+                            <p class="text-gray-600 mt-4">이는 정보가 소실되는 것이 아니라, 특정 관점으로 '투영'되거나 '변환'되는 과정으로 이해할 수 있습니다.</p>
+                        </div>
+                        <div class="md:w-1/2 mt-6 md:mt-0 flex justify-center">
+                            <svg class="slide-image" viewBox="0 0 400 300">
+                                <rect width="400" height="300" fill="#f8f9fa"/>
+                                <g fill="none" stroke="#495057" stroke-width="2">
+                                    <rect x="25" y="120" width="60" height="60" rx="5" fill="#fff"/>
+                                    <rect x="150" y="100" width="100" height="100" rx="5" fill="#fff"/>
+                                    <rect x="315" y="120" width="60" height="60" rx="5" fill="#fff"/>
+                                    <path stroke-dasharray="6,4" d="M85 150h65"/>
+                                    <path d="m147 147 3 3-3 3"/>
+                                    <path stroke-dasharray="6,4" d="M250 150h65"/>
+                                    <path d="m312 147 3 3-3 3"/>
+                                </g>
+                                <g text-anchor="middle" font-family="sans-serif" font-size="14" fill="#343a40">
+                                    <text x="55" y="155">Input</text>
+                                    <text x="200" y="125">Weight Matrix</text>
+                                    <text x="200" y="175" font-family="monospace">X * W = Y</text>
+                                    <text x="345" y="155">Output</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: 텐서의 기본 성질: 가중합 (Weighted Sum) -->
+            <div class="slide" id="slide-2">
+                <div class="slide-content">
+                    <h2>텐서의 기본 성질 ②: 가중합 (Weighted Sum)</h2>
+                    <div class="md:flex md:items-center md:gap-12 mt-8">
+                        <div class="md:w-1/2 text-left">
+                            <p>여러 정보(벡터)를 조합할 때, <b>각 정보의 중요도(가중치)를 반영하여 합산합니다.</b></p>
+                            <p class="text-gray-600 mt-4">가중치가 높은 정보가 최종 결과에 더 큰 영향을 미치게 되며, 이는 정보의 선별적 통합을 가능하게 합니다.</p>
+                        </div>
+                        <div class="md:w-1/2 mt-6 md:mt-0 flex justify-center">
+                            <svg class="slide-image" viewBox="0 0 400 300">
+                                <rect width="400" height="300" fill="#f8f9fa"/>
+                                <g text-anchor="middle" font-family="sans-serif" font-size="14" fill="#343a40">
+                                    <text x="60" y="80">Vector A</text>
+                                    <text x="60" y="160">Vector B</text>
+                                    <text x="60" y="240">Vector C</text>
+                                    <text x="210" y="55" font-family="monospace">w1 = 0.7</text>
+                                    <text x="210" y="125" font-family="monospace">w2 = 0.2</text>
+                                    <text x="210" y="195" font-family="monospace">w3 = 0.1</text>
+                                    <text x="350" y="155">Result</text>
+                                </g>
+                                <path d="M100 80h100" stroke="#0d6efd" stroke-width="7" fill="none"/>
+                                <path d="M100 160h100" stroke="#198754" stroke-width="2" fill="none"/>
+                                <path d="M100 240h100" stroke="#6f42c1" stroke-width="1" fill="none"/>
+                                <path d="M250,50 v200 l50,-100 z" fill-opacity="0.7" fill="#0d6efd"/>
+                                <path d="m315 150 20 0" stroke="#495057" stroke-width="2" fill="none"/>
+                                <path d="m332 147 3 3-3 3" stroke="#495057" stroke-width="2" fill="none"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: 텐서의 기본 성질: 내적 (Dot Product) -->
+            <div class="slide" id="slide-3">
+                <div class="slide-content">
+                    <h2>텐서의 기본 성질 ③: 내적 (Dot Product)</h2>
+                    <div class="md:flex md:items-center md:gap-12 mt-8">
+                        <div class="md:w-1/2 text-left">
+                            <p>두 벡터의 <b>유사도(Similarity)</b>를 측정하는 핵심 연산입니다. <b>두 벡터의 방향이 유사할수록 내적 값은 커집니다.</b></p>
+                            <p class="text-gray-600 mt-4">어텐션에서는 이 원리를 이용해 쿼리와 키 벡터 간의 연관성을 정량적으로 계산합니다.</p>
+                        </div>
+                        <div class="md:w-1/2 mt-6 md:mt-0 flex justify-center">
+                            <svg class="slide-image" viewBox="0 0 400 300">
+                                <rect width="400" height="300" fill="#f8f9fa"/>
+                                <g transform="translate(100 150)">
+                                    <line x1="0" y1="0" x2="80" y2="40" stroke="#0d6efd" stroke-width="3"/>
+                                    <line x1="0" y1="0" x2="85" y2="20" stroke="#198754" stroke-width="3"/>
+                                </g>
+                                <g transform="translate(300 150)">
+                                    <line x1="0" y1="0" x2="80" y2="40" stroke="#ffc107" stroke-width="3"/>
+                                    <line x1="0" y1="0" x2="-20" y2="85" stroke="#dc3545" stroke-width="3"/>
+                                </g>
+                                <g text-anchor="middle" font-family="sans-serif" font-size="14" fill="#343a40">
+                                    <text x="100" y="270">높은 유사도 = 큰 내적 값</text>
+                                    <text x="300" y="270">낮은 유사도 = 작은 내적 값</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: 어텐션의 핵심 과정: Query, Key, Value -->
+            <div class="slide" id="slide-4">
+                <div class="slide-content">
+                    <h2>어텐션의 핵심: Query, Key, Value</h2>
+                    <p class="mt-4 mb-8 text-gray-600">어텐션은 이 세 가지 역할의 벡터로 구성됩니다.</p>
+                    <div class="grid md:grid-cols-3 gap-6 text-left">
+                        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                            <h3 class="font-bold text-lg text-blue-800">Query (Q)</h3>
+                            <p class="text-gray-700 mt-2">분석의 기준이 되는 정보, 즉 <b>'질의'</b> 벡터입니다.</p>
+                        </div>
+                        <div class="bg-green-50 p-6 rounded-lg border border-green-200">
+                            <h3 class="font-bold text-lg text-green-800">Key (K)</h3>
+                            <p class="text-gray-700 mt-2">각 정보가 가진 고유한 특징, 즉 <b>'식별자'</b> 벡터입니다.</p>
+                        </div>
+                        <div class="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                            <h3 class="font-bold text-lg text-purple-800">Value (V)</h3>
+                            <p class="text-gray-700 mt-2">정보의 실제 내용, 즉 <b>'값'</b> 벡터입니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: 유사도 계산: Query와 Key의 내적 -->
+            <div class="slide" id="slide-5">
+                <div class="slide-content">
+                    <h2>1단계: 유사도 점수 계산</h2>
+                    <div class="md:flex md:items-center md:gap-12 mt-8">
+                        <div class="md:w-1/2 text-left">
+                            <p><b>쿼리(Q)</b>를 모든 <b>키(K)</b>와 내적하여, 각 키가 쿼리와 얼마나 연관이 있는지 <b>유사도 점수(Score)</b>를 계산합니다.</p>
+                            <p class="text-gray-700 mt-4">Transformer에서는 계산된 값의 안정성을 위해 벡터 차원 $d_k$의 제곱근으로 나누어주는 스케일링을 적용합니다.</p>
+                            <div class="formula-box">
+                                $$ Score(Q, K) = \frac{Q K^T}{\sqrt{d_k}} $$
+                            </div>
+                        </div>
+                        <div class="md:w-1/2 mt-6 md:mt-0 flex justify-center">
+                            <svg class="slide-image" viewBox="0 0 400 300">
+                                <rect width="400" height="300" fill="#f8f9fa"/>
+                                <g transform="translate(25 125)"><rect width="60" height="50" rx="5" fill="#cce5ff"/><text x="30" y="32" text-anchor="middle" font-weight="bold" font-family="sans-serif" fill="#004085">Q</text></g>
+                                <g transform="translate(150 20)"><rect width="60" height="50" rx="5" fill="#d4edda"/><text x="30" y="32" text-anchor="middle" font-weight="bold" font-family="sans-serif" fill="#155724">K1</text></g>
+                                <g transform="translate(150 125)"><rect width="60" height="50" rx="5" fill="#d4edda"/><text x="30" y="32" text-anchor="middle" font-weight="bold" font-family="sans-serif" fill="#155724">K2</text></g>
+                                <g transform="translate(150 230)"><rect width="60" height="50" rx="5" fill="#d4edda"/><text x="30" y="32" text-anchor="middle" font-weight="bold" font-family="sans-serif" fill="#155724">K3</text></g>
+                                <g transform="translate(300 20)"><rect width="80" height="50" rx="5" fill="#fff3cd"/><text x="40" y="32" text-anchor="middle" font-weight="bold" font-family="sans-serif" fill="#856404">Score 1</text></g>
+                                <g transform="translate(300 125)"><rect width="80" height="50" rx="5" fill="#fff3cd"/><text x="40" y="32" text-anchor="middle" font-weight="bold" font-family="sans-serif" fill="#856404">Score 2</text></g>
+                                <g transform="translate(300 230)"><rect width="80" height="50" rx="5" fill="#fff3cd"/><text x="40" y="32" text-anchor="middle" font-weight="bold" font-family="sans-serif" fill="#856404">Score 3</text></g>
+                                <path d="M85 150 150 45 M85 150 l65 0 M85 150 l65 105" fill="none" stroke="#adb5bd" stroke-width="2" stroke-dasharray="5,3"/>
+                                <path d="M210 45h90 M210 150h90 M210 255h90" fill="none" stroke="#6c757d" stroke-width="2"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: 웨이트 정규화: Softmax 함수 -->
+            <div class="slide" id="slide-6">
+                <div class="slide-content">
+                    <h2>2단계: 가중치 정규화 (Softmax)</h2>
+                     <div class="md:flex md:items-center md:gap-12 mt-8">
+                        <div class="md:w-1/2 text-left">
+                            <p>유사도 점수들을 <strong>Softmax 함수</strong>에 통과시켜 합이 1인 확률 분포, 즉 <b>어텐션 가중치(Attention Weight)</b>로 변환합니다.</p>
+                             <ul class="text-left list-disc list-inside mt-4 space-y-2 text-gray-700">
+                                <li>모든 점수를 0과 1 사이의 값으로 정규화합니다.</li>
+                                <li>가중치가 높을수록 해당 정보에 더 '집중'함을 의미합니다.</li>
+                             </ul>
+                             <div class="formula-box">
+                                $$ \text{Softmax}(z)_i = \frac{e^{z_i}}{\sum_{j=1}^{K} e^{z_j}} $$
+                            </div>
+                        </div>
+                        <div class="md:w-1/2 mt-6 md:mt-0 flex justify-center">
+                             <svg class="slide-image" viewBox="0 0 400 300">
+                                <rect width="400" height="300" fill="#f8f9fa"/>
+                                <g text-anchor="middle" font-family="sans-serif" fill="#343a40">
+                                    <text x="50" y="30">Scores</text>
+                                    <text x="50" y="85" font-family="monospace">12.0</text>
+                                    <text x="50" y="135" font-family="monospace">0.0</text>
+                                    <text x="50" y="185" font-family="monospace">-3.0</text>
+                                    <text x="350" y="30">Weights</text>
+                                    <text x="350" y="85" font-family="monospace">0.90</text>
+                                    <text x="350" y="135" font-family="monospace">0.08</text>
+                                    <text x="350" y="185" font-family="monospace">0.02</text>
+                                    <text x="350" y="255" font-weight="bold">Total: 1.00</text>
+                                </g>
+                                <rect x="140" y="100" width="120" height="100" rx="10" fill="#fff" stroke="#6c757d" stroke-width="2"/>
+                                <text x="200" y="155" text-anchor="middle" font-size="22" font-family="sans-serif">Softmax</text>
+                                <!-- Corrected lines -->
+                                <line x1="85" y1="85" x2="140" y2="130" stroke="#adb5bd" stroke-width="1.5"/>
+                                <line x1="85" y1="135" x2="140" y2="150" stroke="#adb5bd" stroke-width="1.5"/>
+                                <line x1="85" y1="185" x2="140" y2="170" stroke="#adb5bd" stroke-width="1.5"/>
+                                <line x1="260" y1="130" x2="315" y2="85" stroke="#adb5bd" stroke-width="1.5"/>
+                                <line x1="260" y1="150" x2="315" y2="135" stroke="#adb5bd" stroke-width="1.5"/>
+                                <line x1="260" y1="170" x2="315" y2="185" stroke="#adb5bd" stroke-width="1.5"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: 최종 어텐션 결과: Weighted Sum of Values -->
+            <div class="slide" id="slide-7">
+                <div class="slide-content">
+                    <h2>3단계: 최종 결과 계산 (Context Vector)</h2>
+                     <div class="md:flex md:items-center md:gap-12 mt-8">
+                        <div class="md:w-1/2 text-left">
+                            <p>계산된 어텐션 가중치를 각각의 <b>밸류(V)</b> 벡터에 곱한 후, 이들을 모두 합하여 <strong>Context Vector</strong>를 생성합니다.</p>
+                            <p class="text-gray-700 mt-4">이 벡터는 쿼리와의 연관성이 높은 정보들이 강조된, 새로운 맥락 정보를 담고 있습니다.</p>
+                            <div class="formula-box">
+                                $$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V $$
+                            </div>
+                        </div>
+                        <div class="md:w-1/2 mt-6 md:mt-0 flex justify-center">
+                             <svg class="slide-image" viewBox="0 0 400 300">
+                                <rect width="400" height="300" fill="#f8f9fa"/>
+                                <g font-family="sans-serif" text-anchor="middle" fill="#343a40">
+                                    <text x="65" y="40">Weights</text>
+                                    <text x="225" y="40">Values</text>
+                                    <text x="350" y="155">Attention</text>
+                                    <text x="65" y="85">0.90</text>
+                                    <text x="65" y="135">0.08</text>
+                                    <text x="65" y="185">0.02</text>
+                                    <rect x="200" y="65" width="50" height="40" rx="5" fill="#e0cffc"/><text x="225" y="88" font-weight="bold" fill="#4c1d95">V1</text>
+                                    <rect x="200" y="115" width="50" height="40" rx="5" fill="#e0cffc"/><text x="225" y="138" font-weight="bold" fill="#4c1d95">V2</text>
+                                    <rect x="200" y="165" width="50" height="40" rx="5" fill="#e0cffc"/><text x="225" y="188" font-weight="bold" fill="#4c1d95">V3</text>
+                                    <rect x="325" y="125" width="50" height="50" rx="5" fill="#e11d48"/>
+                                </g>
+                                <path d="M100 85h95 M100 135h95 M100 185h95" fill="none" stroke="#6c757d" stroke-width="2"/>
+                                <path d="M280 150h40" fill="none" stroke="#6c757d" stroke-width="2" stroke-dasharray="5,3"/>
+                                <text x="145" y="88" font-size="18">x</text><text x="145" y="138" font-size="18">x</text><text x="145" y="188" font-size="18">x</text>
+                                <text x="295" y="155" font-size="24">+</text>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 9: 어텐션의 역할: 검색 엔진 비유 -->
+            <div class="slide" id="slide-8">
+                <div class="slide-content">
+                    <h2>어텐션의 직관적 이해: 정보 검색</h2>
+                    <div class="md:flex md:items-center md:gap-12 mt-8">
+                         <div class="md:w-1/2 mt-6 md:mt-0 flex justify-center">
+                            <svg class="slide-image" viewBox="0 0 400 300">
+                                <rect width="400" height="300" fill="#f8f9fa"/>
+                                <g transform="translate(25 25)">
+                                    <rect width="70" height="70" rx="10" fill="#cce5ff"/>
+                                    <text x="35" y="48" text-anchor="middle" font-size="30" font-weight="bold" fill="#004085">Q</text>
+                                    <text x="35" y="100" text-anchor="middle">Query</text>
+                                </g>
+                                <g transform="translate(150 25)">
+                                    <rect x="0" y="0" width="200" height="40" rx="5" fill="#d4edda" opacity="0.5"/>
+                                    <text x="100" y="25" text-anchor="middle" fill="#155724">Document A (Key)</text>
+                                    <rect x="0" y="80" width="200" height="40" rx="5" fill="#d4edda"/>
+                                    <text x="100" y="105" text-anchor="middle" fill="#155724" font-weight="bold">Document B (Key)</text>
+                                    <rect x="0" y="160" width="200" height="40" rx="5" fill="#d4edda" opacity="0.5"/>
+                                    <text x="100" y="185" text-anchor="middle" fill="#155724">Document C (Key)</text>
+                                    <rect x="-20" y="210" width="240" height="80" rx="5" fill="#e0cffc"/>
+                                    <text x="100" y="250" text-anchor="middle" font-weight="bold" fill="#4c1d95">Content of B</text>
+                                    <text x="100" y="275" text-anchor="middle">(Value)</text>
+                                </g>
+                                <path d="m100 60 50 45" fill="none" stroke="#495057" stroke-width="2.5" stroke-dasharray="6,4"/>
+                                <path d="m145 102 5-4 5 4" fill="#495057"/>
+                            </svg>
+                         </div>
+                        <div class="md:w-1/2 text-left">
+                            <p>어텐션은 마치 고도로 발전된 <b>'정보 검색 시스템'</b>과 같습니다.</p>
+                            <ul class="text-left list-none mt-4 space-y-3">
+                                <li><span class="key-concept bg-blue-100 text-blue-800">쿼리 (Q)</span> → 검색어</li>
+                                <li><span class="key-concept bg-green-100 text-green-800">키 (K)</span> → 문서의 제목/키워드</li>
+                                <li><span class="key-concept bg-purple-100 text-purple-800">밸류 (V)</span> → 문서의 실제 내용</li>
+                            </ul>
+                            <p class="text-gray-600 mt-4">검색어(Q)와 가장 연관성 높은 문서(K)를 찾아, 그 문서의 내용(V)을 종합하여 결과를 제공하는 원리와 유사합니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 10: 결론 및 다음 단계 -->
+            <div class="slide" id="slide-9">
+                <div class="slide-content">
+                    <h2>결론 및 다음 단계</h2>
+                    <p>어텐션은 주어진 쿼리에 대해, 입력 시퀀스 내에서 <b>어떤 정보에 집중할지를 동적으로 결정하고, 이를 바탕으로 가중합하여 새로운 맥락 벡터를 생성</b>하는 강력한 메커니즘입니다.</p>
+                    <p class="text-xl font-semibold mt-6 text-gray-700">이제 어텐션의 기본 원리를 이해했으니, 다음 단계에서는 <b>셀프 어텐션(Self-Attention)</b>과 <b>트랜스포머(Transformer)</b> 구조에 대해 학습할 준비가 되셨습니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <div class="progress-bar-container">
+                <div id="progressBar" class="progress-bar" style="width: 10%;"></div>
+            </div>
+            <div class="navigation-buttons">
+                <button id="prevBtn" class="nav-button" disabled>이전</button>
+                <button id="nextBtn" class="nav-button">다음</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const progressBar = document.getElementById('progressBar');
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                if (i === index) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+            updateNavigation();
+        }
+
+        function updateNavigation() {
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+            const progressPercentage = ((currentSlide + 1) / totalSlides) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        });
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        });
+        
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
+
