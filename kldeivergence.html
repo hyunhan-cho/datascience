@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KL Divergence 상세 설명</title>
+    <script>
+        // MathJax 설정
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+        :root {
+            --font-size-h1: 4.5rem;
+            --font-size-h2: 2.8rem;
+            --font-size-p: 1.4rem;
+            --font-size-math: 1.5rem;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa; /* 밝은 배경색 */
+            color: #343a40; /* 어두운 글자색 */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slide {
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 5vw;
+            box-sizing: border-box;
+            position: absolute;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            text-align: center; /* 모든 슬라이드 내용 중앙 정렬 기본 */
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .slide-content {
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: var(--font-size-h1);
+            color: #005f73;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: var(--font-size-h2);
+            color: #0a9396;
+            border-bottom: 2px solid #94d2bd;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        
+        p, li {
+            font-size: var(--font-size-p);
+            line-height: 2;
+            text-align: left;
+            font-weight: 400;
+        }
+
+        ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+        
+        li {
+            position: relative;
+            padding-left: 35px;
+            margin-bottom: 25px;
+        }
+
+        li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #0a9396;
+            font-weight: bold;
+            font-size: 1.2em; /* 부모 요소 글꼴 크기에 비례 */
+        }
+
+        .math-formula {
+            background-color: #e9ecef;
+            border-left: 5px solid #0a9396;
+            padding: 30px;
+            margin: 40px 0;
+            border-radius: 8px;
+            font-size: var(--font-size-math);
+            overflow-x: auto;
+            text-align: center;
+            color: #212529;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(10, 147, 150, 0.15);
+            color: #0a9396;
+            border: 1px solid rgba(10, 147, 150, 0.2);
+            padding: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 50%;
+            z-index: 10;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        
+        .nav-button:hover {
+            background-color: rgba(10, 147, 150, 0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        #prevBtn { left: 20px; }
+        #nextBtn { right: 20px; }
+
+        .slide-counter {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            color: #0077b6;
+            margin-top: -10px;
+            margin-bottom: 60px;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        strong, b {
+            color: #ae2012;
+            font-weight: 600;
+        }
+        
+        .two-column {
+            display: flex;
+            gap: 50px;
+            width: 100%;
+            align-items: flex-start;
+            text-align: left;
+        }
+        .column {
+            flex: 1;
+        }
+        
+        .illustration {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            min-height: 200px;
+            background-color: #e9ecef;
+            border: 2px dashed #ced4da;
+            border-radius: 8px;
+            margin-top: 30px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #6c757d;
+            text-align: center;
+        }
+        .slide:first-child p:last-child {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-top: 80px;
+        }
+
+        /* --- 반응형 디자인을 위한 미디어 쿼리 --- */
+        @media (max-width: 768px) {
+            :root {
+                --font-size-h1: 2.8rem;
+                --font-size-h2: 2rem;
+                --font-size-p: 1.1rem;
+                --font-size-math: 1.2rem;
+            }
+
+            .subtitle {
+                font-size: 1.3rem;
+            }
+
+            .slide {
+                padding: 8vw 5vw; /* 위아래 패딩 늘리고 좌우 줄임 */
+            }
+
+            .two-column {
+                flex-direction: column; /* 세로로 쌓이도록 변경 */
+                gap: 20px;
+            }
+
+            .nav-button {
+                width: 40px;
+                height: 40px;
+                padding: 10px;
+                font-size: 20px;
+            }
+            #prevBtn { left: 10px; }
+            #nextBtn { right: 10px; }
+            
+            .slide-counter {
+                font-size: 0.9rem;
+                bottom: 10px;
+                right: 10px;
+            }
+
+            li {
+                padding-left: 25px;
+                margin-bottom: 20px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <!-- Slide 1: Title --><div class="slide active">
+            <div class="slide-content">
+                <h1>KL Divergence</h1>
+                <p class="subtitle">쿨백-라이블러 발산 (Kullback-Leibler Divergence)</p>
+                <p>두 확률분포의 차이를 측정하는 방법</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Introduction --><div class="slide">
+            <div class="slide-content">
+                <h2>1. KL Divergence란?</h2>
+                <p>두 확률분포 P와 Q의 <b>'차이'</b> 또는 <b>'거리'</b>를 측정하는 지표입니다.</p>
+                <ul>
+                    <li><b>핵심 질문:</b> "분포 Q가 분포 P를 얼마나 잘 근사(approximate)하는가?"</li>
+                    <li><b>핵심 아이디어:</b> 분포 P 대신 Q를 사용하여 정보를 인코딩할 때 발생하는 <b>'정보 손실(Information Loss)'</b>의 기댓값을 측정합니다.</li>
+                    <li>정보 이론에서는 '상대 엔트로피(Relative Entropy)'라고도 합니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 3: Entropy --><div class="slide">
+            <div class="slide-content">
+                <h2>2. 배경: 엔트로피</h2>
+                <p><b>엔트로피 H(P):</b> 확률분포 P가 가지는 불확실성의 양입니다. 사건들을 최적으로 인코딩하는 데 필요한 평균 정보량(비트 수)을 의미합니다.</p>
+                <div class="math-formula">
+                    $$ H(P) = -\sum_{x \in \mathcal{X}} P(x) \log_2 P(x) $$
+                </div>
+                <ul>
+                    <li>드문 사건일수록($P(x)$가 낮을수록), 정보량 $-\log_2 P(x)$는 커집니다.</li>
+                    <li>엔트로피는 이 정보량의 기댓값입니다.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Cross-Entropy --><div class="slide">
+            <div class="slide-content">
+                <h2>3. 배경: 교차 엔트로피</h2>
+                <p><b>교차 엔트로피 H(P, Q):</b> 실제 분포가 P인 사건들을, 분포 Q를 기반으로 인코딩할 때 필요한 평균 정보량을 의미합니다.</p>
+                <div class="math-formula">
+                    $$ H(P, Q) = -\sum_{x \in \mathcal{X}} P(x) \log_2 Q(x) $$
+                </div>
+                <ul>
+                    <li>교차 엔트로피는 항상 실제 엔트로피보다 크거나 같습니다: $H(P, Q) \ge H(P)$.</li>
+                    <li>이 둘의 차이가 바로 KL Divergence의 핵심 아이디어입니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 5: Derivation --><div class="slide">
+            <div class="slide-content">
+                <h2>4. KL Divergence의 유도</h2>
+                <p>KL Divergence는 <b>'불필요하게 추가된 정보량'</b>, 즉 교차 엔트로피와 엔트로피의 차이로 정의됩니다.</p>
+                <div class="math-formula">
+                    $$ D_{KL}(P \parallel Q) = H(P, Q) - H(P) $$
+                    $$ = \left(-\sum_x P(x) \log Q(x)\right) - \left(-\sum_x P(x) \log P(x)\right) $$
+                    $$ = \sum_x P(x) (\log P(x) - \log Q(x)) $$
+                    $$ = \sum_x P(x) \log \frac{P(x)}{Q(x)} $$
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 6: Mathematical Definition (Discrete) --><div class="slide">
+            <div class="slide-content">
+                <h2>5. 수학적 정의 (이산)</h2>
+                <p>확률변수 $X$가 이산적인 값을 가질 때, 두 확률질량함수 $P(x)$와 $Q(x)$에 대한 KL Divergence는 다음과 같습니다.</p>
+                <div class="math-formula">
+                    $$ D_{KL}(P \parallel Q) = \sum_{x \in \mathcal{X}} P(x) \log \frac{P(x)}{Q(x)} $$
+                </div>
+                 <ul>
+                    <li>$P(x)$는 기준이 되는 실제(참) 분포이며, 가중치 역할을 합니다.</li>
+                    <li>$\log \frac{P(x)}{Q(x)}$는 각 사건에서 두 분포의 확률 비율에 대한 로그 값으로 정보량 차이를 나타냅니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 7: Mathematical Definition (Continuous) --><div class="slide">
+            <div class="slide-content">
+                <h2>6. 수학적 정의 (연속)</h2>
+                <p>확률변수 $X$가 연속적인 값을 가질 때, 두 확률밀도함수 $p(x)$와 $q(x)$에 대한 KL Divergence는 합산을 적분으로 대체합니다.</p>
+                <div class="math-formula">
+                    $$ D_{KL}(p \parallel q) = \int_{-\infty}^{\infty} p(x) \log \frac{p(x)}{q(x)} dx $$
+                </div>
+                 <ul>
+                    <li>$p(x)$는 기준이 되는 실제(참) 확률밀도함수입니다.</li>
+                    <li>$q(x)$는 근사하려는 모델의 확률밀도함수입니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 8: Properties (Non-negativity) --><div class="slide">
+            <div class="slide-content">
+                <h2>7. 주요 특징 (1): 비음수성</h2>
+                <p>KL Divergence는 항상 0보다 크거나 같습니다 (Non-negativity).</p>
+                <div class="math-formula">
+                    $$ D_{KL}(P \parallel Q) \ge 0 $$
+                </div>
+                <ul>
+                    <li><b>등호 성립 조건:</b> 두 분포가 모든 $x$에 대해 완전히 동일할 때, 즉 $P(x) = Q(x)$일 때만 $D_{KL}(P \parallel Q) = 0$ 입니다.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Slide 9: Properties (Asymmetry) --><div class="slide">
+            <div class="slide-content">
+                <h2>8. 주요 특징 (2): 비대칭성</h2>
+                <p>KL Divergence는 <b>거리가 아닙니다.</b> 순서가 바뀌면 값이 달라지는 매우 중요한 특징입니다.</p>
+                <div class="math-formula">
+                    $$ D_{KL}(P \parallel Q) \neq D_{KL}(Q \parallel P) $$
+                </div>
+                <ul>
+                    <li>$D_{KL}(P \parallel Q)$: <b>Forward KL.</b> P를 기준으로 Q가 얼마나 다른지 측정.</li>
+                    <li>$D_{KL}(Q \parallel P)$: <b>Reverse KL.</b> Q를 기준으로 P가 얼마나 다른지 측정.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 10: Forward KL Explanation --><div class="slide">
+            <div class="slide-content">
+                <h2>9. 비대칭성 이해: Forward KL</h2>
+                <p><b>$D_{KL}(P \parallel Q)$를 최소화하는 경우</b></p>
+                <div class="math-formula">$$ \min_{Q} D_{KL}(P \parallel Q) = \min_{Q} \sum P(x) \log \frac{P(x)}{Q(x)} $$</div>
+                <ul>
+                    <li>이 최적화는 <b>$P(x)$가 큰 곳에서 $Q(x)$도 크도록</b> 모델을 학습시킵니다.</li>
+                    <li>만약 실제 분포 $P(x) > 0$ 인데 모델이 $Q(x) \to 0$으로 예측하면, 페널티가 무한대로 커집니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 11: Forward KL Consequence with Image Placeholder --><div class="slide">
+            <div class="slide-content">
+                <h2>9. Forward KL의 결과 (Mode-Covering)</h2>
+                <p><b>결과:</b> 모델 분포 $Q$가 실제 분포 $P$의 모든 모드(mode, 봉우리)를 넓게 포괄하려는 경향을 보입니다.</p>
+                <p><b>"실제 데이터(P)가 존재하는 모든 곳을 모델(Q)이 커버해야 한다!"</b></p>
+                <div class="illustration">
+                    <svg width="500" height="250" viewBox="0 0 500 250" style="background: white; border-radius: 8px;">
+                        <!-- 격자 배경 -->
+                        <defs>
+                            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#grid)" />
+                        
+                        <!-- 축 -->
+                        <line x1="50" y1="200" x2="450" y2="200" stroke="#333" stroke-width="2"/>
+                        <line x1="50" y1="200" x2="50" y2="30" stroke="#333" stroke-width="2"/>
+                        
+                        <!-- 실제 분포 P (여러 모드) -->
+                        <path d="M 80 200 Q 100 120 120 140 Q 140 160 160 150 Q 180 140 200 130 Q 220 120 240 140 Q 260 160 280 150 Q 300 140 320 130 Q 340 120 360 140 Q 380 160 400 150 Q 420 140 440 200" 
+                              fill="rgba(220, 53, 69, 0.3)" stroke="#dc3545" stroke-width="3"/>
+                        
+                        <!-- 모델 분포 Q (넓게 커버) -->
+                        <path d="M 80 200 Q 150 80 250 85 Q 350 80 420 200" 
+                              fill="rgba(13, 110, 253, 0.2)" stroke="#0d6efd" stroke-width="3"/>
+                        
+                        <!-- 범례 -->
+                        <text x="60" y="25" font-size="14" fill="#333" font-weight="bold">Forward KL: Mode-Covering</text>
+                        <line x1="350" y1="45" x2="380" y2="45" stroke="#dc3545" stroke-width="3"/>
+                        <text x="385" y="50" font-size="12" fill="#dc3545">실제 분포 P (여러 모드)</text>
+                        <line x1="350" y1="65" x2="380" y2="65" stroke="#0d6efd" stroke-width="3"/>
+                        <text x="385" y="70" font-size="12" fill="#0d6efd">모델 분포 Q (넓게 커버)</text>
+                        
+                        <!-- 축 레이블 -->
+                        <text x="250" y="230" text-anchor="middle" font-size="12" fill="#666">x</text>
+                        <text x="25" y="120" text-anchor="middle" font-size="12" fill="#666" transform="rotate(-90, 25, 120)">확률밀도</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Reverse KL Explanation --><div class="slide">
+            <div class="slide-content">
+                <h2>10. 비대칭성 이해: Reverse KL</h2>
+                <p><b>$D_{KL}(Q \parallel P)$를 최소화하는 경우</b></p>
+                <div class="math-formula">$$ \min_{Q} D_{KL}(Q \parallel P) = \min_{Q} \sum Q(x) \log \frac{Q(x)}{P(x)} $$</div>
+                <ul>
+                    <li>이 최적화는 <b>$Q(x)$가 큰 곳에서 $P(x)$도 크도록</b> 모델을 학습시킵니다.</li>
+                    <li>만약 모델이 $Q(x) > 0$으로 생성했는데 실제 분포에서 $P(x) \to 0$이면, 페널티가 무한대로 커집니다.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 13: Reverse KL Consequence with Image Placeholder --><div class="slide">
+            <div class="slide-content">
+                <h2>10. Reverse KL의 결과 (Mode-Seeking)</h2>
+                <p><b>결과:</b> 모델 분포 $Q$가 실제 분포 $P$의 여러 모드 중 가장 확률이 높은 일부에 집중하려는 경향을 보입니다.</p>
+                <p><b>"모델(Q)이 생성한 것은 실제 데이터(P)일 확률이 높아야 한다!"</b></p>
+                <div class="illustration">
+                    <svg width="500" height="250" viewBox="0 0 500 250" style="background: white; border-radius: 8px;">
+                        <!-- 격자 배경 -->
+                        <defs>
+                            <pattern id="grid2" width="20" height="20" patternUnits="userSpaceOnUse">
+                                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#grid2)" />
+                        
+                        <!-- 축 -->
+                        <line x1="50" y1="200" x2="450" y2="200" stroke="#333" stroke-width="2"/>
+                        <line x1="50" y1="200" x2="50" y2="30" stroke="#333" stroke-width="2"/>
+                        
+                        <!-- 실제 분포 P (여러 모드) -->
+                        <path d="M 80 200 Q 100 120 120 140 Q 140 160 160 150 Q 180 140 200 130 Q 220 120 240 140 Q 260 160 280 150 Q 300 140 320 130 Q 340 120 360 140 Q 380 160 400 150 Q 420 140 440 200" 
+                              fill="rgba(220, 53, 69, 0.3)" stroke="#dc3545" stroke-width="3"/>
+                        
+                        <!-- 모델 분포 Q (하나의 모드에 집중) -->
+                        <ellipse cx="200" cy="140" rx="40" ry="60" fill="rgba(13, 110, 253, 0.4)" stroke="#0d6efd" stroke-width="3"/>
+                        
+                        <!-- 집중하는 화살표 -->
+                        <path d="M 150 100 L 180 130" stroke="#28a745" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <path d="M 250 100 L 220 130" stroke="#28a745" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        
+                        <!-- 화살표 마커 정의 -->
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#28a745"/>
+                            </marker>
+                        </defs>
+                        
+                        <!-- 범례 -->
+                        <text x="60" y="25" font-size="14" fill="#333" font-weight="bold">Reverse KL: Mode-Seeking</text>
+                        <line x1="350" y1="45" x2="380" y2="45" stroke="#dc3545" stroke-width="3"/>
+                        <text x="385" y="50" font-size="12" fill="#dc3545">실제 분포 P (여러 모드)</text>
+                        <ellipse cx="365" cy="62" rx="15" ry="8" fill="rgba(13, 110, 253, 0.4)" stroke="#0d6efd" stroke-width="2"/>
+                        <text x="385" y="67" font-size="12" fill="#0d6efd">모델 분포 Q (한 모드에 집중)</text>
+                        
+                        <!-- 축 레이블 -->
+                        <text x="250" y="230" text-anchor="middle" font-size="12" fill="#666">x</text>
+                        <text x="25" y="120" text-anchor="middle" font-size="12" fill="#666" transform="rotate(-90, 25, 120)">확률밀도</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 14: Relation to Cross-Entropy --><div class="slide">
+            <div class="slide-content">
+                <h2>11. 교차 엔트로피와 관계</h2>
+                <p>머신러닝에서 KL Divergence 최소화는 교차 엔트로피 최소화와 깊은 관련이 있습니다.</p>
+                <div class="math-formula">
+                    $$ H(P, Q) = H(P) + D_{KL}(P \parallel Q) $$
+                </div>
+                <ul>
+                    <li>분류 문제에서 실제 분포 P(정답 레이블)는 고정되어 있으므로, $H(P)$는 상수입니다.</li>
+                    <li>따라서 <b>교차 엔트로피($H(P,Q)$) 손실 함수를 최소화하는 것은 $D_{KL}(P \parallel Q)$를 최소화하는 것과 같습니다.</b></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 15: Applications --><div class="slide">
+            <div class="slide-content">
+                <h2>12. 머신러닝에서의 활용</h2>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>생성 모델 (Generative Models)</h4>
+                        <ul>
+                           <li><b>VAE (Variational AutoEncoder):</b> 잠재 변수의 분포 $q(z|x)$가 우리가 원하는 사전 분포 $p(z)$(예: 가우시안)와 비슷해지도록 KL Divergence를 정규화 항으로 사용합니다.</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h4>강화학습 (Reinforcement Learning)</h4>
+                        <ul>
+                           <li><b>TRPO, PPO 등:</b> 정책(policy)을 업데이트할 때, 이전 정책과 새로운 정책의 차이가 너무 커지지 않도록 KL Divergence를 제약 조건으로 사용합니다.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 16: VAE Example --><div class="slide">
+            <div class="slide-content">
+                <h2>13. 활용 예시: VAE 손실 함수</h2>
+                <p>변이형 오토인코더(VAE)의 목적 함수(ELBO)는 다음과 같습니다.</p>
+                <div class="math-formula">
+                $$ \mathcal{L}(x) = \underbrace{\mathbb{E}_{q(z|x)}[\log p(x|z)]}_{\text{재구성 오차 (Reconstruction Term)}} - \underbrace{D_{KL}(q(z|x) \parallel p(z))}_{\text{정규화 항 (Regularization Term)}} $$
+                </div>
+                <ul>
+                    <li><b>재구성 오차:</b> 입력 $x$를 잘 복원하도록 하는 항입니다.</li>
+                    <li><b>정규화 항:</b> 인코더가 만들어내는 잠재 공간의 분포 $q(z|x)$가 사전 분포 $p(z)$와 비슷해지도록 강제합니다. 이는 잠재 공간을 연속적이고 구조적으로 만듭니다.</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Slide 17: Summary --><div class="slide">
+            <div class="slide-content">
+                <h2>14. 요약</h2>
+                <ul>
+                    <li>KL Divergence는 두 확률분포 사이의 <b>정보 손실량</b>을 측정하는 비대칭 지표입니다.</li>
+                    <li>항상 <b>0보다 크거나 같고</b>, 두 분포가 동일할 때만 0이 됩니다.</li>
+                    <li><b>비대칭성</b>은 가장 중요한 특징이며, 최적화 방향에 따라 다른 결과를 낳습니다. (Mode-Covering vs Mode-Seeking)</li>
+                    <li>VAE, 강화학습 등 다양한 머신러닝 분야에서 분포 간의 유사도를 측정하는 핵심 도구로 사용됩니다.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <button id="prevBtn" class="nav-button">&#10094;</button>
+    <button id="nextBtn" class="nav-button">&#10095;</button>
+    <div class="slide-counter" id="slideCounter"></div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const slideCounter = document.getElementById('slideCounter');
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            slideCounter.textContent = `${index + 1} / ${slides.length}`;
+            if (window.MathJax && window.MathJax.typeset) {
+                 window.MathJax.typesetPromise([slides[index]]);
+            }
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(currentSlide);
+        }
+
+        nextBtn.addEventListener('click', nextSlide);
+        prevBtn.addEventListener('click', prevSlide);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        // Initial setup
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
+
