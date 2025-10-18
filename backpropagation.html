@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>역전파와 계산 그래프</title>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        /* --- 기본 스타일 --- */
+        :root {
+            --color-primary: #007bff;
+            --color-dark: #333;
+            --color-light: #f4f4f4;
+            --color-text: #212529;
+            --color-bg: #ffffff;
+            --color-green: #28a745;
+            --color-red: #dc3545;
+            --color-blue: #007bff;
+            --color-orange: #ffc107;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--color-light);
+            color: var(--color-text);
+            line-height: 1.6;
+            overflow: hidden; /* 슬라이드 오버플로우 방지 */
+        }
+
+        /* --- 프레젠테이션 컨테이너 --- */
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* --- 슬라이드 --- */
+        .slide {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 40px;
+            box-sizing: border-box;
+            background-color: var(--color-bg);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease-in-out, visibility 0.6s;
+            overflow-y: auto; /* 내용이 넘칠 경우 스크롤 */
+            display: flex;
+            align-items: center; /* 수직 중앙 정렬 */
+            justify-content: center; /* 수평 중앙 정렬 */
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .slide-content {
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-light);
+            padding-bottom: 10px;
+            font-size: clamp(2rem, 5vw, 2.8rem); /* 반응형 폰트 */
+            text-align: center;
+        }
+        
+        h2 {
+            color: var(--color-dark);
+            margin-top: 30px;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+        }
+        
+        h3 {
+             font-size: clamp(1.2rem, 3vw, 1.6rem);
+             color: var(--color-primary);
+        }
+
+        p, li {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+        }
+
+        /* --- 네비게이션 버튼 --- */
+        .nav-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 100;
+        }
+
+        .nav-buttons button {
+            font-size: 1rem;
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: var(--box-shadow);
+        }
+
+        .nav-buttons button:hover {
+            background-color: #0056b3;
+        }
+
+        .nav-buttons button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        /* --- 코드 및 계산 스타일 --- */
+        code {
+            background-color: var(--color-light);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.95em;
+        }
+        
+        .calc-box {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            border-left: 5px solid var(--color-primary);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .calc-step {
+            margin-bottom: 15px;
+        }
+        
+        .final-answer {
+            font-weight: bold;
+            color: var(--color-green);
+            font-size: 1.3em;
+        }
+        
+        .gradient-path {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px dashed #ddd;
+            border-radius: var(--border-radius);
+        }
+        
+        .gradient-path strong {
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        /* --- 하이라이트 --- */
+        .highlight-green {
+            color: var(--color-green);
+            font-weight: bold;
+        }
+        
+        .highlight-red {
+            color: var(--color-red);
+            font-weight: bold;
+        }
+        
+        .highlight-blue {
+            color: var(--color-blue);
+            font-weight: bold;
+        }
+        .highlight-orange {
+            color: var(--color-orange);
+            font-weight: bold;
+        }
+        
+        /* --- SVG Graph Styles --- */
+        .svg-graph-container {
+            width: 100%;
+            max-width: 700px;
+            margin: 30px auto;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background-color: #fcfcfc;
+            box-shadow: var(--box-shadow);
+        }
+
+        .graph-node {
+            fill: white;
+            stroke: var(--color-primary);
+            stroke-width: 2;
+            transition: fill 0.3s, stroke 0.3s;
+        }
+        .graph-node-text {
+            font-family: sans-serif;
+            font-size: 14px;
+            fill: var(--color-dark);
+            font-weight: bold;
+        }
+        .graph-input-text {
+            font-family: sans-serif;
+            font-size: 14px;
+            fill: var(--color-dark);
+        }
+        .graph-arrow {
+            stroke: #666;
+            stroke-width: 1.5;
+            fill: none;
+            marker-end: url(#arrowhead);
+        }
+        .graph-arrow.forward {
+            stroke: var(--color-blue);
+        }
+        .graph-arrow.backward {
+            stroke: var(--color-red);
+            stroke-dasharray: 4 2;
+        }
+        .graph-gradient-text {
+            font-family: sans-serif;
+            font-size: 12px;
+            fill: var(--color-red);
+        }
+        .graph-value-text {
+            font-family: sans-serif;
+            font-size: 12px;
+            fill: var(--color-blue);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="presentation-container">
+        
+        <section class="slide active">
+            <div class="slide-content">
+                <h1>역전파(Backpropagation)와<br>계산 그래프(Computation Graphs)</h1>
+                <p style="text-align: center;">제공된 예제를 통해 역전파의 상세한 계산 과정을 단계별로 알아봅니다.</p>
+                
+                <div class="calc-box">
+                    <strong>예제 함수:</strong>
+                    $$f(x, y, z) = (x + y) \cdot \max(y, z)$$
+                    <strong>입력값:</strong>
+                    $$x = 1, \quad y = 2, \quad z = 0$$
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <div class="slide-content">
+                <h1>핵심 개념: 연쇄 법칙 (Chain Rule)</h1>
+                <p>역전파는 본질적으로 연쇄 법칙을 계산 그래프에 적용하여 최종 출력(손실)에 대한 각 입력의 기울기(gradient)를 계산하는 과정입니다.</p>
+                
+                <div class="calc-box">
+                    <p>이미지의 개념을 다시 정리하면:</p>
+                    $$ \frac{\partial s}{\partial x} = \frac{\partial s}{\partial z} \cdot \frac{\partial z}{\partial x} $$
+                    <ul>
+                        <li><strong class="highlight-blue">Upstream Gradient (상류):</strong> $\frac{\partial s}{\partial z}$ <br>
+                            (뒤쪽 노드에서 흘러들어오는 기울기)</li>
+                        <li><strong class="highlight-red">Local Gradient (지역):</strong> $\frac{\partial z}{\partial x}$ <br>
+                            (현재 노드의 입력에 대한 미분값)</li>
+                        <li><strong class="highlight-green">Downstream Gradient (하류):</strong> $\frac{\partial s}{\partial x}$ <br>
+                            (앞쪽 노드로 전달할 최종 기울기)</li>
+                    </ul>
+                    <hr>
+                    <h3 style="text-align: center;">"하류 기울기 = 상류 기울기 $\times$ 지역 기울기"</h3>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide">
+            <div class="slide-content">
+                <h1>1. 문제 분해 및 계산 그래프 구성</h1>
+                <p>복잡한 함수 $f$를 간단한 연산 노드(node)로 분해하고 그래프를 구성합니다.</p>
+                
+                <div class="calc-box">
+                    <p><strong>함수:</strong> $f(x, y, z) = (x + y) \cdot \max(y, z)$</p>
+                    <p><strong>중간 변수 도입:</strong></p>
+                    <ol>
+                        <li>$a = x + y$</li>
+                        <li>$b = \max(y, z)$</li>
+                        <li>$f = a \cdot b$</li>
+                    </ol>
+                </div>
+
+                <div class="svg-graph-container">
+                    <svg width="100%" height="250" viewBox="0 0 600 250">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                            </marker>
+                            <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-blue)" />
+                            </marker>
+                            <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-red)" />
+                            </marker>
+                        </defs>
+                        
+                        <circle cx="200" cy="80" r="25" class="graph-node" />
+                        <text x="200" y="85" text-anchor="middle" class="graph-node-text">+</text>
+                        
+                        <circle cx="200" cy="170" r="25" class="graph-node" />
+                        <text x="200" y="175" text-anchor="middle" class="graph-node-text">max</text>
+                        
+                        <circle cx="400" cy="125" r="25" class="graph-node" style="stroke: var(--color-green);" />
+                        <text x="400" y="130" text-anchor="middle" class="graph-node-text">*</text>
+
+                        <text x="50" y="70" text-anchor="middle" class="graph-input-text">x</text>
+                        <text x="50" y="110" text-anchor="middle" class="graph-input-text">y</text>
+                        <text x="50" y="160" text-anchor="middle" class="graph-input-text">y</text>
+                        <text x="50" y="200" text-anchor="middle" class="graph-input-text">z</text>
+
+                        <text x="300" y="85" text-anchor="middle" class="graph-input-text">a</text>
+                        <text x="300" y="175" text-anchor="middle" class="graph-input-text">b</text>
+                        <text x="470" y="130" text-anchor="middle" class="graph-input-text">f</text>
+
+                        <line x1="70" y1="75" x2="175" y2="75" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="105" x2="175" y2="90" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        
+                        <line x1="70" y1="155" x2="175" y2="160" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="195" x2="175" y2="180" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        
+                        <line x1="225" y1="80" x2="375" y2="115" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="225" y1="170" x2="375" y2="135" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        
+                        <line x1="425" y1="125" x2="460" y2="125" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <div class="slide-content">
+                <h1>2. 순전파 (Forward Pass)</h1>
+                <p>입력값 $x=1, y=2, z=0$을 대입하여 각 노드의 출력값을 계산합니다.</p>
+                
+                <div class="calc-box">
+                    <div class="calc-step">
+                        <h3>Node 1: 덧셈 ($a = x + y$)</h3>
+                        $$a = x + y = 1 + 2 = \mathbf{3}$$
+                    </div>
+                    <div class="calc-step">
+                        <h3>Node 2: Max ($b = \max(y, z)$)</h3>
+                        $$b = \max(y, z) = \max(2, 0) = \mathbf{2}$$
+                    </div>
+                    <div class="calc-step">
+                        <h3>Node 3: 곱셈 ($f = a \cdot b$)</h3>
+                        $$f = a \cdot b = 3 \cdot 2 = \mathbf{6}$$
+                    </div>
+                </div>
+                <p style="text-align: center;"><strong>순전파 결과:</strong> $a=3$, $b=2$, $f=6$</p>
+
+                <div class="svg-graph-container">
+                    <svg width="100%" height="250" viewBox="0 0 600 250">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                            </marker>
+                            <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-blue)" />
+                            </marker>
+                            <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-red)" />
+                            </marker>
+                        </defs>
+                        
+                        <circle cx="200" cy="80" r="25" class="graph-node" />
+                        <text x="200" y="85" text-anchor="middle" class="graph-node-text">+</text>
+                        
+                        <circle cx="200" cy="170" r="25" class="graph-node" />
+                        <text x="200" y="175" text-anchor="middle" class="graph-node-text">max</text>
+                        
+                        <circle cx="400" cy="125" r="25" class="graph-node" style="stroke: var(--color-green);" />
+                        <text x="400" y="130" text-anchor="middle" class="graph-node-text">*</text>
+
+                        <text x="50" y="70" text-anchor="middle" class="graph-input-text">x = 1</text>
+                        <text x="50" y="110" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="160" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="200" text-anchor="middle" class="graph-input-text">z = 0</text>
+
+                        <text x="300" y="85" text-anchor="middle" class="graph-input-text">a = 3</text>
+                        <text x="300" y="175" text-anchor="middle" class="graph-input-text">b = 2</text>
+                        <text x="470" y="130" text-anchor="middle" class="graph-input-text">f = 6</text>
+
+                        <line x1="70" y1="75" x2="175" y2="75" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="70" y1="105" x2="175" y2="90" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <text x="120" y="65" text-anchor="middle" class="graph-value-text">1</text>
+                        <text x="120" y="100" text-anchor="middle" class="graph-value-text">2</text>
+                        <text x="250" y="75" text-anchor="middle" class="graph-value-text">3</text>
+                        
+                        <line x1="70" y1="155" x2="175" y2="160" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="70" y1="195" x2="175" y2="180" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <text x="120" y="150" text-anchor="middle" class="graph-value-text">2</text>
+                        <text x="120" y="190" text-anchor="middle" class="graph-value-text">0</text>
+                        <text x="250" y="165" text-anchor="middle" class="graph-value-text">2</text>
+                        
+                        <line x1="225" y1="80" x2="375" y2="115" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="225" y1="170" x2="375" y2="135" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <text x="300" y="95" text-anchor="middle" class="graph-value-text">3</text>
+                        <text x="300" y="155" text-anchor="middle" class="graph-value-text">2</text>
+                        <text x="425" y="110" text-anchor="middle" class="graph-value-text">6</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide">
+            <div class="slide-content">
+                <h1>3. 역전파 (Backward Pass) - Node 3: 곱셈</h1>
+                <p>역전파는 끝에서부터 시작합니다. $f$에 대한 $f$의 기울기는 항상 1입니다.</p>
+                <p style="text-align: center;"><strong>시작점 (Upstream Gradient):</strong> $\frac{\partial f}{\partial f} = 1$</p>
+
+                <div class="calc-box">
+                    <h3>Node 3: $f = a \cdot b$</h3>
+                    <p>먼저 $a$와 $b$에 대한 $f$의 기울기(하류 기울기)를 구합니다.</p>
+                    
+                    <div class="calc-step">
+                        <strong>A. $\frac{\partial f}{\partial a}$ 계산:</strong>
+                        <ul>
+                            <li><strong>Local Gradient (지역 기울기):</strong> $\frac{\partial f}{\partial a} = b = 2$</li>
+                            <li><strong>Chain Rule (연쇄 법칙):</strong> 
+                                $\frac{\partial f}{\partial a} = \frac{\partial f}{\partial f} \cdot \frac{\partial f}{\partial a} = 1 \cdot b = 1 \cdot 2 = \mathbf{2}$
+                            </li>
+                        </ul>
+                        <p>$\rightarrow$ 덧셈 노드로 전달될 <strong class="highlight-blue">Upstream Gradient</strong>는 $\mathbf{2}$ 입니다.</p>
+                    </div>
+
+                    <div class="calc-step">
+                        <strong>B. $\frac{\partial f}{\partial b}$ 계산:</strong>
+                        <ul>
+                            <li><strong>Local Gradient (지역 기울기):</strong> $\frac{\partial f}{\partial b} = a = 3$</li>
+                            <li><strong>Chain Rule (연쇄 법칙):</strong> 
+                                $\frac{\partial f}{\partial b} = \frac{\partial f}{\partial f} \cdot \frac{\partial f}{\partial b} = 1 \cdot a = 1 \cdot 3 = \mathbf{3}$
+                            </li>
+                        </ul>
+                        <p>$\rightarrow$ max 노드로 전달될 <strong class="highlight-blue">Upstream Gradient</strong>는 $\mathbf{3}$ 입니다.</p>
+                    </div>
+                </div>
+
+                <div class="svg-graph-container">
+                    <svg width="100%" height="250" viewBox="0 0 600 250">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                            </marker>
+                            <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-blue)" />
+                            </marker>
+                            <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-red)" />
+                            </marker>
+                        </defs>
+                        
+                        <circle cx="200" cy="80" r="25" class="graph-node" />
+                        <text x="200" y="85" text-anchor="middle" class="graph-node-text">+</text>
+                        
+                        <circle cx="200" cy="170" r="25" class="graph-node" />
+                        <text x="200" y="175" text-anchor="middle" class="graph-node-text">max</text>
+                        
+                        <circle cx="400" cy="125" r="25" class="graph-node" style="stroke: var(--color-green);" />
+                        <text x="400" y="130" text-anchor="middle" class="graph-node-text">*</text>
+
+                        <text x="50" y="70" text-anchor="middle" class="graph-input-text">x = 1</text>
+                        <text x="50" y="110" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="160" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="200" text-anchor="middle" class="graph-input-text">z = 0</text>
+
+                        <text x="300" y="85" text-anchor="middle" class="graph-input-text">a = 3</text>
+                        <text x="300" y="175" text-anchor="middle" class="graph-input-text">b = 2</text>
+                        <text x="470" y="130" text-anchor="middle" class="graph-input-text">f = 6</text>
+
+                        <line x1="70" y1="75" x2="175" y2="75" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="105" x2="175" y2="90" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="155" x2="175" y2="160" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="195" x2="175" y2="180" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="225" y1="80" x2="375" y2="115" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="225" y1="170" x2="375" y2="135" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="425" y1="125" x2="460" y2="125" class="graph-arrow" marker-end="url(#arrowhead)"/>
+
+
+                        <line x1="460" y1="125" x2="425" y2="125" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="440" y="110" text-anchor="middle" class="graph-gradient-text">df/df=1</text>
+                        
+                        <line x1="375" y1="115" x2="225" y2="80" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="300" y="100" text-anchor="middle" class="graph-gradient-text">df/da=2</text>
+                        
+                        <line x1="375" y1="135" x2="225" y2="170" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="300" y="150" text-anchor="middle" class="graph-gradient-text">df/db=3</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide">
+            <div class="slide-content">
+                <h1>3. 역전파 (Backward Pass) - Node 1: 덧셈</h1>
+                <p>Node 3에서 넘어온 Upstream Gradient ($\frac{\partial f}{\partial a} = \mathbf{2}$)를 사용하여 계산합니다.</p>
+                
+                <div class="calc-box">
+                    <h3>Node 1: $a = x + y$</h3>
+                    <p>이 노드로 흘러들어오는 <strong class="highlight-blue">Upstream Gradient</strong>는 $\frac{\partial f}{\partial a} = \mathbf{2}$ 입니다.</p>
+                    
+                    <div class="calc-step">
+                        <strong>A. $\frac{\partial f}{\partial x}$ 계산:</strong>
+                        <ul>
+                            <li><strong>Local Gradient:</strong> $\frac{\partial a}{\partial x} = 1$</li>
+                            <li><strong>Chain Rule:</strong> 
+                                $\frac{\partial f}{\partial x}_{\text{path_a}} = \frac{\partial f}{\partial a} \cdot \frac{\partial a}{\partial x} = 2 \cdot 1 = \mathbf{2}$
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="calc-step">
+                        <strong>B. $\frac{\partial f}{\partial y}$ (덧셈 노드 경로):</strong>
+                        <ul>
+                            <li><strong>Local Gradient:</strong> $\frac{\partial a}{\partial y} = 1$</li>
+                            <li><strong>Chain Rule:</strong> 
+                                $\frac{\partial f}{\partial y}_{\text{path_a}} = \frac{\partial f}{\partial a} \cdot \frac{\partial a}{\partial y} = 2 \cdot 1 = \mathbf{2}$
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="svg-graph-container">
+                    <svg width="100%" height="250" viewBox="0 0 600 250">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                            </marker>
+                            <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-blue)" />
+                            </marker>
+                            <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-red)" />
+                            </marker>
+                        </defs>
+                        
+                        <circle cx="200" cy="80" r="25" class="graph-node" />
+                        <text x="200" y="85" text-anchor="middle" class="graph-node-text">+</text>
+                        
+                        <circle cx="200" cy="170" r="25" class="graph-node" />
+                        <text x="200" y="175" text-anchor="middle" class="graph-node-text">max</text>
+                        
+                        <circle cx="400" cy="125" r="25" class="graph-node" style="stroke: var(--color-green);" />
+                        <text x="400" y="130" text-anchor="middle" class="graph-node-text">*</text>
+
+                        <text x="50" y="70" text-anchor="middle" class="graph-input-text">x = 1</text>
+                        <text x="50" y="110" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="160" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="200" text-anchor="middle" class="graph-input-text">z = 0</text>
+
+                        <text x="300" y="85" text-anchor="middle" class="graph-input-text">a = 3</text>
+                        <text x="300" y="175" text-anchor="middle" class="graph-input-text">b = 2</text>
+                        <text x="470" y="130" text-anchor="middle" class="graph-input-text">f = 6</text>
+
+                        <line x1="70" y1="75" x2="175" y2="75" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="105" x2="175" y2="90" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="155" x2="175" y2="160" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="195" x2="175" y2="180" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="225" y1="80" x2="375" y2="115" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="225" y1="170" x2="375" y2="135" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="425" y1="125" x2="460" y2="125" class="graph-arrow" marker-end="url(#arrowhead)"/>
+
+                        <text x="300" y="100" text-anchor="middle" class="graph-gradient-text">df/da=2</text>
+                        <text x="300" y="150" text-anchor="middle" class="graph-gradient-text">df/db=3</text>
+
+                        <line x1="175" y1="75" x2="70" y2="75" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="120" y="60" text-anchor="middle" class="graph-gradient-text">df/dx=2</text>
+                        
+                        <line x1="175" y1="90" x2="70" y2="105" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="120" y="120" text-anchor="middle" class="graph-gradient-text">df/dy_a=2</text>
+
+                    </svg>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide">
+            <div class="slide-content">
+                <h1>3. 역전파 (Backward Pass) - Node 2: Max</h1>
+                <p>Node 3에서 넘어온 Upstream Gradient ($\frac{\partial f}{\partial b} = \mathbf{3}$)를 사용하여 계산합니다.</p>
+
+                <div class="calc-box">
+                    <h3>Node 2: $b = \max(y, z)$</h3>
+                    <p>이 노드로 흘러들어오는 <strong class="highlight-blue">Upstream Gradient</strong>는 $\frac{\partial f}{\partial b} = \mathbf{3}$ 입니다.</p>
+                    
+                    <p><strong>[중요] max 게이트의 미분:</strong>
+                    $\max(u, v)$ 함수는 <strong>더 컸던 입력으로만</strong> 기울기를 전달하고, 작은 입력으로는 0을 전달합니다. (이를 'Gradient Switch' 또는 'Router'라고도 합니다.)</p>
+                    <p>순전파에서 $y=2, z=0$ 이었으므로, <strong class="highlight-orange">$y > z$</strong> 입니다. 따라서 기울기는 <strong class="highlight-orange">$y$로만</strong> 흐릅니다.</p>
+
+                    <div class="calc-step">
+                        <strong>A. $\frac{\partial f}{\partial y}$ (max 노드 경로):</strong>
+                        <ul>
+                            <li><strong>Local Gradient:</strong> $\frac{\partial b}{\partial y} = 1$ ($y$가 max였으므로)</li>
+                            <li><strong>Chain Rule:</strong> 
+                                $\frac{\partial f}{\partial y}_{\text{path_b}} = \frac{\partial f}{\partial b} \cdot \frac{\partial b}{\partial y} = 3 \cdot 1 = \mathbf{3}$
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="calc-step">
+                        <strong>B. $\frac{\partial f}{\partial z}$ 계산:</strong>
+                        <ul>
+                            <li><strong>Local Gradient:</strong> $\frac{\partial b}{\partial z} = 0$ ($z$가 max가 아니었으므로)</li>
+                            <li><strong>Chain Rule:</strong> 
+                                $\frac{\partial f}{\partial z} = \frac{\partial f}{\partial b} \cdot \frac{\partial b}{\partial z} = 3 \cdot 0 = \mathbf{0}$
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="svg-graph-container">
+                    <svg width="100%" height="250" viewBox="0 0 600 250">
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+                            </marker>
+                            <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-blue)" />
+                            </marker>
+                            <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-red)" />
+                            </marker>
+                        </defs>
+                        
+                        <circle cx="200" cy="80" r="25" class="graph-node" />
+                        <text x="200" y="85" text-anchor="middle" class="graph-node-text">+</text>
+                        
+                        <circle cx="200" cy="170" r="25" class="graph-node" />
+                        <text x="200" y="175" text-anchor="middle" class="graph-node-text">max</text>
+                        
+                        <circle cx="400" cy="125" r="25" class="graph-node" style="stroke: var(--color-green);" />
+                        <text x="400" y="130" text-anchor="middle" class="graph-node-text">*</text>
+
+                        <text x="50" y="70" text-anchor="middle" class="graph-input-text">x = 1</text>
+                        <text x="50" y="110" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="160" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="200" text-anchor="middle" class="graph-input-text">z = 0</text>
+
+                        <text x="300" y="85" text-anchor="middle" class="graph-input-text">a = 3</text>
+                        <text x="300" y="175" text-anchor="middle" class="graph-input-text">b = 2</text>
+                        <text x="470" y="130" text-anchor="middle" class="graph-input-text">f = 6</text>
+
+                        <line x1="70" y1="75" x2="175" y2="75" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="105" x2="175" y2="90" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="155" x2="175" y2="160" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="70" y1="195" x2="175" y2="180" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="225" y1="80" x2="375" y2="115" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="225" y1="170" x2="375" y2="135" class="graph-arrow" marker-end="url(#arrowhead)"/>
+                        <line x1="425" y1="125" x2="460" y2="125" class="graph-arrow" marker-end="url(#arrowhead)"/>
+
+                        <text x="300" y="100" text-anchor="middle" class="graph-gradient-text">df/da=2</text>
+                        <text x="300" y="150" text-anchor="middle" class="graph-gradient-text">df/db=3</text>
+
+                        <line x1="175" y1="75" x2="70" y2="75" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="120" y="60" text-anchor="middle" class="graph-gradient-text">df/dx=2</text>
+                        
+                        <line x1="175" y1="90" x2="70" y2="105" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="120" y="120" text-anchor="middle" class="graph-gradient-text">df/dy_a=2</text>
+
+                        <line x1="175" y1="160" x2="70" y2="155" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <text x="120" y="145" text-anchor="middle" class="graph-gradient-text">df/dy_b=3</text>
+                        
+                        <line x1="175" y1="180" x2="70" y2="195" class="graph-arrow backward" style="stroke-opacity: 0.3;" marker-end="url(#arrowhead-red)"/>
+                        <text x="120" y="210" text-anchor="middle" class="graph-gradient-text" style="fill: #999;">df/dz=0</text>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide">
+            <div class="slide-content">
+                <h1>4. 최종 기울기 합산 (Summing Gradients)</h1>
+                <p>계산 그래프에서 하나의 변수가 여러 경로로 사용된 경우(여기서는 $y$), 각 경로에서 흘러온 기울기를 모두 <strong>더해야</strong> 합니다.</p>
+                
+                <div class="calc-box">
+                    <div class="calc-step">
+                        <h3>최종 $\frac{\partial f}{\partial x}$:</h3>
+                        <p>경로가 하나뿐이었습니다.</p>
+                        <p class="final-answer">$\frac{\partial f}{\partial x} = 2$</p>
+                    </div>
+
+                    <div class="calc-step">
+                        <h3>최종 $\frac{\partial f}{\partial z}$:</h3>
+                        <p>경로가 하나뿐이었습니다.</p>
+                        <p class="final-answer">$\frac{\partial f}{\partial z} = 0$</p>
+                    </div>
+                    
+                    <hr>
+
+                    <div class="calc-step">
+                        <h3>최종 $\frac{\partial f}{\partial y}$:</h3>
+                        <p>$y$는 덧셈 노드($a$)와 max 노드($b$) 두 곳으로 분기되었습니다. 따라서 두 경로의 기울기를 합산합니다.</p>
+                        $$ \frac{\partial f}{\partial y} = \frac{\partial f}{\partial y}_{\text{path_a}} + \frac{\partial f}{\partial y}_{\text{path_b}} $$
+                        $$ \frac{\partial f}{\partial y} = ( \frac{\partial f}{\partial a} \cdot \frac{\partial a}{\partial y} ) + ( \frac{\partial f}{\partial b} \cdot \frac{\partial b}{\partial y} ) $$
+                        <div class="gradient-path">
+                            <strong>Path 1 (via 덧셈):</strong> $2 \cdot 1 = 2$
+                        </div>
+                        <div class="gradient-path">
+                            <strong>Path 2 (via max):</strong> $3 \cdot 1 = 3$
+                        </div>
+                        <br>
+                        <p class="final-answer">$\frac{\partial f}{\partial y} = 2 + 3 = 5$</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="slide">
+            <div class="slide-content">
+                <h1>5. 요약: 순전파 & 역전파 최종 결과</h1>
+                <p>모든 계산 과정을 요약한 최종 결과입니다.</p>
+                
+                <div class="svg-graph-container">
+                    <svg width="100%" height="250" viewBox="0 0 600 250">
+                        <defs>
+                            <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-blue)" />
+                            </marker>
+                            <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--color-red)" />
+                            </marker>
+                        </defs>
+                        
+                        <circle cx="200" cy="80" r="25" class="graph-node" />
+                        <text x="200" y="85" text-anchor="middle" class="graph-node-text">+</text>
+                        
+                        <circle cx="200" cy="170" r="25" class="graph-node" />
+                        <text x="200" y="175" text-anchor="middle" class="graph-node-text">max</text>
+                        
+                        <circle cx="400" cy="125" r="25" class="graph-node" style="stroke: var(--color-green);" />
+                        <text x="400" y="130" text-anchor="middle" class="graph-node-text">*</text>
+
+                        <text x="50" y="70" text-anchor="middle" class="graph-input-text">x = 1</text>
+                        <text x="50" y="110" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="160" text-anchor="middle" class="graph-input-text">y = 2</text>
+                        <text x="50" y="200" text-anchor="middle" class="graph-input-text">z = 0</text>
+
+                        <text x="300" y="85" text-anchor="middle" class="graph-input-text">a = 3</text>
+                        <text x="300" y="175" text-anchor="middle" class="graph-input-text">b = 2</text>
+                        <text x="470" y="130" text-anchor="middle" class="graph-input-text">f = 6</text>
+
+                        <line x1="70" y1="75" x2="175" y2="75" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="70" y1="105" x2="175" y2="90" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="70" y1="155" x2="175" y2="160" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="70" y1="195" x2="175" y2="180" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="225" y1="80" x2="375" y2="115" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="225" y1="170" x2="375" y2="135" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+                        <line x1="425" y1="125" x2="460" y2="125" class="graph-arrow forward" marker-end="url(#arrowhead-blue)"/>
+
+                        <line x1="460" y1="125" x2="425" y2="125" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <line x1="375" y1="115" x2="225" y2="80" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <line x1="375" y1="135" x2="225" y2="170" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <line x1="175" y1="75" x2="70" y2="75" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <line x1="175" y1="90" x2="70" y2="105" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <line x1="175" y1="160" x2="70" y2="155" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        <line x1="175" y1="180" x2="70" y2="195" class="graph-arrow backward" marker-end="url(#arrowhead-red)"/>
+                        
+                        <text x="120" y="65" text-anchor="middle" class="graph-value-text">1</text>
+                        <text x="120" y="100" text-anchor="middle" class="graph-value-text">2</text>
+                        <text x="250" y="75" text-anchor="middle" class="graph-value-text">3</text>
+                        <text x="120" y="150" text-anchor="middle" class="graph-value-text">2</text>
+                        <text x="120" y="190" text-anchor="middle" class="graph-value-text">0</text>
+                        <text x="250" y="165" text-anchor="middle" class="graph-value-text">2</text>
+                        <text x="300" y="95" text-anchor="middle" class="graph-value-text">3</text>
+                        <text x="300" y="155" text-anchor="middle" class="graph-value-text">2</text>
+                        <text x="425" y="110" text-anchor="middle" class="graph-value-text">6</text>
+
+                        <text x="440" y="110" text-anchor="middle" class="graph-gradient-text">1</text>
+                        <text x="300" y="100" text-anchor="middle" class="graph-gradient-text">df/da=2</text>
+                        <text x="300" y="150" text-anchor="middle" class="graph-gradient-text">df/db=3</text>
+                        <text x="120" y="60" text-anchor="middle" class="graph-gradient-text">df/dx=2</text>
+                        <text x="120" y="120" text-anchor="middle" class="graph-gradient-text">df/dy_a=2</text>
+                        <text x="120" y="145" text-anchor="middle" class="graph-gradient-text">df/dy_b=3</text>
+                        <text x="120" y="210" text-anchor="middle" class="graph-gradient-text">df/dz=0</text>
+
+                        <text x="10" y="30" class="graph-gradient-text" style="font-size: 16px; fill: var(--color-green);">df/dx = 2</text>
+                        <text x="500" y="30" class="graph-gradient-text" style="font-size: 16px; fill: var(--color-green);">df/dz = 0</text>
+                        <text x="250" y="30" class="graph-gradient-text" style="font-size: 16px; fill: var(--color-green);">df/dy = 2+3 = 5</text>
+                    </svg>
+                </div>
+
+                <h2>최종 계산된 기울기</h2>
+                <div class="calc-box" style="font-size: 1.2rem; text-align: center;">
+                    <span style="margin: 0 15px;"><strong class="highlight-green">$\frac{\partial f}{\partial x} = 2$</strong></span>
+                    <span style="margin: 0 15px;"><strong class="highlight-green">$\frac{\partial f}{\partial y} = 5$</strong></span>
+                    <span style="margin: 0 15px;"><strong class="highlight-green">$\frac{\partial f}{\partial z} = 0$</strong></span>
+                </div>
+                <p><strong>의미:</strong></p>
+                <ul>
+                    <li>$x$가 1 증가하면 $f$는 약 2 증가합니다.</li>
+                    <li>$y$가 1 증가하면 $f$는 약 5 증가합니다. ($y$가 가장 영향력이 큽니다.)</li>
+                    <li>$z$가 (약간) 증가해도 $f$는 0 증가합니다. (현재 $z=0$은 $b$의 값에 영향을 주지 않기 때문입니다.)</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="nav-buttons">
+        <button id="prev" disabled>&larr; 이전</button>
+        <button id="next">다음 &rarr;</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const nextBtn = document.getElementById('next');
+            const prevBtn = document.getElementById('prev');
+            let currentSlide = 0;
+
+            // MathJax 설정
+            window.MathJax = {
+                tex: {
+                    inlineMath: [['$', '$'], ['\\(', '\\)']],
+                    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+                },
+                svg: {
+                    fontCache: 'global'
+                },
+                startup: {
+                    ready: function () {
+                        MathJax.startup.defaultReady();
+                        MathJax.startup.promise.then(() => {
+                            // MathJax가 완전히 로드된 후 첫 슬라이드 렌더링
+                            showSlide(currentSlide);
+                        });
+                    }
+                }
+            };
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.remove('active');
+                });
+                
+                slides[index].classList.add('active');
+                
+                // 현재 활성화된 슬라이드 내의 수식 렌더링
+                if (window.MathJax && MathJax.startup && MathJax.startup.document) {
+                    MathJax.typesetPromise([slides[index]]).catch(() => {
+                        // 렌더링 실패 시 전체 문서 다시 렌더링
+                        MathJax.typesetPromise();
+                    });
+                }
+
+                prevBtn.disabled = index === 0;
+                nextBtn.disabled = index === slides.length - 1;
+            }
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                } else if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                }
+            });
+
+            // 초기 설정: MathJax가 준비되면 showSlide가 호출됩니다
+        });
+    </script>
+
+</body>
+</html>

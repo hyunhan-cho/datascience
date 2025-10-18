@@ -198,26 +198,60 @@
                     <p>은닉층은 입력 공간을 비선형적으로 왜곡(변환)하여, 새로운 고차원 공간에서는 데이터가 선형적으로 분리될 수 있도록 만들어줍니다.</p>
                 </div>
                  <div class="mt-6 flex justify-center">
-                    <svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="450" height="300" viewBox="0 0 450 300" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Layer Titles -->
                         <text x="50" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Input Layer</text>
-                        <text x="200" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Hidden Layer</text>
-                        <text x="350" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Output Layer</text>
-                        <circle cx="50" cy="80" r="15" fill="#3b82f6"></circle>
-                        <text x="50" y="85" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">x₁</text>
-                        <circle cx="50" cy="170" r="15" fill="#3b82f6"></circle>
-                        <text x="50" y="175" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">x₂</text>
-                        <circle cx="200" cy="80" r="15" fill="#10b981"></circle>
-                        <text x="200" y="85" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">h₁</text>
-                        <circle cx="200" cy="170" r="15" fill="#10b981"></circle>
-                        <text x="200" y="175" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">h₂</text>
-                        <circle cx="350" cy="125" r="15" fill="#f97316"></circle>
-                        <text x="350" y="130" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">y</text>
-                        <line x1="65" y1="80" x2="185" y2="80" stroke="#94a3b8" stroke-width="2"></line>
-                        <line x1="65" y1="80" x2="185" y2="170" stroke="#94a3b8" stroke-width="2"></line>
-                        <line x1="65" y1="170" x2="185" y2="80" stroke="#94a3b8" stroke-width="2"></line>
-                        <line x1="65" y1="170" x2="185" y2="170" stroke="#94a3b8" stroke-width="2"></line>
-                        <line x1="215" y1="80" x2="335" y2="125" stroke="#94a3b8" stroke-width="2"></line>
-                        <line x1="215" y1="170" x2="335" y2="125" stroke="#94a3b8" stroke-width="2"></line>
+                        <text x="225" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Hidden Layer</text>
+                        <text x="400" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Output Layer</text>
+                
+                        <!-- Lines -->
+                        <g stroke="#94a3b8" stroke-width="1.5">
+                            <!-- Input to Hidden -->
+                            <line x1="65" y1="100" x2="210" y2="100"></line> <!-- x1 -> h1 -->
+                            <line x1="65" y1="100" x2="210" y2="200"></line> <!-- x1 -> h2 -->
+                            <line x1="65" y1="200" x2="210" y2="100"></line> <!-- x2 -> h1 -->
+                            <line x1="65" y1="200" x2="210" y2="200"></line> <!-- x2 -> h2 -->
+                            <!-- Hidden to Output -->
+                            <line x1="240" y1="100" x2="385" y2="150"></line> <!-- h1 -> y -->
+                            <line x1="240" y1="200" x2="385" y2="150"></line> <!-- h2 -> y -->
+                        </g>
+                
+                        <!-- Nodes -->
+                        <g font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">
+                            <!-- Input Nodes -->
+                            <circle cx="50" cy="100" r="15" fill="#3b82f6"></circle>
+                            <text x="50" y="104">x₁</text>
+                            <circle cx="50" cy="200" r="15" fill="#3b82f6"></circle>
+                            <text x="50" y="204">x₂</text>
+                            <!-- Hidden Nodes -->
+                            <circle cx="225" cy="100" r="15" fill="#10b981"></circle>
+                            <text x="225" y="104" font-size="10">h₁ (NAND)</text>
+                            <circle cx="225" cy="200" r="15" fill="#10b981"></circle>
+                            <text x="225" y="204" font-size="10">h₂ (OR)</text>
+                            <!-- Output Node -->
+                            <circle cx="400" cy="150" r="15" fill="#f97316"></circle>
+                            <text x="400" y="154" font-size="10">y (AND)</text>
+                        </g>
+                        
+                        <!-- Weights and Biases Text -->
+                        <g font-family="sans-serif" font-size="12" text-anchor="middle" fill="#334155" font-weight="bold">
+                            <!-- Weights from Input to Hidden -->
+                            <text x="135" y="95" fill="#c026d3">w=-20</text> <!-- x1 -> h1 -->
+                            <text x="120" y="165" fill="#c026d3">w=20</text> <!-- x1 -> h2 -->
+                            <text x="120" y="135" fill="#1d4ed8">w=-20</text> <!-- x2 -> h1 -->
+                            <text x="135" y="210" fill="#1d4ed8">w=20</text> <!-- x2 -> h2 -->
+                            
+                            <!-- Biases for Hidden -->
+                            <text x="225" y="75">b=30</text> <!-- h1 (NAND) -->
+                            <text x="225" y="230">b=-10</text> <!-- h2 (OR) -->
+                            
+                            <!-- Weights from Hidden to Output -->
+                            <text x="310" y="115" fill="#059669">w=20</text> <!-- h1 -> y -->
+                            <text x="310" y="185" fill="#059669">w=20</text> <!-- h2 -> y -->
+                    
+                            <!-- Bias for Output -->
+                            <text x="400" y="185">b=-30</text> <!-- y (AND) -->
+                        </g>
                     </svg>
                 </div>
             </div>
