@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLE & XOR 문제 프레젠테이션</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        .slide.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .katex { font-size: 1.1em !important; }
+        .code-block {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
+
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div id="presentation-container" class="p-6 sm:p-8 md:p-12 relative">
+
+            <!-- Slide 1: Title -->
+            <div class="slide active">
+                <h1 class="text-4xl md:text-5xl font-bold text-center text-gray-800 mb-4">MLE & XOR 문제</h1>
+                <p class="text-xl md:text-2xl text-center text-blue-600">핵심 개념 정리 및 신경망 구현</p>
+                <div class="mt-12 text-center text-gray-500">
+                    <p>아래 네비게이션 버튼을 사용하여 슬라이드를 넘겨보세요.</p>
+                </div>
+            </div>
+
+            <!-- Slide 2: MLE 정의 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-500 pb-2">1. 최대우도추정 (MLE) - 개념</h2>
+                <h3 class="text-xl font-semibold text-gray-700 mb-3">1.1. 직관적 정의</h3>
+                <p class="text-lg text-gray-600 mb-4">
+                    데이터가 주어졌을 때, 주어진 확률 모델 $p(x;\theta)$의 파라미터 $\theta$를, 이 데이터가 나타날 확률(우도, Likelihood)을 가장 크게 만드는 값으로 추정하는 방법입니다.
+                </p>
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <p class="mb-2">관찰값 $X=\{x_1, \dots, x_n\}$이 주어졌을 때 우도함수는 다음과 같습니다:</p>
+                    <p>$$L(\theta) = p(X;\theta) = \prod_{i=1}^n p(x_i;\theta)$$</p>
+                    <p class="mt-4 mb-2">MLE는 이 우도함수를 최대화하는 $\theta$를 찾습니다:</p>
+                    <p>$$\hat\theta_{MLE} = \arg\max_\theta L(\theta)$$</p>
+                     <p class="mt-4 mb-2">실제 계산 시에는 곱셈을 덧셈으로 바꿔주는 로그우도(log-likelihood)를 사용합니다:</p>
+                    <p>$$\ell(\theta) = \log L(\theta) = \sum_{i=1}^n \log p(x_i;\theta)$$</p>
+                </div>
+            </div>
+
+            <!-- Slide 3: MLE 성질 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-500 pb-2">1.2. MLE의 수학적 성질 (중요)</h2>
+                <ul class="space-y-4 text-lg">
+                    <li><strong class="text-blue-600">일관성 (Consistency):</strong> 표본 크기 $n \to \infty$일 때 $\hat\theta_{MLE}$은 실제 파라미터 $\theta$에 수렴합니다.</li>
+                    <li><strong class="text-blue-600">점근정규성 (Asymptotic Normality):</strong> $\sqrt{n}(\hat\theta_{MLE}-\theta) \xrightarrow{d} N(0, I(\theta)^{-1})$, 여기서 $I(\theta)$는 피셔 정보 행렬입니다.</li>
+                    <li><strong class="text-blue-600">효율성 (Efficiency):</strong> 정규성 가정 하에서 MLE는 점근적으로 최소 분산(크래머-라우 하한)을 달성합니다.</li>
+                    <li><strong class="text-blue-600">편향 (Bias):</strong> 유한 표본에서는 편향이 있을 수 있습니다. (예: 분산 추정 시 $n$ 대신 $n-1$로 나누는 이유)</li>
+                </ul>
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                    <h4 class="font-semibold mb-2">피셔 정보 (Fisher Information):</h4>
+                    <p>$$I(\theta) = -\mathbb{E}\left[ \frac{\partial^2}{\partial\theta^2} \ell(\theta) \right] = \mathbb{E}\left[ \left(\frac{\partial}{\partial\theta} \log p(X;\theta)\right)\left(\frac{\partial}{\partial\theta} \log p(X;\theta)\right)^T \right]$$</p>
+                </div>
+            </div>
+
+            <!-- Slide 4: MLE 예제 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-500 pb-2">1.3. MLE 예제</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-3">1) 베르누이 분포 (동전 던지기)</h3>
+                        <p class="mb-2">성공(1) 횟수 $k$ / 총 시행 $n$.</p>
+                        <p class="mb-2">모델: $p(x;\theta)=\theta^x(1-\theta)^{1-x}$</p>
+                        <p class="mb-2">로그우도: $\ell(\theta) = k\log\theta + (n-k)\log(1-\theta)$</p>
+                        <p class="mt-4 font-bold text-blue-600 text-lg">결과: $\hat\theta = k/n$ (성공 비율)</p>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-3">2) 정규분포 (평균 $\mu$, 분산 $\sigma^2$)</h3>
+                        <p class="mb-2">독립 표본 $x_i\sim N(\mu,\sigma^2)$</p>
+                        <p class="mt-4 font-bold text-blue-600 text-lg">결과 (평균):</p>
+                        <p>$\hat\mu = \frac{1}{n}\sum x_i$ (표본 평균)</p>
+                        <p class="mt-4 font-bold text-blue-600 text-lg">결과 (분산):</p>
+                        <p>$\hat\sigma^2 = \frac{1}{n}\sum (x_i-\hat\mu)^2$ (편향 추정량)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Slide 5: Bernoulli MLE Derivation -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-500 pb-2">1.3.1. MLE 예제 - 베르누이 미분 과정</h2>
+                <p class="text-lg text-gray-600 mb-4">
+                    베르누이 분포의 로그우도 함수를 미분하여 MLE 추정량 $\hat\theta = k/n$을 유도하는 과정입니다.
+                </p>
+                <div class="bg-blue-50 p-6 rounded-lg space-y-4">
+                    <div>
+                        <h3 class="font-semibold text-lg">1. 로그우도 함수</h3>
+                        <p>성공 횟수를 $k$, 실패 횟수를 $n-k$라고 할 때 로그우도 함수는 다음과 같습니다.</p>
+                        <p>$$\ell(\theta) = k\log\theta + (n-k)\log(1-\theta)$$</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg">2. $\theta$에 대해 미분</h3>
+                        <p>로그 함수 미분 $(\log x)' = 1/x$를 이용하여 미분합니다.</p>
+                        <p>$$\frac{d\ell(\theta)}{d\theta} = \frac{k}{\theta} + \frac{n-k}{1-\theta} \cdot (-1) = \frac{k}{\theta} - \frac{n-k}{1-\theta}$$</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg">3. 미분값을 0으로 놓고 풀기</h3>
+                        <p>최대값을 찾기 위해 미분 결과가 0이 되는 $\theta$를 찾습니다.</p>
+                        <p>$$\frac{k}{\theta} - \frac{n-k}{1-\theta} = 0 \quad \implies \quad \frac{k}{\theta} = \frac{n-k}{1-\theta}$$</p>
+                        <p class="mt-2">$k(1-\theta) = (n-k)\theta$</p>
+                        <p>$k - k\theta = n\theta - k\theta$</p>
+                        <p>$k = n\theta$</p>
+                    </div>
+                     <div>
+                        <h3 class="font-semibold text-lg text-blue-600">4. 최종 결과</h3>
+                        <p class="text-xl">$$\hat\theta_{MLE} = \frac{k}{n}$$</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: MLE와 손실함수 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-blue-500 pb-2">1.4. MLE와 손실함수의 연결</h2>
+                <p class="text-lg text-gray-600 mb-4">
+                    머신러닝, 특히 분류 문제에서 모델이 각 클래스의 확률을 출력할 때, **음의 로그우도(Negative Log-Likelihood)** 손실 함수는 MLE를 수행하는 것과 같습니다. 이 손실 함수는 **크로스엔트로피(Cross-Entropy)** 손실과 동일합니다.
+                </p>
+                <div class="bg-blue-50 p-6 rounded-lg">
+                    <p class="text-lg">예: 소프트맥스 출력 $p(y|x;\theta)$에 대한 손실함수</p>
+                    <p class="my-2">$$ \text{Loss} = -\sum \log p(y_i|x_i;\theta) $$</p>
+                    <p class="text-lg mt-2">이 손실을 경사하강법으로 최소화하는 것은, 데이터의 로그우도를 최대화하는 MLE를 근사적으로 찾는 과정입니다.</p>
+                </div>
+            </div>
+
+            <!-- Slide 7: XOR 문제 정의 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-teal-500 pb-2">2. XOR 문제 - 정의</h2>
+                <p class="text-lg text-gray-600 mb-4">
+                    두 개의 이진 입력에 대해 출력이 XOR 연산 결과가 되는 문제입니다. 이 데이터는 평면에서 선형 분리가 불가능합니다.
+                </p>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                    <table class="w-full md:w-auto text-lg text-center">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="p-3 border">Input 1 ($x_1$)</th>
+                                <th class="p-3 border">Input 2 ($x_2$)</th>
+                                <th class="p-3 border bg-teal-100">Output (Y)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td class="p-3 border">0</td><td class="p-3 border">0</td><td class="p-3 border font-bold text-red-500">0</td></tr>
+                            <tr><td class="p-3 border">0</td><td class="p-3 border">1</td><td class="p-3 border font-bold text-blue-500">1</td></tr>
+                            <tr><td class="p-3 border">1</td><td class="p-3 border">0</td><td class="p-3 border font-bold text-blue-500">1</td></tr>
+                            <tr><td class="p-3 border">1</td><td class="p-3 border">1</td><td class="p-3 border font-bold text-red-500">0</td></tr>
+                        </tbody>
+                    </table>
+                     <div class="w-64 h-64 relative border-2 border-gray-300">
+                         <span class="absolute top-2 left-2 text-gray-500 text-sm">1.0</span>
+                         <span class="absolute bottom-2 left-2 text-gray-500 text-sm">0.0</span>
+                         <span class="absolute bottom-2 right-2 text-gray-500 text-sm">1.0</span>
+                         <!-- Point (0,0) -> 0 -->
+                         <div class="absolute w-6 h-6 rounded-full bg-red-500" style="bottom: 1.5rem; left: 1.5rem;"></div>
+                         <!-- Point (0,1) -> 1 -->
+                         <div class="absolute w-6 h-6 rounded-full bg-blue-500" style="top: 1.5rem; left: 1.5rem;"></div>
+                         <!-- Point (1,0) -> 1 -->
+                         <div class="absolute w-6 h-6 rounded-full bg-blue-500" style="bottom: 1.5rem; right: 1.5rem;"></div>
+                         <!-- Point (1,1) -> 0 -->
+                         <div class="absolute w-6 h-6 rounded-full bg-red-500" style="top: 1.5rem; right: 1.5rem;"></div>
+                     </div>
+                </div>
+                 <p class="text-center mt-4 text-gray-600">하나의 직선으로 파란색 점과 빨간색 점을 나눌 수 없습니다.</p>
+            </div>
+            
+            <!-- Slide 8: 왜 신경망인가 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-teal-500 pb-2">2.1. 신경망으로 해결하는 방법</h2>
+                 <p class="text-lg text-gray-600 mb-4">
+                    단층 퍼셉트론(선형 모델)은 결정 경계가 직선이라 XOR 문제를 풀 수 없습니다. 하지만 **은닉층(hidden layer)**과 **비선형 활성화 함수**를 추가한 다층 퍼셉트론(MLP)은 이 문제를 해결할 수 있습니다.
+                </p>
+                <div class="bg-teal-50 p-6 rounded-lg text-lg">
+                    <h3 class="font-semibold text-xl mb-3">핵심 아이디어</h3>
+                    <p>은닉층은 입력 공간을 비선형적으로 왜곡(변환)하여, 새로운 고차원 공간에서는 데이터가 선형적으로 분리될 수 있도록 만들어줍니다.</p>
+                </div>
+                 <div class="mt-6 flex justify-center">
+                    <svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                        <text x="50" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Input Layer</text>
+                        <text x="200" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Hidden Layer</text>
+                        <text x="350" y="20" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#334155">Output Layer</text>
+                        <circle cx="50" cy="80" r="15" fill="#3b82f6"></circle>
+                        <text x="50" y="85" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">x₁</text>
+                        <circle cx="50" cy="170" r="15" fill="#3b82f6"></circle>
+                        <text x="50" y="175" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">x₂</text>
+                        <circle cx="200" cy="80" r="15" fill="#10b981"></circle>
+                        <text x="200" y="85" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">h₁</text>
+                        <circle cx="200" cy="170" r="15" fill="#10b981"></circle>
+                        <text x="200" y="175" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">h₂</text>
+                        <circle cx="350" cy="125" r="15" fill="#f97316"></circle>
+                        <text x="350" y="130" font-family="sans-serif" font-size="12" text-anchor="middle" fill="white">y</text>
+                        <line x1="65" y1="80" x2="185" y2="80" stroke="#94a3b8" stroke-width="2"></line>
+                        <line x1="65" y1="80" x2="185" y2="170" stroke="#94a3b8" stroke-width="2"></line>
+                        <line x1="65" y1="170" x2="185" y2="80" stroke="#94a3b8" stroke-width="2"></line>
+                        <line x1="65" y1="170" x2="185" y2="170" stroke="#94a3b8" stroke-width="2"></line>
+                        <line x1="215" y1="80" x2="335" y2="125" stroke="#94a3b8" stroke-width="2"></line>
+                        <line x1="215" y1="170" x2="335" y2="125" stroke="#94a3b8" stroke-width="2"></line>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Slide 9: PyTorch 구현 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-teal-500 pb-2">3. 구현 예제 (PyTorch)</h2>
+                <p class="text-lg text-gray-600 mb-4">
+                    다음은 PyTorch를 사용하여 XOR 문제를 해결하는 간단한 다층 퍼셉트론(MLP) 코드입니다.
+                </p>
+                <div class="code-block text-sm">
+<pre><code>
+<span style="color:#66d9ef">import</span> torch
+<span style="color:#66d9ef">import</span> torch.nn <span style="color:#66d9ef">as</span> nn
+<span style="color:#66d9ef">import</span> torch.optim <span style="color:#66d9ef">as</span> optim
+
+<span style="color:#75715e"># 데이터: XOR</span>
+X = torch.tensor([[0.,0.],[0.,1.],[1.,0.],[1.,1.]])
+Y = torch.tensor([[0.],[1.],[1.],[0.]])
+
+<span style="color:#75715e"># 모델: 2(입력) -> 4(은닉) -> 1(출력)</span>
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">XORNet</span>(nn.Module):
+    <span style="color:#66d9ef">def</span> __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(2, 4)
+        self.act = nn.Tanh()
+        self.fc2 = nn.Linear(4, 1)
+        self.out = nn.Sigmoid()
+    
+    <span style="color:#66d9ef">def</span> forward(self, x):
+        x = self.act(self.fc1(x))
+        x = self.out(self.fc2(x))
+        <span style="color:#66d9ef">return</span> x
+
+model = XORNet()
+criterion = nn.BCELoss()  <span style="color:#75715e"># 이진 교차엔트로피</span>
+optimizer = optim.Adam(model.parameters(), lr=0.05)
+
+<span style="color:#75715e"># 학습</span>
+<span style="color:#66d9ef">for</span> epoch <span style="color:#f92672">in</span> range(1000):
+    optimizer.zero_grad()
+    outputs = model(X)
+    loss = criterion(outputs, Y)
+    loss.backward()
+    optimizer.step()
+    
+    <span style="color:#66d9ef">if</span> epoch % 200 == 0:
+        print(f<span style="color:#e6db74">"Epoch </span>{epoch}<span style="color:#e6db74">, loss: </span>{loss.item():.4f}<span style="color:#e6db74">"</span>)
+
+<span style="color:#75715e"># 결과 확인</span>
+<span style="color:#66d9ef">with</span> torch.no_grad():
+    preds = model(X).round()
+    print(<span style="color:#e6db74">"\nOutputs:\n"</span>, model(X).detach().numpy())
+    print(<span style="color:#e6db74">"Preds:\n"</span>, preds.numpy())
+    print(<span style="color:#e6db74">"Targets:\n"</span>, Y.numpy())
+</code></pre>
+                </div>
+            </div>
+            
+            <!-- Slide 10: 추가 고급 주제 -->
+            <div class="slide">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 border-b-4 border-gray-500 pb-2">4. 추가 고급 주제</h2>
+                 <ul class="space-y-4 text-lg text-gray-700">
+                    <li>
+                        <strong class="text-gray-800">확률적 MLE:</strong>
+                        <p class="text-base text-gray-600 ml-4">모델 파라미터의 불확실성을 고려하려면 베이즈 방법(MCMC, VI)을 사용합니다.</p>
+                    </li>
+                     <li>
+                        <strong class="text-gray-800">정규화와 MAP:</strong>
+                        <p class="text-base text-gray-600 ml-4">L2 정규화는 가우시안 사전(prior)을 사용한 MAP(Maximum A Posteriori) 추정과, L1 정규화는 라플라스 사전(prior)을 사용한 MAP 추정과 연결됩니다.</p>
+                    </li>
+                    <li>
+                        <strong class="text-gray-800">최적화 문제:</strong>
+                        <p class="text-base text-gray-600 ml-4">딥러닝의 손실 함수는 비볼록(non-convex)하여 전역 최적해를 보장하기 어렵습니다. 따라서 좋은 초기화, 배치 정규화, 학습률 스케줄링 등의 기법이 중요합니다.</p>
+                    </li>
+                    <li>
+                        <strong class="text-gray-800">불완전한 데이터:</strong>
+                        <p class="text-base text-gray-600 ml-4">결측치나 잠재 변수가 존재할 경우, EM 알고리즘을 사용하여 MLE를 반복적으로 근사할 수 있습니다.</p>
+                    </li>
+                </ul>
+            </div>
+
+
+        </div>
+
+        <!-- Navigation -->
+        <div class="bg-gray-50 p-4 flex items-center justify-between border-t">
+            <button id="prevBtn" class="bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-400 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">이전</button>
+            <div id="slide-indicators" class="flex space-x-2"></div>
+            <button id="nextBtn" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-600 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed">다음</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // KaTeX 렌더링
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ]
+            });
+
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const indicatorsContainer = document.getElementById('slide-indicators');
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            // 슬라이드 인디케이터 생성
+            for (let i = 0; i < totalSlides; i++) {
+                const indicator = document.createElement('div');
+                indicator.classList.add('w-3', 'h-3', 'rounded-full', 'cursor-pointer', 'transition-colors', 'duration-300');
+                indicator.addEventListener('click', () => showSlide(i));
+                indicatorsContainer.appendChild(indicator);
+            }
+            const indicators = indicatorsContainer.querySelectorAll('div');
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                
+                indicators.forEach((indicator, i) => {
+                    indicator.classList.toggle('bg-blue-500', i === index);
+                    indicator.classList.toggle('bg-gray-300', i !== index);
+                });
+
+                currentSlide = index;
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === totalSlides - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    showSlide(currentSlide - 1);
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < totalSlides - 1) {
+                    showSlide(currentSlide + 1);
+                }
+            });
+
+            // 초기 슬라이드 표시
+            showSlide(0);
+        });
+    </script>
+
+</body>
+</html>
+

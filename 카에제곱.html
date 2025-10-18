@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카이제곱 분포와 검정 (Chi-Square Distribution & Test)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        .katex-display { 
+            margin: 0.5em 0; 
+            font-size: 1.1em;
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            border: 1px solid #e5e7eb;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <!-- KaTeX for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmNOspXHUTO" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col justify-center items-center min-h-screen p-4 overflow-hidden">
+
+    <div id="presentation-container" class="w-full max-w-5xl h-[600px] md:h-[650px] relative">
+        <!-- Slide 1: Title -->
+        <div class="slide active flex-col justify-center items-center text-center p-8">
+            <div class="card flex flex-col justify-center">
+                <h1 class="text-4xl md:text-5xl font-bold text-sky-600 mb-4">카이제곱 분포와 검정</h1>
+                <p class="text-xl md:text-2xl text-slate-600">Chi-Square ($\chi^2$) Distribution & Test</p>
+                <div class="mt-8 text-slate-500">
+                    <i class="fas fa-chevron-left mx-2"></i>
+                    <span>슬라이드를 넘기려면 버튼이나 화살표 키를 사용하세요</span>
+                    <i class="fas fa-chevron-right mx-2"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Chi-Square Distribution Concept -->
+        <div class="slide flex-col justify-center items-center p-4">
+            <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center"><i class="fa-solid fa-puzzle-piece text-amber-500"></i> 1. 카이제곱 분포($\chi^2$ 분포) - 개념</h2>
+                <p class="text-lg md:text-xl text-slate-700 leading-relaxed mb-4">
+                    정규분포를 따르는 독립적인 확률변수들의 <strong>제곱의 합</strong>으로 만들어진 확률분포입니다.
+                </p>
+                <div class="bg-slate-100 p-6 rounded-lg">
+                    <p class="mb-2 text-md">독립적인 표준정규분포 $Z_i \sim N(0, 1)$ 변수 $k$개가 있을 때,</p>
+                    <div class="text-center text-xl my-4">
+                        $$ X^2 = Z_1^2 + Z_2^2 + \cdots + Z_k^2 $$
+                    </div>
+                    <p class="text-md">이렇게 정의된 $X^2$의 분포를 카이제곱 분포($\chi^2$)라고 부릅니다.</p>
+                    <p class="mt-4 text-lg">여기서 <span class="font-bold text-red-600">$k$</span>는 <strong>자유도 (df, degrees of freedom)</strong>를 의미합니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Mathematical Properties -->
+        <div class="slide flex-col justify-center items-center p-4">
+            <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center"><i class="fa-solid fa-square-root-variable text-amber-500"></i> 카이제곱 분포 - 수학적 특성</h2>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-sky-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-2 text-sky-800">기댓값 (Mean)</h3>
+                        <div class="text-center text-xl">$$ E(X^2) = k $$</div>
+                    </div>
+                    <div class="bg-green-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-2 text-green-800">분산 (Variance)</h3>
+                        <div class="text-center text-xl">$$ Var(X^2) = 2k $$</div>
+                    </div>
+                </div>
+                <div class="mt-8 bg-slate-100 p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-2 text-slate-800">모양 (Shape)</h3>
+                    <ul class="list-disc list-inside space-y-2 text-lg">
+                        <li>자유도($k$)가 작을수록 비대칭적 (오른쪽으로 긴 꼬리).</li>
+                        <li>자유도($k$)가 커질수록 정규분포에 가까워짐.</li>
+                    </ul>
+                    <p class="text-sm mt-2 text-slate-500">※ 자유도가 크다는 것은 더해진 변수가 많다는 뜻이므로, 중심극한정리에 의해 정규분포를 따르게 됩니다.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Chi-Square Test Concept -->
+        <div class="slide flex-col justify-center items-center p-4">
+             <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center"><i class="fa-solid fa-chart-bar text-sky-500"></i> 2. 카이제곱 검정 - 개념</h2>
+                <p class="text-lg md:text-xl text-slate-700 leading-relaxed mb-4">
+                    <strong>관찰된 빈도(Observed)</strong>와 <strong>기대된 빈도(Expected)</strong>의 차이가 통계적으로 유의미한지를 검정하는 방법입니다. 주로 범주형 데이터 분석에 사용됩니다.
+                </p>
+                <div class="bg-slate-100 p-6 rounded-lg">
+                     <h3 class="text-xl font-semibold mb-2 text-slate-800">카이제곱 통계량</h3>
+                    <div class="text-center text-xl my-4">
+                         $$ \chi^2 = \sum \frac{(O_i - E_i)^2}{E_i} $$
+                    </div>
+                    <div class="flex justify-around text-lg">
+                        <p>$O_i$: 실제 관찰된 빈도</p>
+                        <p>$E_i$: 이론상 기대되는 빈도</p>
+                    </div>
+                    <div class="mt-4 text-center bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-3 rounded-md">
+                        <i class="fas fa-lightbulb mr-2"></i> 이 $\chi^2$ 값이 클수록, 관찰값과 기대값의 차이가 크다는 의미입니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Types of Tests -->
+        <div class="slide flex-col justify-center items-center p-4">
+            <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center"><i class="fa-solid fa-sitemap text-sky-500"></i> 카이제곱 검정의 세 가지 주요 유형</h2>
+                <div class="space-y-4">
+                    <div class="p-5 bg-green-50 border-l-4 border-green-400 rounded-r-lg">
+                        <h3 class="font-bold text-xl text-green-800">① 적합도 검정 (Goodness-of-Fit Test)</h3>
+                        <p class="text-lg text-slate-700 mt-1">한 집단의 관찰 빈도가 이론적 분포에 맞는가?</p>
+                        <p class="text-sm text-slate-500 italic mt-1">예: "주사위를 던졌을 때 각 눈이 나올 확률이 모두 1/6인가?"</p>
+                    </div>
+                    <div class="p-5 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                        <h3 class="font-bold text-xl text-blue-800">② 독립성 검정 (Test of Independence)</h3>
+                        <p class="text-lg text-slate-700 mt-1">두 범주형 변수가 서로 독립인가? (관련이 없는가?)</p>
+                        <p class="text-sm text-slate-500 italic mt-1">예: "성별과 음료 선호도는 서로 관련이 있는가?"</p>
+                    </div>
+                    <div class="p-5 bg-purple-50 border-l-4 border-purple-400 rounded-r-lg">
+                        <h3 class="font-bold text-xl text-purple-800">③ 동질성 검정 (Test of Homogeneity)</h3>
+                        <p class="text-lg text-slate-700 mt-1">여러 집단의 분포가 동일한가?</p>
+                        <p class="text-sm text-slate-500 italic mt-1">예: "세 지역의 정치 성향 분포가 동일한가?"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Example 1 -->
+        <div class="slide flex-col justify-center items-center p-4">
+            <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4 text-center"><i class="fa-solid fa-magnifying-glass-chart text-green-500"></i> 예시 1: 적합도 검정</h2>
+                <p class="text-lg text-center mb-4"><strong>문제:</strong> 주사위를 60번 던진 결과, 이 주사위가 공정한지 검정하라.</p>
+                <table class="w-full text-center border border-collapse mb-4">
+                    <thead>
+                        <tr class="bg-slate-200">
+                            <th class="p-2 border">눈</th><th class="p-2 border">1</th><th class="p-2 border">2</th><th class="p-2 border">3</th><th class="p-2 border">4</th><th class="p-2 border">5</th><th class="p-2 border">6</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-2 border font-semibold">관찰빈도 (O)</td>
+                            <td class="p-2 border">8</td><td class="p-2 border">9</td><td class="p-2 border">10</td><td class="p-2 border">11</td><td class="p-2 border">12</td><td class="p-2 border">10</td>
+                        </tr>
+                        <tr class="bg-slate-50">
+                            <td class="p-2 border font-semibold">기대빈도 (E)</td>
+                            <td class="p-2 border" colspan="6">모두 10 (60/6)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="text-center bg-slate-100 p-4 rounded-lg">
+                    <p class="text-lg">$$ \chi^2 = \frac{(8-10)^2}{10} + \frac{(9-10)^2}{10} + \cdots = 1.0 $$</p>
+                    <p class="mt-2 text-md">자유도(df) = 6 - 1 = 5, 유의수준 0.05에서 임계값 = 11.07</p>
+                    <div class="mt-4 text-xl font-bold bg-green-100 text-green-800 p-3 rounded-md">
+                        결과: $1.0 < 11.07$  &rarr; 귀무가설 채택 (공정한 주사위이다)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Example 2 -->
+        <div class="slide flex-col justify-center items-center p-4">
+            <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4 text-center"><i class="fa-solid fa-magnifying-glass-chart text-blue-500"></i> 예시 2: 독립성 검정</h2>
+                <p class="text-lg text-center mb-4"><strong>문제:</strong> 성별과 커피 선호도 사이에 관계가 있는지 검정하라.</p>
+                 <table class="w-full text-center border border-collapse mb-4">
+                    <thead>
+                        <tr class="bg-slate-200">
+                            <th class="p-2 border"></th><th class="p-2 border">아메리카노</th><th class="p-2 border">라떼</th><th class="p-2 border font-bold">총합</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-2 border font-semibold">남성</td><td class="p-2 border">40 <span class="text-slate-400">(30)</span></td><td class="p-2 border">10 <span class="text-slate-400">(20)</span></td><td class="p-2 border font-bold">50</td>
+                        </tr>
+                         <tr>
+                            <td class="p-2 border font-semibold">여성</td><td class="p-2 border">20 <span class="text-slate-400">(30)</span></td><td class="p-2 border">30 <span class="text-slate-400">(20)</span></td><td class="p-2 border font-bold">50</td>
+                        </tr>
+                        <tr class="bg-slate-50">
+                            <td class="p-2 border font-bold">총합</td><td class="p-2 border font-bold">60</td><td class="p-2 border font-bold">40</td><td class="p-2 border font-bold">100</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-sm text-slate-500 text-center mb-4">※ 괄호 안의 숫자는 기대빈도 $E_{ij} = \frac{(\text{행 합계})(\text{열 합계})}{\text{총합}}$</p>
+                <div class="text-center bg-slate-100 p-4 rounded-lg">
+                    <p class="text-lg">$$ \chi^2 = \frac{(40-30)^2}{30} + \frac{(10-20)^2}{20} + \cdots = 16.67 $$</p>
+                    <p class="mt-2 text-md">자유도(df) = (2-1)×(2-1) = 1, 유의수준 0.05에서 임계값 = 3.84</p>
+                    <div class="mt-4 text-xl font-bold bg-red-100 text-red-800 p-3 rounded-md">
+                        결과: $16.67 > 3.84$ &rarr; 귀무가설 기각 (성별과 커피 선호도는 관련 있다)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Procedure -->
+        <div class="slide flex-col justify-center items-center p-4">
+            <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center"><i class="fa-solid fa-brain"></i> 4. 검정 절차 정리</h2>
+                <ol class="list-decimal list-inside space-y-3 text-lg">
+                    <li class="bg-slate-100 p-2 rounded"><strong>1단계:</strong> 연구가설 및 귀무가설 설정</li>
+                    <li class="bg-slate-100 p-2 rounded"><strong>2단계:</strong> 유의수준($\alpha$) 설정 (보통 0.05)</li>
+                    <li class="bg-slate-100 p-2 rounded"><strong>3단계:</strong> 기대빈도 $E_i$ 계산</li>
+                    <li class="bg-slate-100 p-2 rounded"><strong>4단계:</strong> 카이제곱 통계량 $\chi^2$ 계산</li>
+                    <li class="bg-slate-100 p-2 rounded"><strong>5단계:</strong> 자유도(df)에 따른 임계값 확인</li>
+                    <li class="bg-slate-100 p-2 rounded"><strong>6단계:</strong> $\chi^2$ 통계량과 임계값 비교 → 가설 채택/기각</li>
+                    <li class="bg-slate-100 p-2 rounded"><strong>7단계:</strong> 해석 및 결론 제시</li>
+                </ol>
+            </div>
+        </div>
+        
+        <!-- Slide 9: Cautions & Summary -->
+        <div class="slide flex-col justify-center items-center p-4">
+             <div class="card flex flex-col justify-center">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-4 text-center"><i class="fa-solid fa-triangle-exclamation text-red-500"></i> 5. 주의사항</h2>
+                        <ul class="list-disc list-inside space-y-3 text-lg bg-red-50 p-4 rounded-lg">
+                            <li>기대빈도가 5 미만인 셀은 피해야 함.</li>
+                            <li>빈도(횟수) 데이터만 사용해야 함.</li>
+                            <li>표본은 반드시 독립적이어야 함.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold mb-4 text-center"><i class="fa-solid fa-comment-dots text-indigo-500"></i> 6. 한눈에 정리</h2>
+                        <table class="w-full text-left text-md bg-indigo-50 rounded-lg overflow-hidden">
+                           <tr><td class="p-2 font-semibold border-b">분포 정의</td><td class="p-2 border-b">표준정규변수 제곱합</td></tr>
+                           <tr><td class="p-2 font-semibold border-b">모양 특징</td><td class="p-2 border-b">비대칭 &rarr; df 증가 시 정규분포 근사</td></tr>
+                           <tr><td class="p-2 font-semibold border-b">검정 목적</td><td class="p-2 border-b">범주형 변수의 관계/분포 검정</td></tr>
+                           <tr><td class="p-2 font-semibold border-b">자유도(df)</td><td class="p-2 border-b">(행-1)×(열-1) 또는 (범주수-1)</td></tr>
+                           <tr><td class="p-2 font-semibold">해석 기준</td><td class="p-2">$\chi^2 > \text{임계값}$ &rarr; 귀무가설 기각</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Interpretation Example -->
+        <div class="slide flex-col justify-center items-center p-4">
+            <div class="card flex flex-col justify-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center"><i class="fa-solid fa-book-open text-teal-500"></i> 7. 실제 해석 예시 (요약형)</h2>
+                <div class="bg-slate-100 p-6 rounded-lg shadow-inner">
+                    <p class="text-lg italic text-slate-600 leading-relaxed">
+                        "검정 결과, 
+                        <span class="font-semibold text-teal-700">$\chi^2(2) = 12.45, p < .05$</span>
+                        로 나타나, 관찰빈도와 기대빈도 간에 통계적으로 유의한 차이가 존재하였다."
+                    </p>
+                </div>
+                <div class="mt-6 text-center text-xl">
+                    <i class="fa-solid fa-arrow-right-long text-slate-400"></i>
+                    <span class="ml-4 font-semibold text-slate-800">결론: 두 변수 간에 유의미한 관계가 있다고 해석합니다.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-4 flex items-center justify-between w-full max-w-5xl">
+        <button id="prevBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 disabled:bg-slate-300 disabled:cursor-not-allowed">
+            <i class="fas fa-arrow-left"></i> 이전
+        </button>
+        <div id="slide-counter" class="text-slate-600 font-semibold"></div>
+        <button id="nextBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105 disabled:bg-slate-300 disabled:cursor-not-allowed">
+            다음 <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <script>
+        function setupPresentation() {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+
+            function showSlide(n) {
+                slides.forEach((slide, index) => {
+                    slide.classList.remove('active');
+                });
+                slides[n].classList.add('active');
+                
+                updateCounter();
+                updateNavButtons();
+
+                // Render KaTeX for the current slide
+                if (window.renderMathInElement) {
+                    renderMathInElement(slides[n], {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\(', right: '\\)', display: false},
+                            {left: '\\[', right: '\\]', display: true}
+                        ],
+                        throwOnError: false
+                    });
+                }
+            }
+            
+            function updateCounter() {
+                slideCounter.textContent = `Slide ${currentSlide + 1} / ${slides.length}`;
+            }
+
+            function updateNavButtons() {
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === slides.length - 1;
+            }
+
+            function nextSlide() {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            }
+
+            function prevSlide() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            }
+            
+            nextBtn.addEventListener('click', nextSlide);
+            prevBtn.addEventListener('click', prevSlide);
+            
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                }
+            });
+
+            showSlide(currentSlide);
+        }
+
+        // Wait for all resources including scripts to load, then run setup.
+        window.onload = setupPresentation;
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트랜스포머 디코더와 마스킹의 비밀 (개선판)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        .svg-text {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-8">
+
+    <div id="presentation-container" class="w-full aspect-video max-w-6xl relative shadow-2xl rounded-xl overflow-hidden border border-gray-200">
+        <!-- Slide 1: Title -->
+        <div class="slide active flex-col items-center justify-center text-center p-8 bg-white">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-blue-600 mb-4">트랜스포머 디코더와 마스킹의 비밀</h1>
+            <p class="text-lg sm:text-xl md:text-2xl text-gray-600">어텐션 메커니즘의 핵심 작동 원리 파헤치기</p>
+        </div>
+
+        <!-- Slide 2: Importance of Basics -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-4xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-8">1. 왜 트랜스포머 기본 구조가 중요한가?</h2>
+                <ul class="space-y-4 text-base sm:text-lg text-gray-700">
+                    <li class="flex items-start bg-blue-50 p-4 rounded-lg"><span class="text-blue-500 mr-3 text-2xl font-bold">✓</span><span><strong>기반 지식:</strong> 디코더 내부의 <strong class="text-amber-600">마스킹(Masking)</strong>은 모델의 핵심이며, 이를 이해하는 것은 트랜스포머의 근간을 파악하는 것과 같습니다.</span></li>
+                    <li class="flex items-start bg-blue-50 p-4 rounded-lg"><span class="text-blue-500 mr-3 text-2xl font-bold">✓</span><span><strong>응용의 시작:</strong> 최신 AI 모델들은 기본 구조를 변형하므로, 원본을 알아야 응용 모델의 혁신을 정확히 이해할 수 있습니다.</span></li>
+                    <li class="flex items-start bg-blue-50 p-4 rounded-lg"><span class="text-blue-500 mr-3 text-2xl font-bold">✓</span><span><strong>한계의 이해:</strong> 디코더의 순차적(sequential) 처리 한계를 알아야, 병렬 처리가 가능한 새로운 모델들의 등장을 이해할 수 있습니다.</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 3: Translation Process -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-5xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-6 text-center">2. 번역 프로세스: 직관 vs 실제</h2>
+                 <svg viewBox="0 0 800 300" class="w-full">
+                    <text x="150" y="40" class="svg-text" font-size="18" font-weight="bold" fill="#334155" text-anchor="middle">사람의 직관</text>
+                    <text x="650" y="40" class="svg-text" font-size="18" font-weight="bold" fill="#334155" text-anchor="middle">트랜스포머의 방식</text>
+                    <rect x="50" y="80" width="100" height="40" rx="5" fill="#e0f2fe"/><text x="100" y="105" text-anchor="middle" class="svg-text">"Oh,"</text>
+                    <line x1="150" y1="100" x2="180" y2="100" stroke="#60a5fa" stroke-width="2" marker-end="url(#arrow)"/>
+                    <rect x="180" y="80" width="100" height="40" rx="5" fill="#e0f2fe"/><text x="230" y="105" text-anchor="middle" class="svg-text">"I"</text>
+                    <line x1="280" y1="100" x2="310" y2="100" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow)"/>
+                    <text x="175" y="150" class="svg-text text-gray-500" text-anchor="middle">순차적으로 예측</text>
+                    <rect x="500" y="80" width="100" height="40" rx="5" fill="#dcfce7"/><text x="550" y="105" text-anchor="middle" class="svg-text">&lt;SOS&gt;</text>
+                    <line x1="600" y1="100" x2="630" y2="100" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+                    <rect x="630" y="80" width="100" height="40" rx="5" fill="#e0f2fe"/><text x="680" y="105" text-anchor="middle" class="svg-text">"Oh"</text>
+                    <line x1="730" y1="100" x2="760" y2="100" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow)"/>
+                    <text x="650" y="150" class="svg-text text-gray-500" text-anchor="middle">첫 단어부터 순차적 생성</text>
+                    <defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa" /></marker></defs>
+                 </svg>
+                <p class="mt-6 text-base sm:text-lg text-center text-gray-700">트랜스포머는 번역할 문장의 <strong class="text-amber-600">첫 단어부터 순서대로</strong> 예측하는, 우리의 직관과 유사한 방식을 사용합니다. 이처럼 다음 단어를 예측하기 위해 이전 예측 결과를 다시 입력으로 사용하는 방식을 <strong class="text-blue-600">Auto-regressive(자기회귀)</strong>라고 합니다.</p>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Decoder Information Flow -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+             <div class="w-full max-w-5xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-6 text-center">3. 디코더는 정보를 어떻게 사용하는가?</h2>
+                <svg viewBox="0 0 800 400" class="w-full">
+                    <rect x="50" y="100" width="200" height="200" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/><text x="150" y="130" text-anchor="middle" font-weight="bold" class="svg-text">인코더</text><text x="150" y="210" text-anchor="middle" class="svg-text">"퇴사하고 싶다"</text><path d="M150 230 Q 150 250 130 250 L 70 250 Q 50 250 50 230" fill="none" stroke="#f59e0b" stroke-width="2" marker-start="url(#arrow-enc)"/>
+                    <rect x="550" y="100" width="200" height="200" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="2"/><text x="650" y="130" text-anchor="middle" font-weight="bold" class="svg-text">디코더</text><text x="650" y="210" text-anchor="middle" class="svg-text">&lt;SOS&gt;  "I"  "want"</text><path d="M650 230 Q 650 250 630 250 L 570 250 Q 550 250 550 230" fill="none" stroke="#3b82f6" stroke-width="2" marker-start="url(#arrow-dec)"/>
+                    <line x1="250" y1="180" x2="550" y2="180" stroke="#f472b6" stroke-width="2.5" marker-end="url(#arrow-kv)"/><text x="400" y="165" text-anchor="middle" font-weight="bold" fill="#f472b6" class="svg-text">Cross-Attention</text><text x="400" y="195" text-anchor="middle" class="svg-text">(인코더의 Key, Value 전달)</text>
+                    <line x1="650" y1="300" x2="650" y2="340" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-out)"/><text x="650" y="365" text-anchor="middle" class="svg-text" font-weight="bold" fill="#16a34a">"to" 예측</text>
+                    <defs><marker id="arrow-enc" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" /></marker><marker id="arrow-dec" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" /></marker><marker id="arrow-kv" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f472b6" /></marker><marker id="arrow-out" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a" /></marker></defs>
+                </svg>
+                <p class="text-center text-base sm:text-lg text-gray-700 -mt-4">디코더는 <strong class="text-pink-500">'Cross-Attention'</strong>을 통해 번역할 원문(Source)의 어떤 단어에 집중해야 할지 결정합니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: Parallel Learning -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-4xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-6">4. 병렬 학습을 위한 '꼼수'와 문제점</h2>
+                <p class="mb-4 text-base sm:text-lg">모델을 효율적으로 학습시키기 위해, 전체 문장을 한 번에 처리하는 <strong class="text-amber-600">'Teacher Forcing'</strong> 기법을 사용합니다.</p>
+                <div class="bg-gray-100 p-6 rounded-lg text-base sm:text-lg font-mono whitespace-pre-wrap border border-gray-200">
+                    <p class="text-gray-500"># 목표: "I want to quit"</p>
+                    <p><strong class="text-blue-600">입력 (Input):</strong>  &lt;SOS&gt;  I   want   to</p>
+                    <p><strong class="text-green-600">정답 (Label):</strong>    I   want   to   &lt;EOS&gt;</p>
+                </div>
+                <p class="mt-6 text-base sm:text-lg">실제 번역처럼 한 단어씩 생성하고 다시 입력으로 넣는 방식은 매우 느립니다. 'Teacher Forcing'은 정답을 미리 알려줌으로써 전체 시퀀스를 한 번에 계산할 수 있어 학습 시간을 획기적으로 단축시킵니다. <strong class="text-red-600">하지만 심각한 부작용이 있습니다.</strong></p>
+            </div>
+        </div>
+        
+        <!-- Slide 6: The Contradiction -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-5xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-red-600 mb-6 text-center">5. 심각한 모순의 발생: 미래 정보 유출</h2>
+                 <p class="mb-4 text-base sm:text-lg text-center">`want`를 예측해야 할 때, <strong class="text-amber-600">Self-Attention</strong>이 미래 단어인 `to`, `quit`까지 참고해버립니다.</p>
+                 <svg viewBox="0 0 800 250" class="w-full">
+                    <text x="400" y="40" class="svg-text" font-size="16" fill="#475569" text-anchor="middle">Self-Attention 대상 (Key)</text>
+                    <g id="tokens"><rect x="50" y="60" width="100" height="40" rx="5" fill="#f1f5f9"/><text x="100" y="85" text-anchor="middle" class="svg-text">&lt;SOS&gt;</text><rect x="180" y="60" width="100" height="40" rx="5" fill="#f1f5f9"/><text x="230" y="85" text-anchor="middle" class="svg-text">I</text><rect x="310" y="60" width="100" height="40" rx="5" fill="#dbeafe" stroke="#60a5fa" stroke-width="2"/><text x="360" y="85" text-anchor="middle" class="svg-text font-bold">want</text><rect x="440" y="60" width="100" height="40" rx="5" fill="#fee2e2"/><text x="490" y="85" text-anchor="middle" class="svg-text">to</text><rect x="570" y="60" width="100" height="40" rx="5" fill="#fee2e2"/><text x="620" y="85" text-anchor="middle" class="svg-text">quit</text></g>
+                    <text x="360" y="150" class="svg-text" font-size="16" fill="#475569">Query</text>
+                    <path d="M 360 120 C 300 120, 280 100, 230 100" stroke="#22c55e" stroke-width="2" fill="none" /><path d="M 360 120 C 300 120, 160 100, 100 100" stroke="#22c55e" stroke-width="2" fill="none" />
+                    <path d="M 360 120 C 420 120, 440 100, 490 100" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5,5" fill="none" /><path d="M 360 120 C 480 120, 560 100, 620 100" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5,5" fill="none" /><line x1="440" y1="120" x2="540" y2="40" stroke="#ef4444" stroke-width="3" /><line x1="540" y1="120" x2="440" y2="40" stroke="#ef4444" stroke-width="3" /><line x1="570" y1="120" x2="670" y2="40" stroke="#ef4444" stroke-width="3" /><line x1="670" y1="120" x2="570" y2="40" stroke="#ef4444" stroke-width="3" /><text x="555" y="150" class="svg-text" fill="#ef4444" font-size="16" font-weight="bold">미래 정보 유출!</text>
+                 </svg>
+                 <p class="mt-4 text-base sm:text-lg text-center bg-red-50 p-4 rounded-lg">이는 마치 '백지 답안지를 내야 하는 시험에서, 모든 정답이 적힌 모범 답안지를 참고하며 문제를 푸는 것'과 같은 심각한 모순입니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: The Solution: Masking -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-5xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-6 text-center">6. 해결책: 미래를 가리는 '마스킹(Masking)'</h2>
+                <p class="mb-6 text-base sm:text-lg text-center text-gray-700"><strong class="text-amber-600">마스킹</strong>은 셀프 어텐션이 미래 단어 정보를 참고하지 못하도록 강제하는 <strong class="text-green-600">가림막</strong> 역할을 합니다. 이를 <strong class="text-blue-600">'Look-ahead Mask'</strong> 또는 <strong class="text-blue-600">'Causal Mask'</strong>라고도 부릅니다.</p>
+                <svg viewBox="0 0 800 250" class="w-full">
+                     <use href="#tokens" />
+                     <path d="M425 60 H 700 V 100 H 425 Z" fill="url(#maskPattern)" stroke="#3b82f6" stroke-width="2" />
+                     <defs><pattern id="maskPattern" patternUnits="userSpaceOnUse" width="10" height="10"><path d="M-1,1 l2,-2 M0,10 l10,-10 M9,11 l2,-2" stroke="#60a5fa" stroke-width="1" /></pattern></defs>
+                     <text x="360" y="150" class="svg-text" font-size="16" fill="#475569">Query</text>
+                     <path d="M 360 120 C 300 120, 280 100, 230 100" stroke="#22c55e" stroke-width="2.5" fill="none"  marker-end="url(#arrow-green)"/><path d="M 360 120 C 300 120, 160 100, 100 100" stroke="#22c55e" stroke-width="2.5" fill="none"  marker-end="url(#arrow-green)"/>
+                     <text x="230" y="150" class="svg-text" fill="#16a34a" font-weight="bold">과거 정보만 참고!</text>
+                     <defs><marker id="arrow-green" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e" /></marker></defs>
+                 </svg>
+                 <p class="mt-6 text-base sm:text-lg text-center text-gray-700">마스킹을 통해, 특정 단어를 예측할 때는 <strong class="text-amber-600">자기 자신과 그 이전 단어들만</strong> 보도록 제한합니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: How Masking Works -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-6xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-6 text-center">7. 마스킹의 구체적인 구현 원리</h2>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="text-center">
+                        <h3 class="font-semibold mb-2">1. Attention Score 계산</h3>
+                        <svg viewBox="0 0 180 120" class="w-48 border rounded-md">
+                            <text x="90" y="15" text-anchor="middle" class="svg-text text-xs">Q·Kᵀ</text>
+                            <text x="40" y="50" class="svg-text">12.1</text><text x="90" y="50" class="svg-text">25.8</text><text x="140" y="50" class="svg-text">8.3</text>
+                            <text x="40" y="90" class="svg-text">10.5</text><text x="90" y="90" class="svg-text">15.2</text><text x="140" y="90" class="svg-text">21.9</text>
+                        </svg>
+                    </div>
+                    <div class="text-2xl font-bold text-blue-500">+</div>
+                    <div class="text-center">
+                        <h3 class="font-semibold mb-2">2. Mask 적용</h3>
+                        <svg viewBox="0 0 180 120" class="w-48 border rounded-md">
+                             <text x="90" y="15" text-anchor="middle" class="svg-text text-xs">Mask Matrix</text>
+                             <text x="40" y="50" class="svg-text">0</text><text x="90" y="50" class="svg-text text-red-500">-∞</text><text x="140" y="50" class="svg-text text-red-500">-∞</text>
+                             <text x="40" y="90" class="svg-text">0</text><text x="90" y="90" class="svg-text">0</text><text x="140" y="90" class="svg-text text-red-500">-∞</text>
+                        </svg>
+                    </div>
+                    <div class="text-2xl font-bold text-blue-500">→ Softmax →</div>
+                     <div class="text-center">
+                        <h3 class="font-semibold mb-2">3. 최종 가중치</h3>
+                        <svg viewBox="0 0 180 120" class="w-48 border rounded-md bg-green-50">
+                             <text x="90" y="15" text-anchor="middle" class="svg-text text-xs">Attention Weights</text>
+                             <text x="40" y="50" class="svg-text font-bold">0.3</text><text x="90" y="50" class="svg-text font-bold text-red-600">0</text><text x="140" y="50" class="svg-text font-bold text-red-600">0</text>
+                             <text x="40" y="90" class="svg-text font-bold">0.2</text><text x="90" y="90" class="svg-text font-bold">0.3</text><text x="140" y="90" class="svg-text font-bold">0.5</text>
+                        </svg>
+                    </div>
+                </div>
+                 <p class="mt-6 text-base sm:text-lg text-center text-gray-700">미래 위치의 스코어에 아주 큰 음수(-∞)를 더해, Softmax 함수를 통과했을 때 해당 위치의 최종 가중치가 <strong class="text-red-600">0</strong>이 되도록 만듭니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: The Goal of Masking -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-4xl">
+                <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-amber-500 mb-6">8. 마스킹의 최종 목표: 환경의 일치</h2>
+                <p class="mb-6 text-base sm:text-lg text-center text-gray-700">마스킹의 핵심 역할은 두 가지 상황의 정보 환경을 동일하게 만들어주는 것입니다.</p>
+                <div class="flex flex-col md:flex-row items-center justify-around bg-gray-100 p-6 rounded-lg border">
+                    <div class="text-center mb-4 md:mb-0">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-800">모델을 훈련할 때</h3>
+                        <p class="text-gray-600">미래 단어를 볼 수 없도록 마스킹 적용</p>
+                    </div>
+                    <div class="text-6xl text-blue-600 my-4 md:my-0 mx-8 font-bold">🟰</div>
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-800">실제 번역을 수행할 때</h3>
+                        <p class="text-gray-600">애초에 미래 단어 정보가 없음</p>
+                    </div>
+                </div>
+                <p class="mt-6 text-lg sm:text-xl text-center text-amber-700 bg-amber-100 p-4 rounded-lg">결론적으로, 마스킹은 모델이 학습 과정에서 '컨닝'하지 않고, 실제 번역 상황과 똑같은 조건에서 정직하게 배우도록 만드는 필수적인 장치입니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 10: Conclusion -->
+        <div class="slide flex-col items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-4xl text-center">
+                <h2 class="text-3xl sm:text-4xl font-bold text-blue-600 mb-8">마무리 및 다음 단계</h2>
+                <ul class="space-y-4 text-base sm:text-lg text-gray-700 text-left list-disc pl-6 marker:text-blue-500">
+                    <li><strong>트랜스포머 디코더</strong>는 이전 결과들을 바탕으로 다음 단어를 <strong class="text-amber-600">순차적으로</strong> 생성합니다(Auto-regressive).</li>
+                    <li><strong>병렬 학습</strong>의 효율성을 위해 전체 문장을 입력하지만, 이는 <strong class="text-red-600">미래 정보 유출</strong>이라는 모순을 낳습니다.</li>
+                    <li><strong>마스킹</strong>은 셀프 어텐션에서 미래 위치의 가중치를 0으로 만들어 이 모순을 해결합니다.</li>
+                    <li><strong>궁극적인 목표</strong>는 <strong class="text-green-600">학습과 실제 추론 환경을 일치</strong>시켜 모델이 올바르게 동작하도록 보장하는 것입니다.</li>
+                    <li><strong>심화 학습:</strong> 이 이해를 바탕으로, BERT처럼 양방향 정보를 모두 활용하는 마스킹 전략이나, 디코더의 순차적 동작을 개선하려는 Non-Autoregressive 모델들을 탐구할 수 있습니다.</li>
+                </ul>
+                <p class="mt-12 text-2xl font-semibold">감사합니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-4 flex items-center space-x-2 sm:space-x-4">
+        <button id="prev-btn" class="bg-white hover:bg-gray-100 text-gray-800 font-bold py-2 px-4 rounded-lg border border-gray-300 transition duration-300 shadow-sm">이전</button>
+        <span id="slide-counter" class="text-base sm:text-lg text-gray-600 w-20 text-center">1 / 10</span>
+        <button id="next-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 shadow-sm">다음</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                slideCounter.textContent = `${index + 1} / ${slides.length}`;
+            }
+
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }
+
+            function prevSlide() {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                showSlide(currentSlide);
+            }
+
+            nextBtn.addEventListener('click', nextSlide);
+            prevBtn.addEventListener('click', prevSlide);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    prevSlide();
+                }
+            });
+
+            // Initialize
+            showSlide(currentSlide);
+        });
+    </script>
+</body>
+</html>
+
