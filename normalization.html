@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배치 정규화 vs 레이어 정규화</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU07EWpWzlzY8CwnwQDpcuXSILsNUcYweDsFOKAO2dw7VqkCEJ+stre" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" xintegrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+            width: 100%;
+            height: 100%;
+            padding: 4rem 2rem;
+            box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        .katex-display {
+            margin: 1em 0;
+            text-align: center;
+        }
+        .katex {
+            font-size: 1.1em;
+        }
+        .nav-button {
+            position: fixed;
+            bottom: 2rem;
+            background-color: #3B82F6; /* blue-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+            z-index: 50;
+            box-shadow: 0 4px 14px 0 rgba(0, 118, 255, 0.39);
+        }
+        .nav-button:hover {
+            background-color: #2563EB; /* blue-600 */
+        }
+        #prev { left: 2rem; }
+        #next { right: 2rem; }
+        .slide-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="slide-container" class="relative w-full h-screen overflow-hidden">
+
+        <!-- Slide 1: Title -->
+        <div class="slide active flex-col items-center justify-center text-center">
+            <h1 class="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-teal-500">배치 정규화 vs 레이어 정규화</h1>
+            <p class="mt-4 text-2xl md:text-3xl text-gray-700">트랜스포머는 왜 레이어 정규화를 선택했는가?</p>
+            <p class="mt-12 text-gray-500">화면의 좌우 버튼 또는 키보드 화살표 키로 이동하세요</p>
+        </div>
+
+        <!-- Slide 2: What is Normalization? -->
+        <div class="slide flex-col items-center justify-center">
+            <div class="w-full max-w-4xl p-8">
+                <h2 class="text-4xl font-bold text-center text-blue-600 mb-6">1. 정규화(Normalization), 왜 필요한가?</h2>
+                <div class="text-xl space-y-4 text-gray-700">
+                    <p>신경망 학습 과정에서 각 층을 통과할 때마다 데이터의 분포가 계속 바뀌는 현상을 <strong class="text-yellow-600">'내부 공변량 변화(Internal Covariate Shift)'</strong>라고 합니다.</p>
+                    <p>이 현상은 학습 속도를 저하시키고, 가중치 초기값에 민감하게 만듭니다.</p>
+                    <p class="mt-4 p-4 bg-white rounded-lg shadow-md"><strong>정규화</strong>는 각 층의 입력 데이터 분포를 평균 0, 분산 1로 일정하게 만들어주어, 이 문제를 해결하고 학습을 <strong class="text-green-600">안정적이고 빠르게</strong> 만듭니다.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: Batch Normalization -->
+        <div class="slide flex-col lg:flex-row items-center justify-center gap-8">
+            <div class="w-full lg:w-1/2 max-w-xl">
+                <h2 class="text-4xl font-bold text-blue-600 mb-4">2. 배치 정규화 (Batch Normalization)</h2>
+                <p class="text-xl mb-4">"미니배치 내 <strong class="text-yellow-600">동일한 특성(Feature)</strong>끼리 정규화"</p>
+                <div class="p-4 bg-white rounded-lg shadow-md text-lg space-y-2">
+                    <p><strong class="text-green-600">컨셉:</strong> 반 전체 학생들의 '국어' 점수 평균/분산을 구하고, '영어' 점수 평균/분산을 따로 구하는 방식.</p>
+                    <p><strong class="text-red-600">문제점:</strong> 배치 크기(학생 수)가 너무 작으면 통계치가 불안정해집니다.</p>
+                </div>
+                <div class="mt-6 text-center">
+                    <p>배치 \(B = \{x_1, ..., x_m\}\)에 대해 각 특성(feature)별로 계산:</p>
+                    <div>\(\mu_B = \frac{1}{m}\sum_{i=1}^{m}x_i\)</div>
+                    <div>\(\sigma_B^2 = \frac{1}{m}\sum_{i=1}^{m}(x_i - \mu_B)^2\)</div>
+                    <div>\(\hat{x}_i = \frac{x_i - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}\)</div>
+                    <p class="mt-2">학습 가능한 파라미터 \(\gamma, \beta\)를 통해 스케일링 및 이동:</p>
+                    <div>\(y_i = \gamma \hat{x}_i + \beta\)</div>
+                </div>
+            </div>
+            <div class="w-full lg:w-1/2 max-w-md flex flex-col items-center">
+                 <p class="text-center mb-2 font-bold">정규화 방향 (세로)</p>
+                <svg viewBox="0 0 320 280" class="w-full bg-white rounded-lg p-2 border">
+                    <text x="160" y="25" font-size="16" fill="black" text-anchor="middle">Batch (N Samples)</text>
+                    <text x="20" y="140" font-size="16" fill="black" transform="rotate(-90 20 140)" text-anchor="middle">Features (D)</text>
+                    <!-- Matrix -->
+                    <defs>
+                        <rect id="cell" width="50" height="30" rx="3" fill="#f3f4f6" stroke="#d1d5db"/>
+                    </defs>
+                    <g transform="translate(60, 50)">
+                        <use href="#cell" x="0" y="0"/><use href="#cell" x="60" y="0"/><use href="#cell" x="120" y="0"/><use href="#cell" x="180" y="0"/>
+                        <use href="#cell" x="0" y="40"/><use href="#cell" x="60" y="40"/><use href="#cell" x="120" y="40"/><use href="#cell" x="180" y="40"/>
+                        <use href="#cell" x="0" y="80"/><use href="#cell" x="60" y="80"/><use href="#cell" x="120" y="80"/><use href="#cell" x="180" y="80"/>
+                        <use href="#cell" x="0" y="120"/><use href="#cell" x="60" y="120"/><use href="#cell" x="120" y="120"/><use href="#cell" x="180" y="120"/>
+                        <use href="#cell" x="0" y="160"/><use href="#cell" x="60" y="160"/><use href="#cell" x="120" y="160"/><use href="#cell" x="180" y="160"/>
+                    </g>
+                    <!-- Arrow -->
+                    <g transform="translate(85, 50)">
+                        <rect x="-5" y="0" width="10" height="190" fill="rgba(59, 130, 246, 0.3)" stroke="rgba(96, 165, 250, 0.8)" stroke-width="2" rx="5"/>
+                        <path d="M -15 195 L 0 210 L 15 195" fill="rgba(96, 165, 250, 0.8)"/>
+                        <text x="0" y="225" font-size="14" fill="#60a5fa" text-anchor="middle">Feature 1</text>
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Slide 4: Layer Normalization -->
+        <div class="slide flex-col lg:flex-row items-center justify-center gap-8">
+            <div class="w-full lg:w-1/2 max-w-md flex flex-col items-center">
+                 <p class="text-center mb-2 font-bold">정규화 방향 (가로)</p>
+                 <svg viewBox="0 0 320 280" class="w-full bg-white rounded-lg p-2 border">
+                    <text x="160" y="25" font-size="16" fill="black" text-anchor="middle">Batch (N Samples)</text>
+                    <text x="20" y="140" font-size="16" fill="black" transform="rotate(-90 20 140)" text-anchor="middle">Features (D)</text>
+                    <!-- Matrix -->
+                    <g transform="translate(60, 50)">
+                        <use href="#cell" x="0" y="0"/><use href="#cell" x="60" y="0"/><use href="#cell" x="120" y="0"/><use href="#cell" x="180" y="0"/>
+                        <use href="#cell" x="0" y="40"/><use href="#cell" x="60" y="40"/><use href="#cell" x="120" y="40"/><use href="#cell" x="180" y="40"/>
+                        <use href="#cell" x="0" y="80"/><use href="#cell" x="60" y="80"/><use href="#cell" x="120" y="80"/><use href="#cell" x="180" y="80"/>
+                        <use href="#cell" x="0" y="120"/><use href="#cell" x="60" y="120"/><use href="#cell" x="120" y="120"/><use href="#cell" x="180" y="120"/>
+                        <use href="#cell" x="0" y="160"/><use href="#cell" x="60" y="160"/><use href="#cell" x="120" y="160"/><use href="#cell" x="180" y="160"/>
+                    </g>
+                    <!-- Arrow -->
+                    <g transform="translate(60, 105)">
+                        <rect x="0" y="-5" width="230" height="10" fill="rgba(59, 130, 246, 0.3)" stroke="rgba(96, 165, 250, 0.8)" stroke-width="2" rx="5"/>
+                        <path d="M 235 -10 L 250 0 L 235 10" fill="rgba(96, 165, 250, 0.8)"/>
+                        <text x="260" y="5" font-size="14" fill="#60a5fa" text-anchor="start" dominant-baseline="middle">Sample 1</text>
+                    </g>
+                </svg>
+            </div>
+             <div class="w-full lg:w-1/2 max-w-xl">
+                <h2 class="text-4xl font-bold text-blue-600 mb-4">3. 레이어 정규화 (Layer Normalization)</h2>
+                <p class="text-xl mb-4">"<strong class="text-yellow-600">하나의 데이터(샘플)</strong> 내 모든 특성들을 정규화"</p>
+                <div class="p-4 bg-white rounded-lg shadow-md text-lg space-y-2">
+                    <p><strong class="text-green-600">컨셉:</strong> '학생 1'의 국, 영, 수 전 과목 점수 평균/분산을 구하고, '학생 2'의 전 과목 평균/분산을 따로 구하는 방식.</p>
+                    <p><strong class="text-green-600">장점:</strong> 배치 크기와 무관하게 독립적으로 계산됩니다. (RNN, 트랜스포머에 적합)</p>
+                </div>
+                <div class="mt-6 text-center">
+                    <p>하나의 샘플 \(x\) 내 \(H\)개의 특성에 대해 계산:</p>
+                    <div>\(\mu_L = \frac{1}{H}\sum_{i=1}^{H}x_i\)</div>
+                    <div>\(\sigma_L^2 = \frac{1}{H}\sum_{i=1}^{H}(x_i - \mu_L)^2\)</div>
+                    <div>\(\hat{x}_i = \frac{x_i - \mu_L}{\sqrt{\sigma_L^2 + \epsilon}}\)</div>
+                    <p class="mt-2">BN과 동일하게 학습 가능한 파라미터 \(\gamma, \beta\) 사용:</p>
+                    <div>\(y_i = \gamma \hat{x}_i + \beta\)</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Comparison -->
+        <div class="slide flex-col items-center justify-center">
+            <div class="w-full max-w-5xl p-8">
+                <h2 class="text-4xl font-bold text-center text-blue-600 mb-8">4. BN vs LN : 직관적 비교</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-center">
+                    <div class="bg-white p-6 rounded-lg shadow-lg border">
+                        <h3 class="text-2xl font-bold text-yellow-600 mb-4">배치 정규화 (BN)</h3>
+                        <svg viewBox="0 0 200 150" class="w-full h-48 mx-auto mb-4">
+                           <rect x="10" y="10" width="180" height="130" rx="5" fill="#f9fafb" stroke="#e5e7eb" />
+                           <text x="100" y="30" text-anchor="middle" fill="#1f2937">한 반의 학생들 (Batch)</text>
+                           <rect x="25" y="50" width="40" height="20" fill="#e5e7eb" /><text x="45" y="65" text-anchor="middle" fill="#1f2937">국어</text>
+                           <rect x="80" y="50" width="40" height="20" fill="#e5e7eb" /><text x="100" y="65" text-anchor="middle" fill="#1f2937">영어</text>
+                           <rect x="135" y="50" width="40" height="20" fill="#e5e7eb" /><text x="155" y="65" text-anchor="middle" fill="#1f2937">수학</text>
+                           <rect x="25" y="80" width="40" height="50" fill="rgba(59, 130, 246, 0.4)" stroke="#3b82f6" />
+                           <path d="M 45 135 L 45 145" stroke="#3b82f6" stroke-width="2"/>
+                           <text x="45" y="90" text-anchor="middle" fill="#1f2937" font-size="10">학생1</text>
+                           <text x="45" y="105" text-anchor="middle" fill="#1f2937" font-size="10">학생2</text>
+                           <text x="45" y="120" text-anchor="middle" fill="#1f2937" font-size="10">...</text>
+                        </svg>
+                        <p class="text-lg"><strong>'국어'</strong> 과목을 기준으로<br>모든 학생의 점수를 정규화</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-lg border">
+                        <h3 class="text-2xl font-bold text-yellow-600 mb-4">레이어 정규화 (LN)</h3>
+                         <svg viewBox="0 0 200 150" class="w-full h-48 mx-auto mb-4">
+                           <rect x="10" y="10" width="180" height="130" rx="5" fill="#f9fafb" stroke="#e5e7eb" />
+                           <text x="100" y="30" text-anchor="middle" fill="#1f2937">'학생 1'의 성적표</text>
+                           <rect x="25" y="50" width="40" height="20" fill="#e5e7eb" /><text x="45" y="65" text-anchor="middle" fill="#1f2937">국어</text>
+                           <rect x="80" y="50" width="40" height="20" fill="#e5e7eb" /><text x="100" y="65" text-anchor="middle" fill="#1f2937">영어</text>
+                           <rect x="135" y="50" width="40" height="20" fill="#e5e7eb" /><text x="155" y="65" text-anchor="middle" fill="#1f2937">수학</text>
+                           <rect x="25" y="80" width="150" height="25" fill="rgba(59, 130, 246, 0.4)" stroke="#3b82f6" />
+                           <path d="M 190 92.5 L 200 92.5" stroke="#3b82f6" stroke-width="2"/>
+                           <text x="100" y="95" text-anchor="middle" fill="#1f2937" font-size="10">국어, 영어, 수학 점수</text>
+                        </svg>
+                        <p class="text-lg"><strong>'학생 1'</strong>을 기준으로<br>모든 과목의 점수를 정규화</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Transformer & LN -->
+        <div class="slide flex-col items-center justify-center">
+            <div class="w-full max-w-4xl p-8">
+                <h2 class="text-4xl font-bold text-center text-blue-600 mb-6">5. 왜 트랜스포머는 LN을 선택했는가?</h2>
+                <div class="text-xl space-y-6 text-gray-700">
+                    <div class="p-4 bg-white rounded-lg shadow-md border">
+                        <h3 class="font-bold text-yellow-600">1. 배치 크기 의존성 문제</h3>
+                        <p>트랜스포머는 모델이 커서 배치 크기를 작게 설정하는 경우가 많습니다. BN은 작은 배치 크기에 통계가 불안정해지지만, LN은 배치 크기에 전혀 영향을 받지 않습니다.</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg shadow-md border">
+                        <h3 class="font-bold text-yellow-600">2. 가변 길이 시퀀스 처리</h3>
+                        <p>문장의 길이는 제각각입니다. BN은 각 단어 위치(시간 단계)별로 통계를 계산해야 하는데, 문장 길이가 다르면 특정 위치의 통계가 부정확해집니다. LN은 각 문장(샘플)별로 독립적으로 계산하므로 이 문제에서 자유롭습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: Summary -->
+        <div class="slide flex-col items-center justify-center">
+            <div class="w-full max-w-4xl p-8 text-center">
+                <h2 class="text-4xl font-bold text-blue-600 mb-8">6. 핵심 요약</h2>
+                <table class="w-full text-left text-lg border-collapse bg-white rounded-lg shadow-lg">
+                    <thead>
+                        <tr class="border-b-2 border-blue-500">
+                            <th class="p-4">구분</th>
+                            <th class="p-4 text-yellow-600">배치 정규화 (BN)</th>
+                            <th class="p-4 text-yellow-600">레이어 정규화 (LN)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700">
+                        <tr class="border-b border-gray-200">
+                            <td class="p-4 font-bold">정규화 단위</td>
+                            <td class="p-4">미니배치 내 동일 특성</td>
+                            <td class="p-4">단일 데이터 내 모든 특성</td>
+                        </tr>
+                        <tr class="border-b border-gray-200">
+                            <td class="p-4 font-bold">배치 크기 의존성</td>
+                            <td class="p-4">높음 (크기가 작으면 불안정)</td>
+                            <td class="p-4">없음</td>
+                        </tr>
+                        <tr class="border-b border-gray-200">
+                            <td class="p-4 font-bold">주요 적용 분야</td>
+                            <td class="p-4">CNN (컴퓨터 비전)</td>
+                            <td class="p-4">RNN, Transformer (자연어 처리)</td>
+                        </tr>
+                         <tr>
+                            <td class="p-4 font-bold">장점</td>
+                            <td class="p-4">학습 안정화, 빠른 수렴 (큰 배치에서)</td>
+                            <td class="p-4">배치 크기/시퀀스 길이에 강건함</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Slide 8: End -->
+        <div class="slide flex-col items-center justify-center text-center">
+            <h1 class="text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-teal-500">Q & A</h1>
+            <p class="mt-4 text-3xl text-gray-600">감사합니다</p>
+        </div>
+
+    </div>
+
+    <!-- Navigation -->
+    <div id="prev" class="nav-button">&larr; 이전</div>
+    <div id="next" class="nav-button">다음 &rarr;</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Render LaTeX math
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false}
+                ]
+            });
+
+            const slides = document.querySelectorAll('.slide');
+            let currentSlide = 0;
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+            }
+
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % slides.length;
+                showSlide(currentSlide);
+            }
+
+            function prevSlide() {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                showSlide(currentSlide);
+            }
+
+            document.getElementById('next').addEventListener('click', nextSlide);
+            document.getElementById('prev').addEventListener('click', prevSlide);
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') {
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                }
+            });
+
+            showSlide(currentSlide);
+        });
+    </script>
+</body>
+</html>
+
