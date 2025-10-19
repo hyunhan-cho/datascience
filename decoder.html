@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트랜스포머 어텐션 시각화</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+        }
+        .active-slide {
+            display: block;
+        }
+        .attention-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(2, 1fr);
+            gap: 4px;
+        }
+        .attention-cell {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .header-cell {
+            font-weight: bold;
+            background-color: #f1f5f9;
+        }
+        .decoder-token {
+            font-weight: bold;
+            background-color: #f0f9ff;
+        }
+        .highlight-strong {
+            background-color: #3b82f6;
+            color: white;
+            transform: scale(1.05);
+        }
+        .highlight-medium {
+            background-color: #93c5fd;
+            color: white;
+        }
+        .highlight-weak {
+            background-color: #dbeafe;
+            color: #1e3a8a;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="presentation-container" class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- Slides will be injected here by JavaScript -->
+        <main id="slides-wrapper" class="p-8 md:p-12 min-h-[500px]">
+        </main>
+
+        <!-- Navigation -->
+        <footer class="bg-slate-100 p-4 flex justify-between items-center border-t">
+            <span id="slide-counter" class="text-sm text-slate-500"></span>
+            <div class="flex gap-2">
+                <button id="prev-btn" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 font-semibold hover:bg-slate-50 transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    이전
+                </button>
+                <button id="next-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition active:scale-95">
+                    다음
+                </button>
+            </div>
+        </footer>
+    </div>
+
+<script>
+    // Slide content data
+    const slidesData = [
+        {
+            title: "트랜스포머 어텐션 완벽 이해하기",
+            subtitle: "Decoder-Encoder Attention",
+            content: `
+                <div class="text-center mt-16">
+                    <p class="text-xl text-slate-600">입력 문장이 어떻게 목표 문장으로 번역되는지,</p>
+                    <p class="text-xl text-slate-600">그 과정 속 '어텐션'의 역할을 시각적으로 알아봅니다.</p>
+                    <div class="mt-12 p-6 bg-slate-100 rounded-xl inline-block">
+                        <p class="text-lg"><strong>입력 (Encoder):</strong> ["저는", "강사입니다"]</p>
+                        <p class="text-lg"><strong>출력 (Decoder):</strong> "I am an instructor"</p>
+                    </div>
+                </div>
+            `
+        },
+        {
+            title: "1️⃣ 상황 설정 및 핵심 개념",
+            content: `
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">상황 설정</h3>
+                        <ul class="list-disc list-inside bg-slate-50 p-4 rounded-lg text-slate-700">
+                            <li><strong>Encoder 입력 (길이 2):</strong> <code class="bg-slate-200 px-2 py-1 rounded">["저는", "강사입니다"]</code></li>
+                            <li><strong>Decoder 출력 (추론 단계):</strong> <code class="bg-slate-200 px-2 py-1 rounded">"I am an instructor"</code></li>
+                            <li class="mt-2">Decoder는 <code class="bg-slate-200 px-2 py-1 rounded">&lt;sos&gt;</code> 토큰부터 시작하여, 한 번에 한 단어씩 예측하고, 예측한 단어를 다음 입력으로 사용합니다.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800 mb-2">Attention Matrix의 의미</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <h4 class="font-bold text-blue-800">행 (Rows)</h4>
+                                <p class="text-blue-700">Decoder 입력 토큰의 길이. 매 스텝마다 1씩 증가합니다.</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                                <h4 class="font-bold text-green-800">열 (Columns)</h4>
+                                <p class="text-green-700">Encoder 입력 토큰의 길이. 번역 내내 고정됩니다.</p>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-center text-lg font-medium text-slate-600 bg-yellow-100 p-3 rounded-md">"각 Decoder 토큰이, 번역을 위해 어떤 Encoder 토큰에 집중(Attention)해야 하는가?"</p>
+                    </div>
+                </div>
+            `
+        },
+        {
+            title: "Step 1: 첫 단어 예측",
+            subtitle: "Decoder Input: <sos>",
+            content: `
+                <p class="mb-4 text-slate-600">번역 시작을 알리는 <code class="bg-slate-200 px-2 py-1 rounded">&lt;sos&gt;</code> 토큰이 입력됩니다. 모델은 문장의 어떤 부분부터 번역을 시작할지 결정합니다.</p>
+                <h3 class="text-lg font-semibold mb-2">Decoder-Encoder Attention (1 x 2)</h3>
+                <div class="attention-grid">
+                    <div class="attention-cell"></div>
+                    <div class="attention-cell header-cell">"저는"</div>
+                    <div class="attention-cell header-cell">"강사입니다"</div>
+                    <div class="attention-cell decoder-token">&lt;sos&gt;</div>
+                    <div class="attention-cell highlight-medium">0.7</div>
+                    <div class="attention-cell highlight-weak">0.3</div>
+                </div>
+                <div class="mt-6 p-4 bg-slate-50 rounded-lg">
+                    <p class="font-semibold">🧠 모델의 생각:</p>
+                    <p class="text-slate-700">"번역을 시작해야지. 문장의 주어인 '저는'에 좀 더 집중해서 첫 단어를 만들어야겠다."</p>
+                    <p class="mt-2 text-lg text-center font-bold text-blue-600">➡️ 예측 결과: "I"</p>
+                </div>
+            `
+        },
+        {
+            title: "Step 2: 두 번째 단어 예측",
+            subtitle: "Decoder Input: <sos> I",
+            content: `
+                <p class="mb-4 text-slate-600">방금 예측한 <code class="bg-slate-200 px-2 py-1 rounded">"I"</code>를 다음 입력으로 추가합니다. 이제 모델은 'I' 다음에 올 단어를 찾습니다.</p>
+                <h3 class="text-lg font-semibold mb-2">Decoder-Encoder Attention (2 x 2)</h3>
+                <div class="attention-grid">
+                    <div class="attention-cell"></div>
+                    <div class="attention-cell header-cell">"저는"</div>
+                    <div class="attention-cell header-cell">"강사입니다"</div>
+                    
+                    <div class="attention-cell decoder-token">&lt;sos&gt;</div>
+                    <div class="attention-cell">...</div>
+                    <div class="attention-cell">...</div>
+                    
+                    <div class="attention-cell decoder-token">I</div>
+                    <div class="attention-cell highlight-strong">0.9</div>
+                    <div class="attention-cell highlight-weak">0.1</div>
+                </div>
+                <div class="mt-6 p-4 bg-slate-50 rounded-lg">
+                    <p class="font-semibold">🧠 모델의 생각:</p>
+                    <p class="text-slate-700">"'I'는 원본 문장의 '저는'과 관련이 깊으니, 여기에 강하게 집중하자. 그 다음 내용은 '입니다'와 관련이 있겠군."</p>
+                    <p class="mt-2 text-lg text-center font-bold text-blue-600">➡️ 예측 결과: "am"</p>
+                </div>
+            `
+        },
+        {
+            title: "Step 3~5: 단어 계속 예측",
+            subtitle: "Decoder Input: <sos> I am an ...",
+            content: `
+                <p class="mb-4 text-slate-600">이 과정은 문장이 끝날 때까지 반복됩니다. 매번 새로운 단어가 추가되고, 그 단어의 관점에서 원본 문장을 다시 봅니다.</p>
+                <h3 class="text-lg font-semibold mb-2">Decoder-Encoder Attention (5 x 2)</h3>
+                <div class="attention-grid">
+                    <div class="attention-cell"></div>
+                    <div class="attention-cell header-cell">"저는"</div>
+                    <div class="attention-cell header-cell">"강사입니다"</div>
+                    
+                    <div class="attention-cell decoder-token">&lt;sos&gt;</div> <div class="attention-cell">...</div> <div class="attention-cell">...</div>
+                    <div class="attention-cell decoder-token">I</div> <div class="attention-cell">...</div> <div class="attention-cell">...</div>
+                    <div class="attention-cell decoder-token">am</div> <div class="attention-cell">...</div> <div class="attention-cell">...</div>
+                    <div class="attention-cell decoder-token">an</div> <div class="attention-cell">...</div> <div class="attention-cell">...</div>
+                    <div class="attention-cell decoder-token">instructor</div>
+                    <div class="attention-cell highlight-weak">0.1</div>
+                    <div class="attention-cell highlight-strong">0.9</div>
+                </div>
+                <div class="mt-6 p-4 bg-slate-50 rounded-lg">
+                    <p class="font-semibold">🧠 모델의 생각:</p>
+                    <p class="text-slate-700">"'instructor'를 예측할 차례군. 이 단어는 원본의 '강사입니다'와 명백하게 관련이 있으니, 여기에 모든 주의를 기울여야 해."</p>
+                    <p class="mt-2 text-lg text-center font-bold text-blue-600">➡️ 다음 예측: &lt;eos&gt; (문장 끝)</p>
+                </div>
+            `
+        },
+        {
+            title: "✅ 최종 어텐션 매트릭스 및 정리",
+            content: `
+                <p class="mb-4 text-slate-600">번역이 완료되면, 각 디코더 토큰이 인코더 토큰에 어떻게 주의를 기울였는지 전체 그림을 볼 수 있습니다.</p>
+                <div class="attention-grid mb-6">
+                    <div class="attention-cell"></div>
+                    <div class="attention-cell header-cell">"저는"</div>
+                    <div class="attention-cell header-cell">"강사입니다"</div>
+                    
+                    <div class="attention-cell decoder-token">&lt;sos&gt;</div>
+                    <div class="attention-cell highlight-medium"></div> <div class="attention-cell highlight-weak"></div>
+                    
+                    <div class="attention-cell decoder-token">I</div>
+                    <div class="attention-cell highlight-strong"></div> <div class="attention-cell highlight-weak"></div>
+
+                    <div class="attention-cell decoder-token">am</div>
+                    <div class="attention-cell highlight-weak"></div> <div class="attention-cell highlight-medium"></div>
+
+                    <div class="attention-cell decoder-token">an</div>
+                    <div class="attention-cell highlight-weak"></div> <div class="attention-cell highlight-medium"></div>
+                    
+                    <div class="attention-cell decoder-token">instructor</div>
+                    <div class="attention-cell highlight-weak"></div> <div class="attention-cell highlight-strong"></div>
+
+                    <div class="attention-cell decoder-token">&lt;eos&gt;</div>
+                    <div class="attention-cell highlight-weak"></div> <div class="attention-cell highlight-medium"></div>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 class="font-bold text-blue-800 text-xl">핵심 포인트</h3>
+                    <ul class="list-disc list-inside mt-2 text-blue-700">
+                        <li><strong>동적 문맥 파악:</strong> 디코더는 매 순간 번역에 가장 필요한 원본 단어의 정보를 동적으로 가져옵니다.</li>
+                        <li><strong>정보의 가중 평균:</strong> 어텐션 점수는 원본 단어 정보의 '가중치'로 사용되어, 맞춤형 '문맥 벡터'를 생성합니다.</li>
+                        <li><strong>병렬 계산 불가(추론 시):</strong> 이처럼 한 단어씩 순차적으로 생성하는 방식을 자기회귀(Autoregressive)라고 합니다.</li>
+                    </ul>
+                </div>
+            `
+        }
+    ];
+
+    let currentSlide = 0;
+    const slidesWrapper = document.getElementById('slides-wrapper');
+    const slideCounter = document.getElementById('slide-counter');
+    const nextBtn = document.getElementById('next-btn');
+    const prevBtn = document.getElementById('prev-btn');
+
+    function renderSlides() {
+        slidesWrapper.innerHTML = '';
+        slidesData.forEach((slide, index) => {
+            const slideElement = document.createElement('div');
+            slideElement.className = 'slide w-full';
+            slideElement.innerHTML = `
+                <div class="border-b pb-4 mb-6">
+                    <h2 class="text-3xl font-bold text-slate-800">${slide.title}</h2>
+                    ${slide.subtitle ? `<p class="text-lg text-slate-500 mt-1">${slide.subtitle}</p>` : ''}
+                </div>
+                <div>${slide.content}</div>
+            `;
+            slidesWrapper.appendChild(slideElement);
+        });
+    }
+
+    function showSlide(index) {
+        const slides = document.querySelectorAll('.slide');
+        slides.forEach((slide, i) => {
+            if (i === index) {
+                slide.classList.add('active-slide', 'fade-in');
+                slide.style.display = 'block';
+            } else {
+                slide.classList.remove('active-slide', 'fade-in');
+                slide.style.display = 'none';
+            }
+        });
+        
+        // Update counter and buttons
+        slideCounter.textContent = `슬라이드 ${index + 1} / ${slidesData.length}`;
+        prevBtn.disabled = index === 0;
+        nextBtn.disabled = index === slidesData.length - 1;
+    }
+
+    nextBtn.addEventListener('click', () => {
+        if (currentSlide < slidesData.length - 1) {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentSlide > 0) {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+    });
+
+    // Initial setup
+    renderSlides();
+    showSlide(currentSlide);
+
+</script>
+
+</body>
+</html>
