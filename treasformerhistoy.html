@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>트랜스포머 기반 언어 모델의 발전 과정</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .slide {
+            display: none;
+        }
+        .slide.active {
+            display: flex;
+        }
+        /* 간단한 페이드인 애니메이션 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="presentation-container" class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden aspect-video flex flex-col">
+        <!-- Slides will be injected here by JavaScript -->
+        <main id="slides-container" class="flex-grow w-full h-full p-8 md:p-12 lg:p-16 overflow-y-auto">
+            <!-- Slide 1: Title -->
+            <div class="slide active fade-in flex-col items-center justify-center text-center h-full">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">트랜스포머 기반 언어 모델의 발전 과정</h1>
+                <p class="mt-4 text-xl md:text-2xl text-gray-500">2017년부터 2022년까지의 여정</p>
+            </div>
+
+            <!-- Slide 2: GPT-1 -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">1. GPT-1 (2017): 디코더 기반 언어 모델</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">구조:</strong> 트랜스포머의 '디코더' 부분만을 사용 (12개의 디코더 블록).</p>
+                    <p><strong class="font-semibold text-gray-800">특징:</strong> 기본적인 언어 모델링으로 사전 학습 후, 각 과제에 맞게 모델 구조를 변경하여 미세 조정.</p>
+                    <div>
+                        <strong class="font-semibold text-gray-800">활용 예시:</strong>
+                        <ul class="list-disc list-inside mt-2 space-y-2 pl-4">
+                            <li><strong class="font-semibold text-sky-700">Classification:</strong> 텍스트 끝에 Linear 레이어를 추가하여 긍정/부정 분류.</li>
+                            <li><strong class="font-semibold text-sky-700">Entailment:</strong> 전제와 가설 문장을 구분자와 함께 입력하여 논리적 관계 파악.</li>
+                            <li><strong class="font-semibold text-sky-700">Similarity:</strong> 두 텍스트를 순서를 바꿔 두 번 입력 후 결과를 더해 유사도 계산.</li>
+                            <li><strong class="font-semibold text-sky-700">Multiple Choice:</strong> 문맥과 각 답변을 짝지어 입력, 가장 높은 점수를 받은 답변 선택.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 3: BERT -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">2. BERT (2018): 인코더 기반 언어 모델</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">구조:</strong> 트랜스포머의 '인코더' 부분만을 사용하며, 가장 큰 특징은 <strong class="text-indigo-500">양방향(Bidirectional)</strong> 문맥 이해.</p>
+                    <div>
+                        <strong class="font-semibold text-gray-800">학습 방식 (<span class="text-teal-600">Masked Language Model</span>):</strong>
+                        <ul class="list-disc list-inside mt-2 space-y-2 pl-4">
+                            <li>입력 문장의 일부 단어를 `[mask]` 토큰으로 변경.</li>
+                            <li class="p-2 bg-gray-100 rounded-md">예: "So long and thanks for all the fish" → "So [mask] and [mask] for all the fish"</li>
+                            <li>모델은 `[mask]` 토큰의 양쪽 문맥을 모두 참고하여 원래 단어를 예측하도록 학습.</li>
+                        </ul>
+                    </div>
+                    <p><strong class="font-semibold text-gray-800">의의:</strong> 양방향 문맥 이해 능력으로 당시 대부분의 NLP 벤치마크에서 최고 성능을 기록하며 큰 주목을 받음.</p>
+                </div>
+            </div>
+            
+            <!-- Slide 4: GPT-2 -->
+            <div class="slide fade-in flex-col h-full">
+                 <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">3. GPT-2 (2019): 모델의 대형화 (Scaling up)</h2>
+                 <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">핵심:</strong> "모델을 더 크게 만들고, 더 많은 데이터로 학습시키니 성능이 비약적으로 향상된다"는 것을 증명.</p>
+                    <p><strong class="font-semibold text-gray-800">구조:</strong> GPT-1과 동일한 디코더 기반이지만, 모델 크기를 SMALL, MEDIUM, LARGE, EXTRA LARGE (15억 파라미터)로 확장.</p>
+                    <p><strong class="font-semibold text-gray-800">결과:</strong> 가장 큰 모델은 별도의 미세 조정 없이 간단한 지시(Prompt)만으로 번역, 요약, 질의응답 등 다양한 작업을 수행하는 <strong class="text-indigo-500">제로샷(Zero-shot)</strong> 성능을 보여주며 큰 화제가 됨.</p>
+                </div>
+            </div>
+
+            <!-- Slide 5: T5 -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">4. T5 (2020): 모든 것을 '텍스트-투-텍스트'로</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">개념:</strong> 모든 NLP 문제를 "<strong class="text-amber-600">텍스트-투-텍스트(Text-to-Text)</strong>" 형식으로 통합. 어떤 과제든 텍스트 입력을 받아 텍스트 출력을 생성.</p>
+                    <div>
+                        <strong class="font-semibold text-gray-800">예시:</strong>
+                        <ul class="list-disc list-inside mt-2 space-y-1 pl-4 bg-gray-50 p-3 rounded-lg">
+                            <li><strong class="text-gray-600">번역:</strong> "translate English to German: That is good." → "Das ist gut."</li>
+                            <li><strong class="text-gray-600">문법 교정:</strong> "cola sentence: The course is jumping well." → "not acceptable"</li>
+                            <li><strong class="text-gray-600">요약:</strong> "summarize: state authorities dispatched..." → "six people hospitalized..."</li>
+                        </ul>
+                    </div>
+                    <p><strong class="font-semibold text-gray-800">구조:</strong> 트랜스포머의 인코더와 디코더를 모두 사용.</p>
+                </div>
+            </div>
+
+            <!-- Slide 6: GPT-3 -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">5. GPT-3 (2020): "인컨텍스트 러닝"의 발견</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">핵심 발견 (In-context Learning):</strong> 모델의 가중치 변경 없이, 프롬프트에 몇 개의 예시<strong class="text-indigo-500">(Few-shot)</strong>를 제공하는 것만으로 모델이 새로운 작업을 학습하고 수행 가능함을 발견.</p>
+                     <div>
+                        <strong class="font-semibold text-gray-800">용어 정리:</strong>
+                        <ul class="list-disc list-inside mt-2 space-y-2 pl-4">
+                            <li><strong class="text-gray-600">Few-shot learning:</strong> 작업 예시 몇 개를 보여주고 문제 풀이. (예: sea otter ⇒ loutre de mer, cheese ⇒ ??)</li>
+                            <li><strong class="text-gray-600">Zero-shot learning:</strong> 예시 없이, 작업 설명만으로 문제 풀이. (예: translate English to French, cheese ⇒ ??)</li>
+                        </ul>
+                    </div>
+                    <p><strong class="font-semibold text-gray-800">의의:</strong> 이 발견으로 "어떻게 좋은 프롬프트를 만드느냐"가 중요해지는 <strong class="text-indigo-500">프롬프팅(Prompting)</strong> 시대가 열림.</p>
+                </div>
+            </div>
+
+            <!-- Slide 7: GPT-3.5 (ChatGPT) -->
+            <div class="slide fade-in flex-col h-full">
+                 <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">6. GPT-3.5 (ChatGPT, 2022): 인간의 의도에 맞추기</h2>
+                 <div class="text-base md:text-lg text-gray-700 space-y-3 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">배경:</strong> 거대 언어 모델이 사용자의 의도와 다른 무의미하거나 유해한 답변을 생성하는 문제 발생.</p>
+                    <p><strong class="font-semibold text-gray-800">해결책 (<span class="text-teal-600">RLHF</span>: 인간 피드백 기반 강화학습):</strong> 3단계 과정을 통해 모델을 인간의 선호도에 '정렬(Align)'.</p>
+                    <div class="bg-gray-50 p-3 rounded-lg text-sm md:text-base space-y-1">
+                        <p class="font-medium"><span class="text-indigo-600 font-bold">1단계 (SFT):</span> 사람이 만든 고품질 (질문, 답변) 쌍으로 지도 미세 조정.</p>
+                        <p class="font-medium"><span class="text-sky-600 font-bold">2단계 (보상 모델):</span> 사람이 모델 답변들의 순위를 매겨, "좋은 답변"을 판별하는 보상 모델 훈련.</p>
+                        <p class="font-medium"><span class="text-amber-600 font-bold">3단계 (강화학습):</span> 언어 모델이 보상 모델로부터 높은 점수를 받도록 답변 생성 방식을 업데이트.</p>
+                    </div>
+                    <p><strong class="font-semibold text-gray-800">결과:</strong> 이 과정을 통해 탄생한 <strong class="text-indigo-500">ChatGPT</strong>는 사용자의 의도를 훨씬 잘 파악하고 유용한 답변을 생성.</p>
+                 </div>
+            </div>
+
+            <!-- Slide 8: GPT-4 -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">7. GPT-4 (2022): 멀티모달과 전문가 혼합</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                     <div>
+                        <strong class="font-semibold text-teal-600">멀티모달 (Multimodal):</strong>
+                        <p class="mt-1 pl-4">텍스트뿐만 아니라 <strong class="text-indigo-500">이미지, 오디오</strong> 등 다양한 종류의 데이터를 이해하고 처리.</p>
+                    </div>
+                     <div>
+                        <strong class="font-semibold text-amber-600">전문가 혼합 (Mixture-of-Experts, MoE):</strong>
+                        <p class="mt-1 pl-4">하나의 거대 모델 대신, 여러 개의 작은 '전문가' 모델들을 두고, 입력에 따라 가장 적합한 전문가를 선택적으로 활성화하여 <strong class="text-indigo-500">계산 효율성과 성능을 동시</strong>에 높임. (루머 기반)</p>
+                    </div>
+                    <div class="flex gap-4 pt-4">
+                        <img src="https://placehold.co/400x200/A7F3D0/047857?text=Multimodal+Inputs\n(Text,+Image,+Audio)" alt="멀티모달 구조" class="w-1/2 rounded-lg object-cover">
+                        <img src="https://placehold.co/400x200/FDE68A/B45309?text=Mixture-of-Experts\n(16+Expert+Models)" alt="MoE 구조" class="w-1/2 rounded-lg object-cover">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slide 9: 핵심 개념 심화 학습 -->
+             <div class="slide fade-in flex-col items-center justify-center text-center h-full">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">핵심 개념 심화 학습</h1>
+                <p class="mt-4 text-xl md:text-2xl text-gray-500">Few-Shot Learning, Instruction Tuning, Alignment</p>
+            </div>
+
+            <!-- Slide 10: In-Context Learning -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">In-Context Learning 이란?</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">정의:</strong></p>
+                    <blockquote class="border-l-4 border-indigo-300 pl-4 py-2 bg-indigo-50 text-gray-800">
+                        모델의 가중치를 업데이트하는 '훈련' 과정 없이, 프롬프트에 작업 예시를 포함시켜 모델이 해당 작업을 수행하게 하는 능력.
+                    </blockquote>
+                    <p><strong class="font-semibold text-gray-800">성능 변화:</strong></p>
+                    <p>프롬프트에 제공하는 예시의 개수(K)가 늘어남에 따라 모델의 성능이 급격히 향상됨. (Zero-shot → One-shot → Few-shot)</p>
+                     <p><strong class="font-semibold text-gray-800">전통적인 미세 조정과의 차이:</strong></p>
+                     <ul class="list-disc list-inside mt-2 space-y-2 pl-4">
+                         <li><strong class="text-gray-600">In-context learning:</strong> 예시를 프롬프트에 넣기만 함 (경사 하강법 없음).</li>
+                         <li><strong class="text-gray-600">Traditional fine-tuning:</strong> 각 예시에 대해 모델 가중치를 직접 업데이트 (경사 하강법 사용).</li>
+                     </ul>
+                </div>
+            </div>
+
+            <!-- Slide 11: Instruction Tuning -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">Instruction Tuning (지시 튜닝)</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-red-50 border border-red-200 p-4 rounded-lg">
+                        <h3 class="font-bold text-red-700">문제점</h3>
+                        <p class="mt-2">사전 학습만 거친 모델은 사용자의 지시를 따르기보다, 학습 데이터 패턴을 따라 문장을 이어가는 경향이 있음.</p>
+                        <p class="mt-2 text-sm text-gray-600 p-2 bg-red-100 rounded">"6살 아이에게 달 착륙 설명해줘" → "6살 아이에게 중력 설명해줘" (비슷한 질문 나열)</p>
+                    </div>
+                     <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                        <h3 class="font-bold text-green-700">해결책</h3>
+                        <p class="mt-2">다양한 <strong class="text-green-800">(지시, 결과) 쌍</strong>으로 구성된 대규모 데이터셋으로 미세 조정하여 '지시를 따르는 방법'을 학습시킴.</p>
+                         <p class="mt-2 text-sm text-gray-600 p-2 bg-green-100 rounded">"6살 아이에게 달 착륙 설명해줘" → (실제로 달 착륙에 대한 설명을 생성)</p>
+                    </div>
+                </div>
+                <div class="mt-4 text-base md:text-lg text-gray-700">
+                    <strong class="font-semibold text-gray-800">한계점:</strong> 정답이 없는 창의적 작업에 적용하기 어렵고, 모든 단어의 실수를 동일하게 취급하여 인간의 선호도를 완벽히 만족시키기 어려움.
+                </div>
+            </div>
+            
+            <!-- Slide 12: Alignment -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">Alignment (정렬)</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                    <p><strong class="font-semibold text-gray-800">목표:</strong></p>
+                    <blockquote class="border-l-4 border-indigo-300 pl-4 py-2 bg-indigo-50 text-gray-800">
+                        언어 모델의 결과물이 '인간의 선호도'와 일치하도록 만드는 것.
+                    </blockquote>
+                    <p><strong class="font-semibold text-gray-800">핵심 아이디어 (강화학습):</strong></p>
+                     <ul class="list-decimal list-inside mt-2 space-y-2 pl-4">
+                         <li>인간이 직접 점수를 매긴 데이터로 "좋은 답변에 높은 점수를 주는" <strong class="text-indigo-500">보상 모델(Reward Model)</strong>을 훈련.</li>
+                         <li>언어 모델이 생성한 답변을 보상 모델이 채점하고, 언어 모델은 더 높은 점수(보상)를 받기 위해 답변 생성 방식을 수정.</li>
+                     </ul>
+                    <p><strong class="font-semibold text-rose-600">위험성 (Reward Hacking):</strong> 모델이 보상 모델의 허점을 파고들어 점수만 높이는 '꼼수'를 배우는 현상.</p>
+                    <p><strong class="font-semibold text-gray-800">우려:</strong> 인간 피드백 자체의 편향성으로 인해, 겉으로만 정렬된 것처럼 보이는 모델이 만들어질 수 있다는 우려 존재.</p>
+                </div>
+            </div>
+
+            <!-- Slide 13: Conclusion & Future -->
+            <div class="slide fade-in flex-col h-full">
+                <h2 class="text-2xl md:text-3xl font-bold text-indigo-600 mb-4">결론 및 미래</h2>
+                <div class="text-base md:text-lg text-gray-700 space-y-4 flex-grow">
+                     <div>
+                        <strong class="font-semibold text-gray-800">과거와 현재:</strong>
+                        <p class="mt-1 pl-4">2003년 신경망 언어 모델부터 2018년 사전 학습 모델에 이르기까지 NLP는 비약적으로 발전.</p>
+                    </div>
+                     <div>
+                        <strong class="font-semibold text-gray-800">최신 기술 동향:</strong>
+                        <ul class="list-disc list-inside mt-2 space-y-1 pl-4">
+                             <li><strong class="text-sky-500">Parameter-efficient Fine-tuning:</strong> 일부 파라미터만 업데이트하여 튜닝 효율 극대화.</li>
+                             <li><strong class="text-teal-500">HuggingGPT:</strong> 언어 모델이 컨트롤러가 되어 다른 AI 모델을 호출하여 사용.</li>
+                             <li><strong class="text-amber-500">Tool-use:</strong> 외부 도구(계산기, 검색 등)를 사용하여 한계 극복.</li>
+                        </ul>
+                    </div>
+                     <div>
+                        <strong class="font-semibold text-gray-800">미래:</strong>
+                        <p class="mt-1 pl-4">다음 여정은 텍스트를 넘어 <strong class="text-indigo-500">음성 인식</strong>과 같은 다른 모달리티(modality)로 확장될 것.</p>
+                    </div>
+                </div>
+            </div>
+            
+             <!-- Slide 14: End -->
+             <div class="slide fade-in flex-col items-center justify-center text-center h-full">
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-800">감사합니다</h1>
+                <p class="mt-4 text-xl md:text-2xl text-gray-500">Q&A</p>
+            </div>
+
+
+        </main>
+        
+        <!-- Navigation -->
+        <footer class="flex-shrink-0 w-full bg-gray-50 border-t border-gray-200">
+            <div class="max-w-4xl mx-auto flex items-center justify-between p-3 md:p-4">
+                <button id="prev-btn" class="px-4 py-2 bg-indigo-500 text-white rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    이전
+                </button>
+                <div id="slide-counter" class="text-gray-600 font-medium"></div>
+                <button id="next-btn" class="px-4 py-2 bg-indigo-500 text-white rounded-lg shadow-md hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition disabled:bg-gray-300 disabled:cursor-not-allowed">
+                    다음
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const slideCounter = document.getElementById('slide-counter');
+            const slidesContainer = document.getElementById('slides-container');
+
+            let currentSlide = 0;
+            const totalSlides = slides.length;
+
+            function showSlide(index) {
+                // Remove active class from all slides
+                slides.forEach((slide, i) => {
+                    slide.classList.remove('active');
+                });
+                
+                // Add active class to the current slide
+                slides[index].classList.add('active');
+                
+                // Reset scroll for the container
+                slidesContainer.scrollTop = 0;
+
+                updateNav();
+            }
+
+            function updateNav() {
+                // Update slide counter
+                slideCounter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+                
+                // Update button states
+                prevBtn.disabled = currentSlide === 0;
+                nextBtn.disabled = currentSlide === totalSlides - 1;
+            }
+
+            function goToNextSlide() {
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            }
+
+            function goToPrevSlide() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            }
+            
+            // Event Listeners
+            nextBtn.addEventListener('click', goToNextSlide);
+            prevBtn.addEventListener('click', goToPrevSlide);
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    goToNextSlide();
+                } else if (e.key === 'ArrowLeft') {
+                    goToPrevSlide();
+                }
+            });
+
+            // Initial setup
+            showSlide(currentSlide);
+        });
+    </script>
+</body>
+</html>
+
