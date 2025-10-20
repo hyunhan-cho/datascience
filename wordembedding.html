@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>워드 임베딩(Word Embedding) 상세 정리</title>
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0052cc;
+            --secondary-color: #4c4f69;
+            --background-color: #f4f5f7;
+            --text-color: #172b4d;
+            --text-light: #5e6c84;
+            --border-color: #dfe1e6;
+            --white: #ffffff;
+            --shadow: 0 4px 12px rgba(23, 43, 77, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .presentation-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .slide {
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            max-height: 750px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .slide.active {
+            display: flex;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-header {
+            padding: 24px 48px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .slide-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .slide-subtitle {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .slide-content {
+            padding: 32px 48px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* Title Slide Specific Styles */
+        .title-slide-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+
+        .title-slide-content h1 {
+            font-size: 52px;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+        }
+
+        .title-slide-content p {
+            font-size: 22px;
+            color: var(--text-light);
+            max-width: 600px;
+        }
+        
+        /* Content Styles */
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 3px solid var(--primary-color);
+            display: inline-block;
+        }
+
+        .content-text {
+            font-size: 18px;
+            line-height: 1.7;
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+
+        .highlight-box {
+            background-color: #e9f2ff;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            margin: 24px 0;
+            border-radius: 8px;
+        }
+
+        .highlight-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+        
+        .formula-box {
+            background-color: #fafbfc;
+            padding: 24px;
+            border-radius: 8px;
+            margin: 24px 0;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .formula-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+        }
+        
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+            align-items: start;
+        }
+
+        .step-box {
+            background-color: var(--white);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .step-box:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .technique-card {
+            background-color: #fafbfc;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        
+        .technique-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+        }
+
+        .navigation {
+            position: absolute;
+            bottom: 24px;
+            right: 48px;
+            display: flex;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .nav-button {
+            background-color: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-button:hover:not(:disabled) {
+            background-color: #0041a3;
+        }
+
+        .nav-button:disabled {
+            background-color: #a5adba;
+            cursor: not-allowed;
+        }
+        
+        .slide-indicator {
+            position: absolute;
+            bottom: 32px;
+            left: 48px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-light);
+            z-index: 100;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #fafbfc;
+            font-weight: 600;
+        }
+        td {
+            color: var(--text-light);
+        }
+        .increase-text {
+            color: #00875a;
+            font-weight: 600;
+        }
+        .decrease-text {
+            color: #de350b;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <div class="slide-content title-slide-content">
+                <h1>워드 임베딩(Word Embedding) 상세 정리</h1>
+                <p>단어를 벡터로, 의미를 수치로 표현하는 자연어 처리의 핵심 기술</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: 개념과 기본 아이디어 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">핵심 개념</div>
+                <div class="slide-subtitle">워드 임베딩의 정의와 철학</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">워드 임베딩이란?</div>
+                <p class="content-text">단어를 컴퓨터가 이해할 수 있는 고정된 크기의 밀집 벡터(dense vector)로 변환하는 기술입니다.</p>
+                <div class="highlight-box">
+                    <p class="highlight-text">"각각의 이산적인(discrete) 단어를 연속적인 벡터 공간(continuous vector space)에 끼워 넣는(embed) 것"</p>
+                </div>
+
+                <div class="section-title" style="margin-top: 40px;">분포 가설 (Distributional Hypothesis)</div>
+                <p class="content-text">워드 임베딩의 핵심적인 철학적 기반입니다.</p>
+                <div class="highlight-box">
+                    <p class="highlight-text" style="font-style: italic;">"You shall know a word by the company it keeps"<br>- 단어의 의미는 그 단어 주변에 함께 나타나는 단어들에 의해 결정된다.</p>
+                </div>
+                 <p class="content-text"><b>예시:</b> "사과"와 "오렌지"는 "과일", "먹다"와 같은 비슷한 문맥에서 등장하므로, 벡터 공간에서 서로 가까운 위치에 표현됩니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: Word2vec & Skip-gram 소개 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">Word2vec: Skip-gram 모델</div>
+                <div class="slide-subtitle">중심 단어로 주변 단어 예측하기</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">Skip-gram의 핵심 목표</div>
+                <div class="highlight-box">
+                    <p class="highlight-text">중심 단어(center word)가 주어졌을 때, 그 주변에 나타날 문맥 단어(context words)들을 예측하는 것</p>
+                </div>
+                
+                <p class="content-text"><b>예시 문장:</b> "... problems turning <b>into</b> banking crises ..."</p>
+                <div class="two-column">
+                    <div class="step-box">
+                        <p class="step-title" style="color: var(--primary-color);">입력 (중심 단어)</p>
+                        <p class="content-text" style="font-size: 20px; font-weight: bold;">into</p>
+                    </div>
+                    <div class="step-box">
+                        <p class="step-title" style="color: #de350b;">출력 (예측할 문맥 단어)</p>
+                        <p class="content-text">problems, turning, banking, crises</p>
+                    </div>
+                </div>
+                 <p class="content-text" style="margin-top: 24px;">이 예측 과제를 잘 수행하는 모델을 만들면, 그 과정에서 단어의 의미를 담은 벡터를 부산물로 얻게 됩니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 4: 데이터 준비 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">학습 데이터 준비</div>
+                <div class="slide-subtitle">모델은 무엇을 보고 배우는가?</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">학습 데이터셋 구성</div>
+                <p class="content-text">모델은 '정답'과 '오답' 예시를 통해 단어 간의 관계를 학습합니다.</p>
+                <div class="two-column">
+                    <div class="step-box">
+                        <p class="step-title" style="color: #00875a;">✓ 긍정 예시 (Positive Examples)</p>
+                        <p class="content-text">실제로 문장에서 함께 등장한 (중심 단어, 주변 단어) 쌍입니다. 모델이 '가깝게 만들어야 할' 대상입니다.</p>
+                        <p class="content-text"><b>(into, banking), (into, turning)</b></p>
+                    </div>
+                    <div class="step-box">
+                        <p class="step-title" style="color: #de350b;">✗ 부정 예시 (Negative Examples)</p>
+                        <p class="content-text">관련 없는 단어를 무작위로 추출하여 만든 (중심 단어, 무작위 단어) 쌍입니다. 모델이 '멀게 만들어야 할' 대상입니다.</p>
+                        <p class="content-text"><b>(into, computer), (into, pencil)</b></p>
+                    </div>
+                </div>
+                 <p class="content-text" style="margin-top: 24px;">이처럼 긍정과 부정 예시를 대조하며 학습하는 방식을 <b>네거티브 샘플링(Negative Sampling)</b>이라고 합니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: 수학적 모델링 1 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">수학적 모델링 (1/2)</div>
+                <div class="slide-subtitle">단어의 벡터 표현과 유사도 계산</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">두 종류의 임베딩 벡터</div>
+                <p class="content-text">효율적인 학습을 위해, 각 단어 \(w\)는 두 가지 역할을 수행하며 각각 다른 벡터를 가집니다.</p>
+                 <div class="two-column">
+                    <div class="step-box">
+                        <p class="step-title">Target Embedding: \(e_t(w)\)</p>
+                        <p class="content-text">단어가 중심 단어(Target)일 때 사용되는 벡터</p>
+                    </div>
+                    <div class="step-box">
+                        <p class="step-title">Context Embedding: \(e_c(w)\)</p>
+                        <p class="content-text">단어가 주변 단어(Context)일 때 사용되는 벡터</p>
+                    </div>
+                </div>
+                <div class="section-title" style="margin-top: 40px;">유사도 계산 (내적)</div>
+                <p class="content-text">중심 단어 \(w\)와 주변 단어 \(u\)의 유사도는 두 벡터의 내적(Dot Product)으로 계산합니다. 두 벡터가 유사한 방향을 가리킬수록 값이 커집니다.</p>
+                <div class="formula-box">
+                    <p class="formula-title">유사도 점수</p>
+                    <p style="font-size: 20px;">\[ \text{Similarity}(w, u) = e_t(w) \cdot e_c(u) \]</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 6: 수학적 모델링 2 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">수학적 모델링 (2/2)</div>
+                <div class="slide-subtitle">유사도를 확률로 변환하기</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">긍정 예시 확률</div>
+                <p class="content-text">계산된 유사도 점수를 시그모이드(Sigmoid) 함수를 통해 0과 1 사이의 확률 값으로 변환합니다.</p>
+                <div class="formula-box">
+                    <p class="formula-title">긍정 예시일 확률</p>
+                    <p style="font-size: 20px;">\[ P(+|w, u) = \sigma(e_t(w) \cdot e_c(u)) = \frac{1}{1 + \exp(-e_t(w) \cdot e_c(u))} \]</p>
+                </div>
+                
+                <div class="section-title" style="margin-top: 30px;">부정 예시 확률</div>
+                <p class="content-text">반대로, 한 쌍이 부정 예시일 확률은 긍정 예시일 확률을 1에서 뺀 값과 같습니다.</p>
+                <div class="formula-box">
+                    <p class="formula-title">부정 예시일 확률</p>
+                    <p style="font-size: 20px;">\[ P(-|w, v) = 1 - P(+|w, v) = \sigma(-e_t(w) \cdot e_c(v)) \]</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 학습 목표 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">학습의 목표와 손실 함수</div>
+                 <div class="slide-subtitle">모델이 무엇을 최적화하는가?</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">최적화 목표</div>
+                <div class="highlight-box">
+                    <p class="highlight-text">
+                        모든 긍정 예시 쌍 \((w, u)\)에 대한 확률 \( P(+|w, u) \)는 최대화하고, 모든 부정 예시 쌍 \((w, v)\)에 대한 확률 \( P(-|w, v) \)도 최대화하는 최적의 임베딩 벡터 \(e_t\)와 \(e_c\)를 찾는 것입니다.
+                    </p>
+                </div>
+                 <p class="content-text">이는 전체 데이터셋에 대한 가능도(Likelihood)를 최대화하는 것과 같습니다. 이 목표를 달성하기 위해, 모델은 예측이 틀렸을 때의 '비용'인 손실 함수(Loss Function)를 최소화하는 방향으로 학습합니다.</p>
+            </div>
+        </div>
+
+        <!-- Slide 8: SGD -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">최적화 방법: 확률적 경사 하강법 (SGD)</div>
+                <div class="slide-subtitle">Stochastic Gradient Descent</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">SGD의 원리</div>
+                <p class="content-text">
+                    마치 안개 낀 산에서 가장 낮은 지점을 찾아 한 걸음씩 내려가듯, 손실 함수(Loss Function)의 기울기(gradient)를 계산하고 그 기울기의 반대 방향으로 벡터 값을 조금씩 반복적으로 업데이트하여 손실을 최소화합니다.
+                </p>
+                <div class="step-box">
+                    <p class="step-title">업데이트 규칙</p>
+                    <p class="content-text">
+                        \(\theta^{new} = \theta^{old} - \alpha \nabla_{\theta}J(\theta)\)
+                    </p>
+                    <p class="content-text" style="font-size: 16px;">
+                        • \(\theta\): 업데이트할 파라미터 (임베딩 벡터) <br>
+                        • \(\alpha\): 학습률 (얼마나 큰 보폭으로 움직일지) <br>
+                        • \(\nabla_{\theta}J(\theta)\): 손실 함수의 기울기
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 학습 전체 과정 요약 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">Skip-gram with Negative Sampling (SGNS)</div>
+                <div class="slide-subtitle">전체 학습 과정 요약</div>
+            </div>
+            <div class="slide-content">
+                 <ol style="font-size: 18px; line-height: 2.2; margin-left: 20px;">
+                    <li>모든 단어의 Target(\(e_t\)), Context(\(e_c\)) 벡터를 무작위로 초기화합니다.</li>
+                    <li>코퍼스를 순회하며 중심 단어 \(w\)를 선택합니다.</li>
+                    <li>실제 주변 단어 \(u\)를 <b>긍정 예시</b>로 설정합니다.</li>
+                    <li>사전에서 \(k\)개의 단어를 무작위로 샘플링하여 <b>부정 예시</b> \(v_1, ..., v_k\)로 설정합니다.</li>
+                    <li>긍정 예시에 대해서는 \(P(+|w,u)\)를 1에 가깝게, 부정 예시에 대해서는 \(P(-|w,v_i)\)를 1에 가깝게 만드는 방향으로 관련 벡터들을 업데이트합니다.</li>
+                    <li>코퍼스 전체에 대해 위 과정을 수차례 반복합니다.</li>
+                 </ol>
+            </div>
+        </div>
+
+        <!-- Slide 10: 학습 최적화 기법 1 -->
+        <div class="slide">
+            <div class="slide-header">
+                 <div class="slide-title">학습 성능 향상을 위한 실용적 기법 (1/2)</div>
+                 <div class="slide-subtitle">Subsampling of Frequent Words</div>
+            </div>
+            <div class="slide-content">
+                <div class="technique-card">
+                    <div class="technique-title">고빈도 단어 서브샘플링</div>
+                    <p class="content-text">'the', 'a' 등 너무 자주 등장하는 단어는 유용한 정보가 적으면서 학습은 불균형하게 만듭니다. 따라서 이런 단어는 학습에서 일정 확률로 제외합니다.</p>
+                    <div class="formula-box">
+                        <div class="formula-title">단어 \(w_i\)를 제외할 확률</div>
+                        <p style="font-size: 20px;">\[ P(w_i) = 1 - \sqrt{\frac{t}{f(w_i)}} \]</p>
+                        <p class="content-text" style="font-size: 14px; margin-top: 10px;">• \(f(w_i)\): 단어의 빈도<br>• \(t\): 사용자가 정하는 임계값 (e.g., \(10^{-5}\))</p>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <p class="highlight-text"><b>효과:</b> 의미 있는 단어(상대적 저빈도 단어)의 임베딩 학습이 더 잘 이루어지게 하고, 학습 속도를 향상시킵니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: 학습 최적화 기법 2 -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">학습 성능 향상을 위한 실용적 기법 (2/2)</div>
+                <div class="slide-subtitle">Modified Negative Sampling Distribution</div>
+            </div>
+            <div class="slide-content">
+                <div class="technique-card">
+                    <div class="technique-title">수정된 분포를 이용한 네거티브 샘플링</div>
+                    <p class="content-text">부정 예시를 추출할 때, 드물게 등장하는 단어도 샘플링될 기회를 주기 위해 원래의 단어 빈도 분포를 보정합니다. 단순히 빈도수가 높은 단어만 부정 예시로 뽑히는 것을 방지합니다.</p>
+                    <div class="formula-box">
+                        <div class="formula-title">단어 \(v\)가 부정 샘플로 뽑힐 확률</div>
+                         <p style="font-size: 20px;">\[ P_{\alpha}(v) = \frac{f(v)^{\alpha}}{\sum_{w \in V} f(w)^{\alpha}} \]</p>
+                        <p class="content-text" style="font-size: 14px; margin-top: 10px;">• \(f(v)\): 단어 빈도<br>• \(\alpha\): 분포 보정값 (주로 0.75 사용)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 12: Negative Sampling Example -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">네거티브 샘플링 분포 보정 예시</div>
+                <div class="slide-subtitle">α=0.75를 적용했을 때의 효과</div>
+            </div>
+            <div class="slide-content">
+                <p class="content-text">매우 불균형한 단어 분포가 있다고 가정해 봅시다.</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>단어 (w)</th>
+                            <th>빈도 f(w)</th>
+                            <th>기존 확률 P(w) (α=1)</th>
+                            <th>수정된 확률 P(w) (α=0.75)</th>
+                            <th>변화</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>the</td>
+                            <td>1,000,000</td>
+                            <td>66.6%</td>
+                            <td>62.1%</td>
+                            <td class="decrease-text">감소</td>
+                        </tr>
+                        <tr>
+                            <td>on</td>
+                            <td>500,000</td>
+                            <td>33.3%</td>
+                            <td>37.1%</td>
+                            <td class="increase-text">증가</td>
+                        </tr>
+                        <tr>
+                            <td>cat</td>
+                            <td>1,000</td>
+                            <td>0.07%</td>
+                            <td>0.35%</td>
+                            <td class="increase-text">5배 증가</td>
+                        </tr>
+                        <tr>
+                            <td>rare_word</td>
+                            <td>10</td>
+                            <td>0.0007%</td>
+                            <td>0.011%</td>
+                            <td class="increase-text">15배 이상 증가</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="highlight-box" style="margin-top: 30px;">
+                    <p class="highlight-text">
+                        <b>결론:</b> \(\alpha\) 값을 적용하면 'the'와 같이 매우 흔한 단어의 샘플링 확률은 감소하고, 'cat'이나 'rare_word'처럼 상대적으로 드문 단어의 샘플링 확률은 크게 증가합니다. 이를 통해 모델이 더 다양하고 의미 있는 부정 예시를 학습할 수 있습니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Conclusion -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-title">결론</div>
+                <div class="slide-subtitle">Summary of Word Embedding</div>
+            </div>
+            <div class="slide-content">
+                <div class="section-title">핵심 요약</div>
+                <div class="step-box" style="margin-bottom: 20px;">
+                    <p class="step-title">1. Word Embedding</p>
+                    <p class="content-text">단어의 의미를 벡터 공간에 표현하는 기술로, 분포 가설에 기반합니다.</p>
+                </div>
+                 <div class="step-box" style="margin-bottom: 20px;">
+                    <p class="step-title">2. Skip-gram with Negative Sampling</p>
+                    <p class="content-text">중심 단어로 주변 단어를 예측하는 과제를 통해, 긍정/부정 예시를 대조하며 벡터를 학습하는 효율적인 알고리즘입니다.</p>
+                </div>
+                 <div class="step-box">
+                    <p class="step-title">3. 최종 결과</p>
+                    <p class="content-text">단어 간의 의미적, 문법적 관계를 내포한 고품질의 벡터 표현을 얻게 되며, 이는 다양한 NLP 다운스트림 태스크의 성능을 향상시키는 핵심 요소로 사용됩니다.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Controls -->
+        <div class="slide-indicator"></div>
+        <div class="navigation">
+            <button class="nav-button" id="prevBtn">이전</button>
+            <button class="nav-button" id="nextBtn">다음</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Select all slides inside the container
+            const slides = document.querySelectorAll('.presentation-container .slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const indicator = document.querySelector('.slide-indicator');
+            let currentSlide = 0;
+
+            function showSlide(n) {
+                // Deactivate all slides
+                slides.forEach(slide => slide.classList.remove('active'));
+                
+                // Activate the target slide
+                if(slides[n]) {
+                    slides[n].classList.add('active');
+                }
+
+                // Update indicator
+                indicator.textContent = `Slide ${n + 1} of ${slides.length}`;
+
+                // Update button states
+                prevBtn.disabled = n === 0;
+                nextBtn.disabled = n === slides.length - 1;
+            }
+
+            nextBtn.addEventListener('click', () => {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    showSlide(currentSlide);
+                }
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    showSlide(currentSlide);
+                }
+            });
+            
+            // Arrow key navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    nextBtn.click();
+                } else if (e.key === 'ArrowLeft') {
+                    prevBtn.click();
+                }
+            });
+
+            // Initial setup
+            showSlide(currentSlide);
+        });
+    </script>
+</body>
+</html>
+
