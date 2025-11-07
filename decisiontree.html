@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Tree 고객 이탈 예측</title>
+    <!-- Tailwind CSS CDN --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter 폰트 (Tailwind 기본 폰트) --><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <style>
+        /* 기본 폰트 Inter로 설정 */
+        body {
+            font-family: 'Inter', sans-serif;
+            /* 부드러운 스크롤 스냅 */
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+        }
+        /* 각 슬라이드 섹션 */
+        .slide {
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* 스크롤 스냅 정렬 */
+            scroll-snap-align: start;
+            /* 슬라이드 간 구분을 위한 배경색 */
+            background-color: #f0f4f8; /* 연한 회색 배경 */
+            padding: 2rem;
+        }
+        /* 슬라이드 내용 컨테이너 */
+        .slide-content {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            padding: 3rem; /* p-12 */
+            width: 100%;
+            max-width: 64rem; /* max-w-6xl */
+            height: 90%;
+            overflow-y: auto; /* 내용 많을 시 스크롤 */
+        }
+        /* 코드 블록 스타일 */
+        pre {
+            background-color: #f3f4f6; /* bg-gray-100 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1rem; /* p-4 */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            overflow-x: auto; /* 가로 스크롤 */
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        /* Beamer의 'block' 스타일 */
+        .b-block {
+            background-color: #eff6ff; /* bg-blue-50 */
+            border: 1px solid #bfdbfe; /* border-blue-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1rem; /* p-4 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .b-block-title {
+            font-weight: 700; /* font-bold */
+            color: #1d4ed8; /* text-blue-700 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        /* Beamer의 'alertblock' 스타일 */
+        .b-alert-block {
+            background-color: #fef2f2; /* bg-red-50 */
+            border: 1px solid #fecaca; /* border-red-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1rem; /* p-4 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .b-alert-block-title {
+            font-weight: 700; /* font-bold */
+            color: #b91c1c; /* text-red-700 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        /* 테이블 스타일 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        th, td {
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            padding: 0.75rem; /* p-3 */
+            text-align: left;
+        }
+        th {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Slide 1: 표지 --><section class="slide">
+        <div class="slide-content flex flex-col justify-center items-center text-center">
+            <h1 class="text-4xl font-bold text-indigo-700 mb-4">Decision Tree를 활용한 통신사 고객 이탈 예측</h1>
+            <h2 class="text-2xl text-gray-600 mb-8">머신러닝을 통한 고객 이탈 요인 분석 및 예측 모델링</h2>
+            <p class="text-xl text-gray-800">(`05. DecisionTree.ipynb` 분석 기반)</p>
+            <p class="text-lg text-gray-500 mt-12">발표자: 조현한</p>
+        </div>
+    </section>
+
+    <!-- Slide 2: 목차 (Agenda) --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">목차 (Agenda)</h2>
+            <ol class="list-decimal list-inside text-xl space-y-3 text-gray-700">
+                <li>문제 정의: 우리가 해결하려는 문제는 무엇인가?</li>
+                <li>데이터 준비: 어떤 데이터를 사용하는가?</li>
+                <li>데이터 전처리: 모델 학습을 위해 데이터를 어떻게 다듬었는가?</li>
+                <li>모델링: Decision Tree 모델을 어떻게 구축했는가?</li>
+                <li>성능 평가: 모델이 얼마나 잘 예측하는가?</li>
+                <li>모델 해석 및 최적화:
+                    <ul class="list-disc list-inside ml-6 mt-2 space-y-2 text-lg">
+                        <li>모델은 어떻게 생겼는가? (시각화)</li>
+                        <li>모델은 어떤 변수를 중요하게 생각하는가? (변수 중요도)</li>
+                        <li>모델을 어떻게 더 좋게 만들 수 있는가? (하이퍼파라미터)</li>
+                    </ul>
+                </li>
+                <li>결론 및 제언</li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- Slide 3: 프로젝트 배경 및 목표 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">1. 문제 정의: 프로젝트 배경 및 목표</h2>
+            <div class="flex flex-row gap-6">
+                <!-- 왼쪽 컬럼 --><div class="w-full">
+                    <div class="b-block">
+                        <div class="b-block-title">배경 (As-Is)</div>
+                        <ul class="list-disc list-inside text-lg">
+                            <li>여러분은 <strong>OO 통신회사</strong>의 데이터 분석가입니다.</li>
+                            <li>현재 회사는 <strong>약정 기간이 끝난 고객의 번호이동(이탈)</strong> 문제로 어려움을 겪고 있습니다.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="b-block">
+                        <div class="b-block-title">과제 (To-Be)</div>
+                        <ul class="list-disc list-inside text-lg">
+                            <li>어떤 고객이 이탈할지 예측하는 <strong>머신러닝 모델</strong>을 구축해야 합니다.</li>
+                            <li><strong>궁극적 목표:</strong> 이탈 가능성이 높은 고객을 미리 식별하여, 이탈 방지 마케팅 전략을 수립하는 것입니다.</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- 오른쪽 컬럼 --><!-- 이미지가 제거되었습니다. -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 4: 데이터 로드 및 환경 설정 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">2. 데이터 준비: 환경 설정 및 로드</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>분석 환경:</strong> Python</li>
+                <li><strong>주요 라이브러리 임포트</strong></li>
+            </ul>
+            <pre><code>import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split</code></pre>
+            
+            <p class="text-lg mt-6 mb-2"><strong>데이터 로드</strong></p>
+            <pre><code>path = 'https://raw.githubusercontent.com/DA4BAM/dataset/master/mobile_cust_churn.csv'
+data = pd.read_csv(path)</code></pre>
+        </div>
+    </section>
+
+    <!-- Slide 5: 데이터 미리보기 (data.head()) --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">2. 데이터 준비: 미리보기 (data.head())</h2>
+            <p class="text-lg mb-4">로드된 데이터의 상위 5개 행을 보여주며, 데이터의 전반적인 구조를 확인합니다.</p>
+            
+            <p class="text-sm font-semibold mb-2">data.head() 실행 결과 (일부)</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>id</th>
+                        <th>COLLEGE</th>
+                        <th>INCOME</th>
+                        <th>OVERAGE</th>
+                        <th>...</th>
+                        <th class="font-bold">CHURN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>31953</td>
+                        <td>0</td>
+                        <td>...</td>
+                        <td class="font-bold">0</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>1</td>
+                        <td>31953</td>
+                        <td>0</td>
+                        <td>...</td>
+                        <td class="font-bold">0</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>1</td>
+                        <td>31953</td>
+                        <td>0</td>
+                        <td>...</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>1</td>
+                        <td>31953</td>
+                        <td>0</td>
+                        <td>...</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>0</td>
+                        <td>31953</td>
+                        <td>0</td>
+                        <td>...</td>
+                        <td class="font-bold">1</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Slide 6: 주요 변수 설명 (Data Dictionary) --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">2. 데이터 준비: 주요 변수 설명 (Data Dictionary)</h2>
+            
+            <div class="b-block">
+                <div class="b-block-title">Target 변수 (우리가 맞추고자 하는 값)</div>
+                <p class="text-lg"><strong>CHURN:</strong> 고객 이탈(번호이동) 여부 (1: 이탈, 0: 유지)</p>
+            </div>
+
+            <div class="b-block">
+                <div class="b-block-title">Feature 변수 (특징 변수)</div>
+                <ul class="list-disc list-inside text-lg space-y-1">
+                    <li><code>COLLEGE</code>: 대학 졸업 여부</li>
+                    <li><code>INCOME</code>: 연 수입</li>
+                    <li><code>OVERAGE</code>: 월평균 초과 사용 시간(분)</li>
+                    <li><code>LEFTOVER</code>: 월평균 잔여 시간 비율(%)</li>
+                    <li><code>HOUSE</code>: 집값</li>
+                    <li><code>HANDSET_PRICE</code>: 스마트폰 가격</li>
+                    <li><code>OVER_15MINS_CALLS_PER_MONTH</code>: 월평균 장기통화(15분 이상) 횟수</li>
+                    <li><code>AVERAGE_CALL_DURATION</code>: 평균 통화 시간</li>
+                    <li><code>REPORTED_SATISFACTION</code>: 만족도 설문조사 결과</li>
+                    <li><code>REPORTED_USAGE_LEVEL</code>: 사용도 자가진단 결과</li>
+                    <li><code>CONSIDERING_CHANGE_OF_PLAN</code>: 향후 변경계획 설문조사 결과</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 7: 전처리 (1) - 불필요한 변수 제거 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">3. 데이터 전처리 (1): 불필요한 변수 제거</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>목적:</strong> 모델링에 필요 없거나, 예측에 도움이 되지 않는 변수를 제거합니다.</li>
+                <li><strong>제거 대상:</strong> <code>id</code> (단순 식별자)</li>
+            </ul>
+            <pre><code>drop_cols = ['id']
+data.drop(drop_cols, axis = 1, inplace = True)</code></pre>
+        </div>
+    </section>
+
+    <!-- Slide 8: 전처리 (2) - X, y 분할 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">3. 데이터 전처리 (2): X, y 분할</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>목적:</strong> 모델 학습을 위해 '문제지(X)'와 '정답지(y)'를 분리합니다.</li>
+                <li><strong>X (Features):</strong> <code>CHURN</code>을 제외한 모든 변수</li>
+                <li><strong>y (Target):</strong> <code>CHURN</code> 변수</li>
+            </ul>
+            <pre><code>target = 'CHURN'
+x = data.drop(target, axis = 1)
+y = data.loc[:, target]</code></pre>
+        </div>
+    </section>
+
+    <!-- Slide 9: 전처리 (3) - 가변수화 (One-Hot Encoding) --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">3. 데이터 전처리 (3): 가변수화 (One-Hot Encoding)</h2>
+            <ul class="list-disc list-inside text-lg mb-4 space-y-2">
+                <li><strong>목적:</strong> 머신러닝 모델이 이해할 수 있도록, 문자형(범주형) 데이터를 숫자형으로 변환합니다.</li>
+                <li><strong>대상 변수:</strong>
+                    <ul class="list-circle list-inside ml-6">
+                        <li><code>REPORTED_SATISFACTION</code> (e.g., 'avg', 'high')</li>
+                        <li><code>REPORTED_USAGE_LEVEL</code></li>
+                        <li><code>CONSIDERING_CHANGE_OF_PLAN</code></li>
+                    </ul>
+                </li>
+                <li><strong>방법:</strong> <code>pandas</code>의 <code>get_dummies</code> 사용 (<code>drop_first=True</code>)</li>
+            </ul>
+            <pre><code>dumm_cols = ['REPORTED_SATISFACTION',
+             'REPORTED_USAGE_LEVEL',
+             'CONSIDERING_CHANGE_OF_PLAN']
+             
+x = pd.get_dummies(x, columns = dumm_cols, 
+                   drop_first = True)</code></pre>
+        </div>
+    </section>
+
+    <!-- Slide 10: 전처리 (4) - 학습용 / 검증용 데이터 분할 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">3. 데이터 전처리 (4): 학습용 / 검증용 데이터 분할</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>목적:</strong> 모델을 학습시킬 데이터(train)와 모델의 성능을 공정하게 평가할 데이터(validation)로 분리합니다.</li>
+                <li><strong>비율:</strong> 학습용 80%, 검증용 20%</li>
+                <li><strong><code>random_state = 20</code>:</strong> 재현성을 위해 난수 시드 고정</li>
+            </ul>
+            <pre><code>x_train, x_val, y_train, y_val = train_test_split(
+    x, y, test_size=.2, random_state = 20)</code></pre>
+            
+            <!-- 이미지가 제거되었습니다. -->
+        </div>
+    </section>
+
+    <!-- Slide 11: Decision Tree 모델 학습 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">4. 모델링: Decision Tree 모델 학습</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>모델:</strong> Decision Tree (의사결정나무)
+                    <ul class="list-circle list-inside ml-6">
+                        <li>'스무고개'와 같이, 데이터를 특정 기준으로 나누는 규칙(Rule)을 나무(Tree) 형태로 만들어가는 모델입니다.</li>
+                    </ul>
+                </li>
+                <li><strong>학습 단계:</strong></li>
+            </ul>
+
+            <div class="b-block">
+                <div class="b-block-title">1. 모델 라이브러리 불러오기</div>
+                <pre><code>from sklearn.tree import DecisionTreeClassifier</code></pre>
+            </div>
+
+            <div class="b-block">
+                <div class="b-block-title">2. 모델 선언 (기본 옵션)</div>
+                <pre><code>model = DecisionTreeClassifier()</code></pre>
+            </div>
+
+            <div class="b-block">
+                <div class="b-block-title">3. 모델 학습 (fit)</div>
+                <pre><code>model.fit(x_train, y_train)</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 12: 모델 예측 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">4. 모델링: 모델 예측</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>목적:</strong> 학습된 모델이 처음 보는 데이터(<code>x_val</code>)를 얼마나 잘 맞추는지 테스트합니다.</li>
+                <li><strong>예측 (predict):</strong> <code>x_val</code> 데이터를 모델에 입력하여 <code>y_val</code>(실제 이탈 여부)을 예측합니다.</li>
+            </ul>
+            <pre><code>pred = model.predict(x_val)</code></pre>
+            <p class="text-lg mt-4"><code>pred</code> 변수에는 모델이 예측한 값 (0 또는 1)이 저장됩니다.</p>
+        </div>
+    </section>
+
+    <!-- Slide 13: Confusion Matrix (혼동 행렬) --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">5. 성능 평가 (1): Confusion Matrix (혼동 행렬)</h2>
+            <p class="text-lg mb-4"><strong>목적:</strong> 모델의 예측 결과를 실제 값과 비교하여, 모델이 어떤 부분을 맞추고 틀렸는지 상세히 확인합니다.</p>
+            <pre><code>from sklearn.metrics import confusion_matrix
+print(confusion_matrix(y_val, pred))
+
+# 예시 출력:
+# [[1708  319]
+#  [ 323 1650]]</code></pre>
+            
+            <p class="text-sm font-semibold mb-2 mt-4">결과 해석용 2x2 테이블</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>예측: 유지 (0)</th>
+                        <th>예측: 이탈 (1)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="font-bold">실제: 유지 (0)</td>
+                        <td>TN (True Negative)</td>
+                        <td>FP (False Positive)</td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold">실제: 이탈 (1)</td>
+                        <td class="font-bold text-red-600">FN (False Negative)</td>
+                        <td>TP (True Positive)</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <ul class="list-disc list-inside text-lg mt-4 space-y-2">
+                <li><strong class="text-red-600">FN (False Negative): (가장 중요)</strong> 실제 이탈 고객을 '유지'로 잘못 예측. (잡아야 할 고객을 놓침)</li>
+                <li><strong>FP (False Positive):</strong> 실제 유지 고객을 '이탈'로 잘못 예측. (불필요한 마케팅 비용 발생)</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Slide 14: Classification Report --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">5. 성능 평가 (2): Classification Report</h2>
+            <p class="text-lg mb-4"><strong>목적:</strong> 정밀도, 재현율, F1-Score 등 분류 모델의 핵심 성능 지표를 한눈에 확인합니다.</p>
+            <pre><code>from sklearn.metrics import classification_report
+print(classification_report(y_val, pred, digits = 4))</code></pre>
+            
+            <div class="b-block mt-6">
+                <div class="b-block-title">주요 지표 해석</div>
+                <ul class="list-disc list-inside text-lg space-y-2">
+                    <li><strong>Accuracy (정확도):</strong> 전체 중 몇 개를 맞췄는가?</li>
+                    <li><strong>Precision (정밀도 - 1 기준):</strong> 모델이 '이탈'이라고 예측한 것 중, 실제 '이탈'인 비율.</li>
+                    <li><strong class="text-red-600">Recall (재현율 - 1 기준): (중요)</strong> 실제 '이탈' 고객 중, 모델이 '이탈'이라고 맞춘 비율.</li>
+                    <li><strong>F1-Score:</strong> 정밀도와 재현율의 조화 평균.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 15: 모델 시각화 (전체 트리) --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">6. 모델 해석 (1): 시각화 (기본 모델)</h2>
+            <p class="text-lg mb-4"><strong>Decision Tree의 최대 장점:</strong> 모델의 의사결정 과정을 시각적으로 확인할 수 있습니다.</p>
+            
+            <!-- 이미지가 제거되었습니다. -->
+            
+            <div class="b-alert-block mt-6">
+                <div class="b-alert-block-title">문제점</div>
+                <ul class="list-disc list-inside text-lg">
+                    <li>트리가 너무 깊고 복잡합니다. (규칙이 수백 개)</li>
+                    <li><strong>과적합(Overfitting):</strong> 학습 데이터는 완벽히 맞추려 하지만, 새로운 데이터에 대한 예측 성능은 낮을 수 있습니다.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 16: 모델 시각화 (간소화된 트리) --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">6. 모델 해석 (2): 시각화 (간소화된 트리)</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>해결책:</strong> 하이퍼파라미터 튜닝으로 모델의 복잡도를 제한합니다.
+                    <ul class="list-circle list-inside ml-6">
+                        <li><code>max_depth=3</code>: 트리의 최대 깊이를 3으로 제한</li>
+                    </ul>
+                </li>
+            </ul>
+            <pre><code>from sklearn.tree import plot_tree
+model2 = DecisionTreeClassifier(max_depth = 3)
+model2.fit(x_train, y_train)
+# plot_tree(model2, ...)</code></pre>
+
+            <!-- 이미지가 제거되었습니다. -->
+            
+            <ul class="list-disc list-inside text-lg mt-4">
+                <li><strong>해석:</strong> 모델이 단순해져 해석이 용이해졌습니다.</li>
+                <li>(예시) <code>INCOME &lt;= 45000</code>이고 <code>OVERAGE &lt;= 100</code>인 고객은 이탈하지 않는다(class=0)는 규칙 발견.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Slide 17: 변수 중요도 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">6. 모델 해석 (3): 변수 중요도 (Feature Importance)</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>목적:</strong> 모델이 이탈을 예측할 때, 어떤 변수를 가장 중요하게 사용했는지 확인합니다.</li>
+                <li><strong>개념:</strong> 트리를 분기할 때, 특정 변수가 얼마나 불순도(Gini)를 많이 감소시켰는지를 기준으로 중요도를 계산합니다.</li>
+            </ul>
+            <pre><code># 변수명 리스트
+print(x_train.columns)
+
+# 변수별 중요도 수치
+print(model.feature_importances_)</code></pre>
+        </div>
+    </section>
+
+    <!-- Slide 18: 변수 중요도 시각화 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">6. 모델 해석 (4): 변수 중요도 시각화</h2>
+            <p class="text-lg mb-4"><strong>목적:</strong> 변수 중요도를 막대그래프로 시각화하여 어떤 변수가 가장 영향력이 큰지 한눈에 파악합니다.</p>
+            
+            <!-- 이미지가 제거되었습니다. -->
+            
+            <div class="b-block mt-6">
+                <div class="b-block-title">결과 분석 (예시)</div>
+                <p class="text-lg">"그래프를 보면, <strong>INCOME</strong>와 <strong>HOUSE</strong> (또는 <strong>OVERAGE</strong>)가 고객 이탈 예측에 가장 큰 영향을 미치는 변수임을 알 수 있습니다."</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 19: 하이퍼파라미터 튜닝 실습 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">6. 모델 해석 (5): 하이퍼파라미터 튜닝 실습</h2>
+            <ul class="list-disc list-inside text-lg mb-4">
+                <li><strong>목적:</strong> 모델 성능과 해석력의 균형을 맞추는 최적의 <code>max_depth</code>를 찾아봅니다.</li>
+                <li><strong>실습 내용:</strong> <code>max_depth</code>를 1부터 5까지 변경하면서 모델을 생성하고, 성능(Accuracy, Recall)을 비교합니다.</li>
+            </ul>
+            
+            <div class="b-block">
+                <div class="b-block-title">Python Code (개념)</div>
+                <pre><code>from sklearn.metrics import accuracy_score, recall_score
+
+for d in [1, 2, 3, 4, 5]:
+    model_d = DecisionTreeClassifier(max_depth=d)
+    model_d.fit(x_train, y_train)
+    
+    pred_d = model_d.predict(x_val)
+    
+    # 성능 지표 계산 및 기록
+    acc = accuracy_score(y_val, pred_d)
+    rec = recall_score(y_val, pred_d) # 이탈(1) 기준
+    print(f'Depth: {d}, Accuracy: {acc:.4f}, Recall: {rec:.4f}')</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 20: 튜닝 결과 비교 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">6. 모델 해석 (6): 튜닝 결과 비교</h2>
+            
+            <div class="b-block">
+                <div class="b-block-title"><code>max_depth</code>에 따른 성능 변화 (시각화)</div>
+                <div class="flex justify-center my-4">
+                    <!-- 이미지가 제거되었습니다. -->
+                    <p class="text-gray-500 italic">[성능 비교 꺾은선 그래프 영역]</p>
+                </div>
+                <p class="text-sm text-center italic">X축: max_depth (1, 2, ...), Y축: Accuracy/Recall (Validation Recall이 3~5 사이에서 정점)</p>
+            </div>
+            
+            <div class="b-block mt-6">
+                <div class="b-block-title">결과 분석</div>
+                <ul class="list-disc list-inside text-lg space-y-2">
+                    <li>깊이가 너무 얕으면(e.g., 1) 모델이 너무 단순하여 성능이 낮습니다. (Underfitting)</li>
+                    <li>깊이가 너무 깊어지면(e.g., >10) 학습 데이터에 과적합되어 검증 성능이 오히려 떨어집니다. (Overfitting)</li>
+                    <li><strong class="text-red-600">"<code>max_depth</code>가 3~5 사이"</strong>일 때, 모델의 해석력과 검증 성능(특히 Recall)이 가장 균형 잡힌 지점으로 보입니다.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 21: 결론 및 제언 --><section class="slide">
+        <div class="slide-content">
+            <h2 class="text-3xl font-bold text-indigo-700 mb-8">7. 결론 및 제언</h2>
+            
+            <div class="b-block">
+                <div class="b-block-title">결론 (Summary)</div>
+                <ul class="list-disc list-inside text-lg space-y-2">
+                    <li>통신사 고객 이탈 데이터를 바탕으로 Decision Tree 예측 모델을 구축했습니다.</li>
+                    <li>기본 모델은 과적합 경향을 보였으나, <code>max_depth</code> 튜닝을 통해 모델을 간소화하고 해석력을 높였습니다.</li>
+                    <li>모델 분석 결과, 고객 이탈에 영향을 미치는 주요 요인은 <strong>INCOME</strong>, <strong>HOUSE</strong> 등이었습니다.</li>
+                </ul>
+            </div>
+
+            <div class="b-block mt-6">
+                <div class="b-block-title">제언 (Next Steps)</div>
+                <ul class="list-disc list-inside text-lg space-y-2">
+                    <li><strong>모델 측면:</strong> 더 안정적인 성능을 위해 <strong>Random Forest</strong> 또는 <strong>Gradient Boosting</strong> 모델 사용을 제안합니다.</li>
+                    <li><strong>비즈니스 측면:</strong>
+                        <ul class="list-circle list-inside ml-6 mt-2 space-y-1">
+                            <li>변수 중요도가 높게 나온 <strong>INCOME</strong> (e.g., `INCOME`)를 기준으로 고객 세그먼트를 나눠, 차별화된 이탈 방지 프로그램을 적용합니다.</li>
+                            <li>간소화된 트리에서 발견된 <strong>특정 이탈 위험 규칙</strong> (e.g., '소득이 낮고 초과 사용량이 많은 고객') 그룹을 타겟으로 즉각적인 케어(요금제 변경 제안 등)가 필요합니다.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Slide 22: Q&A --><section class="slide">
+        <div class="slide-content flex flex-col justify-center items-center text-center">
+            <h1 class="text-6xl font-bold text-indigo-700">Q&A</h1>
+            <p class="text-4xl text-gray-700 mt-12">감사합니다.</p>
+        </div>
+    </section>
+
+</body>
+</html>
+

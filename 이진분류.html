@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>딥러닝 이진 분류: 타이타닉 생존자 예측 (단순 버전)</title>
+</head>
+<body style="background-color: #f0f0f0; padding: 20px; font-family: 'Malgun Gothic', 'Arial', sans-serif;">
+
+<!-- 
+    각 슬라이드는 <div class="slide">...</div> 입니다.
+    이 <div> 안의 내용을 구글 슬라이드에 붙여넣기 해보세요.
+    레이아웃은 <table>을 사용하고, 모든 스타일은 style="..." 속성으로 직접 넣었습니다.
+-->
+
+<!-- Slide 1: Title_Slide -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <table style="width: 100%; height: 100%;">
+        <tr>
+            <td style="text-align: center; vertical-align: middle;">
+                <h1 style="font-size: 60px; color: #212121; margin: 0;">딥러닝 이진 분류</h1>
+                <p style="font-size: 28px; color: #424242; margin-top: 20px;">타이타닉 데이터 생존자 예측</p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Slide 2: Env Setup 1 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">1. 환경 준비</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(1) 라이브러리 로딩</h3>
+    <p style="font-size: 20px; color: #424242;">분석에 필요한 주요 라이브러리를 불러옵니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import *
+from sklearn.preprocessing import MinMaxScaler
+
+from keras.models import Sequential
+from keras.layers import Dense, Input
+from keras.backend import clear_session
+from keras.optimizers import Adam
+    </pre>
+</div>
+
+<!-- Slide 3: Env Setup 2 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">1. 환경 준비</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">학습곡선 함수 정의</h3>
+    <p style="font-size: 20px; color: #424242;">모델의 학습 과정을 시각화할 <code>dl_history_plot</code> 함수를 정의합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+def dl_history_plot(history):
+    plt.figure(figsize=(10,6))
+    plt.plot(history['loss'], label='train_err', marker = '.')
+    plt.plot(history['val_loss'], label='val_err', marker = '.')
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid()
+    plt.show()
+    </pre>
+</div>
+
+<!-- Slide 4: Env Setup 3 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">1. 환경 준비</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(2) 데이터 로딩</h3>
+    <p style="font-size: 20px; color: #424242;"><code>titanic.3.csv</code> 파일을 로드하고, 이번 분석에 사용하지 않을 컬럼들을 제거합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+path = "https://raw.githubusercontent.com/DA4BAM/dataset/master/titanic.3.csv"
+data = pd.read_csv(path)
+data.drop(['Age_scale1', 'AgeGroup', 'SibSp','Parch' ], axis = 1, inplace = True)
+data.head()
+    </pre>
+</div>
+
+<!-- Slide 5: Data Prep 1-1 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">2. 데이터 준비 (모델 1)</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(1) 데이터 준비: Feature Selection</h3>
+    <p style="font-size: 20px; color: #424242;"><code>Sex</code>, <code>Age</code>, <code>Fare</code> 3개 변수만 사용하여 <code>Survived</code>를 예측합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+target = 'Survived'
+features = ['Sex', 'Age', 'Fare']
+x = data.loc[:, features]
+y = data.loc[:, target]
+    </pre>
+    <h3 style="font-size: 28px; color: #00796B; margin: 20px 0 15px 0;">(2) 가변수화 (Dummification)</h3>
+    <p style="font-size: 20px; color: #424242;">범주형 변수인 <code>Sex</code>를 숫자형으로 변환합니다 (One-Hot Encoding).</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+x = pd.get_dummies(x, columns = ['Sex'], drop_first = True)
+x.head()
+    </pre>
+</div>
+
+<!-- Slide 6: Data Prep 1-2 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">2. 데이터 준비 (모델 1)</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(3) 데이터 분할 (Split)</h3>
+    <p style="font-size: 20px; color: #424242;">데이터를 훈련용(70%)과 검증용(30%)으로 분리합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=.3, random_state = 20)
+    </pre>
+    <h3 style="font-size: 28px; color: #00796B; margin: 20px 0 15px 0;">(4) 스케일링 (Scaling)</h3>
+    <p style="font-size: 20px; color: #424242;"><code>MinMaxScaler</code>를 사용해 모든 특성을 0과 1 사이로 정규화합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+scaler = MinMaxScaler()
+x_train = scaler.fit_transform(x_train)
+x_val = scaler.transform(x_val)
+    </pre>
+</div>
+
+<!-- Slide 7: Model 1-1 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">3. 딥러닝 1: 3개 Feature</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(1) 모델 설계</h3>
+    <p style="font-size: 20px; color: #424242;">입력 (3개)에서 바로 출력 (1개)으로 이어지는 가장 단순한 모델입니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+nfeatures = x_train.shape[1] <span style="color: #757575;"># nfeatures = 3</span>
+clear_session()
+
+model = Sequential( [Input(shape = (nfeatures,)),
+                     Dense( 1, activation= 'sigmoid')])
+
+model.summary()
+    </pre>
+</div>
+
+<!-- Slide 8: Model 1-2 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">3. 딥러닝 1: 3개 Feature</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(2) Compile 및 학습</h3>
+    <p style="font-size: 20px; color: #424242;"><code>binary_crossentropy</code> 손실 함수와 <code>Adam</code> 옵티마이저(학습률 0.01)로 50 Epochs 학습합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+model.compile(optimizer = Adam(learning_rate=0.01), loss = 'binary_crossentropy')
+
+history = model.fit(x_train, y_train,
+                    epochs = 50, 
+                    validation_split=0.2).history
+dl_history_plot(history)
+    </pre>
+</div>
+
+<!-- Slide 9: Model 1-3 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">3. 딥러닝 1: 3개 Feature</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(3) 예측 및 검증</h3>
+    <p style="font-size: 20px; color: #424242;">모델이 예측한 확률값을 0.5 기준으로 0 또는 1로 변환하여 실제값과 비교합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+pred = model.predict(x_val)
+print(pred[:5])
+<span style="color: #757575;"># activation이 sigmoid --> 0 ~ 1 사이의 확률값.</span>
+<span style="color: #757575;"># 그러므로 cut-off value(보통 0.5)를 기준으로 잘라서 0과 1로 만들어 준다.</span>
+pred = np.where(pred >= .5, 1, 0)
+print(pred[:5])
+print(classification_report(y_val, pred))
+    </pre>
+    <p style="font-size: 20px; color: #424242; margin-top: 10px;">약 <strong style="color: #00796B;">78%</strong>의 정확도(Accuracy)를 달성했습니다.</p>
+</div>
+
+<!-- Slide 10: Data Prep 2-1 (Table Layout) -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">4. 딥러닝 2: 전체 Feature</h2>
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 50%; vertical-align: top; padding-right: 20px;">
+                <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(1) 데이터 준비</h3>
+                <p style="font-size: 20px; color: #424242;"><code>Survived</code>를 제외한 모든 변수를 <code>x</code>로, <code>Survived</code>를 <code>y</code>로 사용합니다.</p>
+                <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+target = 'Survived'
+x = data.drop(target, axis = 1)
+y = data.loc[:, target]
+                </pre>
+            </td>
+            <td style="width: 50%; vertical-align: top; padding-left: 20px;">
+                <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(1) 가변수화</h3>
+                <p style="font-size: 20px; color: #424242;"><code>Pclass</code>, <code>Sex</code>, <code>Embarked</code> 범주형 변수들을 <code>get_dummies</code>로 처리합니다.</p>
+                <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+cat_cols = ['Pclass','Sex', 'Embarked']
+x = pd.get_dummies(x, columns = cat_cols, drop_first = True)
+                </pre>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Slide 11: Data Prep 2-2 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">4. 딥러닝 2: 전체 Feature</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(1) 데이터 전처리: 분할 및 스케일링</h3>
+    <p style="font-size: 20px; color: #424242;">이전과 동일하게 70/30 (random_state=20)으로 분할하고 <code>MinMaxScaler</code>로 스케일링합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=.3, random_state = 20)
+scaler = MinMaxScaler()
+x_train = scaler.fit_transform(x_train)
+x_val = scaler.transform(x_val)
+    </pre>
+</div>
+
+<!-- Slide 12: Model 2-1 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">4. 딥러닝 2: 전체 Feature</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(2) 모델링</h3>
+    <p style="font-size: 20px; color: #424242;">전체 Feature(<code>n</code>)를 사용하려 했으나, 모델 입력 shape이 <code>nfeatures</code>(3)로 설정되었습니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+n = x_train.shape[1] <span style="color: #757575;"># n은 현재 모든 Feature 수 (예: 10)</span>
+<span style="color: #757575;"># nfeatures는 이전 3개 Feature 모델에서 넘어온 값 (현재 3)</span>
+clear_session()
+model = Sequential( [Input(shape = (nfeatures,)), 
+                     Dense( 1, activation = 'sigmoid')])
+model.summary()
+    </pre>
+    <p style="font-size: 18px; color: #FF7043; margin-top: 10px;"><strong>[주의]</strong> 모델의 입력 shape이 <code>n</code>이 아닌 <code>nfeatures</code>로 설정되어, 실제로는 3개의 Feature만 학습에 사용되었습니다. 이로 인해 모델 성능이 기대만큼 향상되지 않을 수 있습니다.</p>
+</div>
+
+<!-- Slide 13: Model 2-2 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">4. 딥러닝 2: 전체 Feature</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">Compile + 학습 및 예측</h3>
+    <p style="font-size: 20px; color: #424242;">동일한 하이퍼파라미터로 학습 후, 예측 및 검증을 수행합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+model.compile(optimizer = Adam(learning_rate = 0.01), loss = 'binary_crossentropy')
+history = model.fit(x_train, y_train, epochs = 50, validation_split=.2).history
+dl_history_plot(history)
+
+pred2 = model.predict(x_val)
+pred2 = np.where( pred2 >= .5 , 1, 0)
+print(classification_report(y_val, pred2))
+    </pre>
+    <p style="font-size: 20px; color: #424242; margin-top: 10px;">입력 Feature가 제한되었기 때문에, 이전과 비슷한 약 <strong style="color: #00796B;">78%</strong>의 정확도를 보였습니다.</p>
+</div>
+
+<!-- Slide 14: Model 3-1 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">5. 딥러닝 3: Hidden Layer 추가</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(1) 모델 설계</h3>
+    <p style="font-size: 20px; color: #424242;">모든 Feature(<code>n</code>)를 입력받고, 4개 노드의 <code>relu</code> 은닉층을 추가하여 모델의 복잡도를 높였습니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+n = x_train.shape[1] <span style="color: #757575;"># 모든 Feature 수</span>
+clear_session()
+
+model3 = Sequential([
+  Input(shape = (n,)),
+  Dense(4, activation = 'relu'),
+  Dense(1, activation = 'sigmoid')
+])
+model3.summary()
+    </pre>
+</div>
+
+<!-- Slide 15: Model 3-2 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">5. 딥러닝 3: Hidden Layer 추가</h2>
+    <h3 style="font-size: 28px; color: #00796B; margin: 0 0 15px 0;">(2) Compile + 학습 및 검증</h3>
+    <p style="font-size: 20px; color: #424242;">동일한 하이퍼파라미터로 학습 후, 예측 및 검증을 수행합니다.</p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+model3.compile( optimizer=Adam(learning_rate= 0.01), loss ='binary_crossentropy')
+hist = model3.fit(x_train, y_train, epochs = 50, validation_split=.2 ).history
+dl_history_plot(hist)
+
+pred3 = model3.predict(x_val)
+pred3 = np.where(pred3 >= 0.5, 1, 0)
+print(classification_report(y_val, pred3))
+    </pre>
+    <p style="font-size: 20px; color: #424242; margin-top: 10px;"><strong>정확도 (Accuracy): ~81%</strong> (은닉층 추가와 모든 Feature 사용으로 성능 향상)</p>
+</div>
+
+<!-- Slide 16: Exercise 1 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">5. (3) 실습 1: 모델 설계</h2>
+    <p style="font-size: 20px; color: #424242;">다음의 summary를 보고 모델을 설계하시오.</p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid #ddd; padding: 12px; background-color: #f5f5f5; font-size: 18px; text-align: left;">Layer (type)</th>
+                <th style="border: 1px solid #ddd; padding: 12px; background-color: #f5f5f5; font-size: 18px; text-align: left;">Output Shape</th>
+                <th style="border: 1px solid #ddd; padding: 12px; background-color: #f5f5f5; font-size: 18px; text-align: left;">옵션</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">dense (Dense)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">(None, 16)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;"><code>node</code>, <code>input_shape</code>, <code>activation = 'relu'</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">dense_1 (Dense)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">(None, 1)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;"><code>node</code>, <code>activation = 'sigmoid'</code></td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="font-size: 20px; color: #424242;"><strong>정답 예시:</strong></p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+<span style="color: #757575;"># n = x_train.shape[1] (예: 전체 Feature 수)</span>
+clear_session()
+model_ex1 = Sequential([
+    Input(shape = (n,)),
+    Dense(16, activation = 'relu'),
+    Dense(1, activation = 'sigmoid')
+])
+model_ex1.summary()
+    </pre>
+</div>
+
+<!-- Slide 17: Exercise 2 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">5. (4) 실습 2: 모델 설계</h2>
+    <p style="font-size: 20px; color: #424242;">다음의 summary를 보고 모델을 설계하시오.</p>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid #ddd; padding: 12px; background-color: #f5f5f5; font-size: 18px; text-align: left;">Layer (type)</th>
+                <th style="border: 1px solid #ddd; padding: 12px; background-color: #f5f5f5; font-size: 18px; text-align: left;">Output Shape</th>
+                <th style="border: 1px solid #ddd; padding: 12px; background-color: #f5f5f5; font-size: 18px; text-align: left;">옵션</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">dense (Dense)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">(None, 16)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;"><code>node</code>, <code>input_shape</code>, <code>activation = 'relu'</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">dense_1 (Dense)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">(None, 8)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;"><code>node</code>, <code>activation = 'relu'</code></td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">dense_2 (Dense)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;">(None, 1)</td>
+                <td style="border: 1px solid #ddd; padding: 12px; font-size: 18px;"><code>node</code>, <code>activation = 'sigmoid'</code></td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="font-size: 20px; color: #424242;"><strong>정답 예시:</strong></p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+<span style="color: #757575;"># n = x_train.shape[1] (예: 전체 Feature 수)</span>
+clear_session()
+model_ex2 = Sequential([
+    Input(shape = (n,)),
+    Dense(16, activation = 'relu'),
+    Dense(8, activation = 'relu'),
+    Dense(1, activation = 'sigmoid')
+])
+model_ex2.summary()
+    </pre>
+</div>
+
+<!-- Slide 18: Exercise 3 -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <h2 style="font-size: 36px; color: #00838F; margin: 0 0 30px 0;">5. (5) 실습 3: 나만의 모델</h2>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <blockquote style="font-size: 32px; color: #212121; margin: 20px 0 20px 0; font-family: 'Georgia', serif;">"이번에는 여러분이 원하는 대로 모델을 설계하고, 학습해 봅시다!"</blockquote>
+        <p style="font-size: 20px; color: #424242; font-style: italic;">Tip: 은닉층(layer) 개수, 노드(node) 개수, 활성화 함수, 학습률(learning rate), Epochs 등을 다양하게 변경하며 최적의 모델을 찾아보세요.</p>
+    </div>
+    <p style="font-size: 20px; color: #424242;"><strong>예시 코드 구조:</strong></p>
+    <pre style="background: #f5f5f5; border: 1px solid #ddd; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; white-space: pre-wrap; word-wrap: break-word; overflow-x: auto;">
+<span style="color: #757575;"># 1. 모델 설계</span>
+<span style="color: #757575;"># n = x_train.shape[1]</span>
+clear_session()
+my_model = Sequential([
+    Input(shape = (n,)),
+    Dense(..., activation = '...'),  <span style="color: #757575;"># 원하는 은닉층 추가</span>
+    Dense(..., activation = '...'),  <span style="color: #757575;"># 원하는 은닉층 추가</span>
+    Dense(1, activation = 'sigmoid')
+])
+my_model.summary()
+
+<span style="color: #757575;"># 2. 컴파일 및 학습</span>
+my_model.compile(optimizer = Adam(learning_rate = 0.001), loss = 'binary_crossentropy') <span style="color: #757575;"># 학습률 조정 가능</span>
+my_history = my_model.fit(x_train, y_train, epochs = 100, validation_split = 0.2).history <span style="color: #757575;"># Epochs 조정 가능</span>
+dl_history_plot(my_history)
+
+<span style="color: #757575;"># 3. 예측 및 검증</span>
+my_pred = my_model.predict(x_val)
+my_pred = np.where(my_pred >= 0.5, 1, 0)
+print(classification_report(y_val, my_pred))
+    </pre>
+</div>
+
+<!-- Slide 19: Q&A -->
+<div class="slide" style="width: 1280px; height: 720px; background-color: #ffffff; border: 1px solid #ccc; margin-bottom: 20px; padding: 60px; box-sizing: border-box;">
+    <table style="width: 100%; height: 100%;">
+        <tr>
+            <td style="text-align: center; vertical-align: middle;">
+                <h2 style="font-size: 70px; color: #00ACC1; margin: 0 0 20px 0;">Q&A</h2>
+                <p style="font-size: 28px; color: #424242;">감사합니다.</p>
+            </td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>
