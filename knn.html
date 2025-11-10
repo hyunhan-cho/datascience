@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regression : KNN (K-최근접 이웃)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inter 폰트 및 Noto Sans KR 적용 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+        
+        /* '슬라이드' 섹션 스타일 */
+        .slide-section {
+            background-color: white;
+            max-width: 1200px;
+            min-height: 80vh; /* 각 슬라이드 최소 높이 */
+            margin: 2rem auto; /* 위아래 여백 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            padding: 3rem; /* p-12 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 내용물 중앙 정렬 (수직) */
+        }
+        
+        /* 첫번째/마지막 슬라이드는 특별히 중앙 정렬 */
+        .slide-section.title-slide {
+            align-items: center; /* 내용물 중앙 정렬 (수평) */
+            text-align: center;
+        }
+
+        /* 코드 블록 스타일 */
+        pre {
+            background-color: #1f2937; /* bg-gray-900 */
+            color: #f9fafb; /* text-gray-50 */
+            padding: 1rem; /* p-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            overflow-x: auto; /* 코드 길어질 시 가로 스크롤 */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 1rem; /* mt-4 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        
+        code {
+            font-family: 'D2Coding', 'Consolas', 'Monaco', monospace;
+        }
+
+        /* 테이블 스타일 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem; /* mt-6 */
+        }
+        th, td {
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            padding: 0.75rem; /* p-3 */
+            text-align: left;
+        }
+        th {
+            background-color: #f9fafb; /* bg-gray-50 */
+            font-weight: 600; /* font-semibold */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 md:p-8">
+
+    <!-- Slide 1: Title -->
+    <div class="slide-section title-slide">
+        <h1 class="text-5xl font-bold text-gray-800 mb-4">Regression : KNN</h1>
+        <p class="text-3xl text-gray-600">K-최근접 이웃을 사용한 회귀</p>
+        <p class="mt-8 text-lg text-gray-500">보스턴 주택 가격 예측</p>
+    </div>
+
+    <!-- Slide 2: 00 환경준비 - Import -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">00. 환경준비 (Environment Setup)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">01. Import</h3>
+        <p class="text-lg mb-4">데이터 분석과 모델링에 필요한 라이브러리들을 불러옵니다.</p>
+        <pre><code class="language-python"># 라이브러리들을 불러오자.
+import numpy as np           # 수치 계산을 위한 라이브러리
+import pandas as pd          # 데이터프레임 처리를 위한 라이브러리
+import matplotlib.pyplot as plt # 데이터 시각화를 위한 라이브러리
+import seaborn as sns        # 더 예쁜 시각화를 위한 라이브러리
+
+# scikit-learn에서 데이터 분할 함수를 불러옴
+from sklearn.model_selection import train_test_split</code></pre>
+    </div>
+
+    <!-- Slide 3: 00 환경준비 - Data Loading -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">00. 환경준비 (Environment Setup)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">02. Data Loading</h3>
+        <p class="text-lg mb-4">'보스턴 주택 가격' 데이터셋을 원격 URL에서 직접 불러옵니다.</p>
+        <pre><code class="language-python"># 데이터를 불러올 경로
+path = 'https://raw.githubusercontent.com/DA4BAM/dataset/master/boston.csv'
+
+# pandas의 read_csv 함수를 사용해 데이터를 DataFrame 객체로 불러옴
+data = pd.read_csv(path)
+
+# 데이터의 첫 5개 행을 출력하여 구조를 확인
+data.head()</code></pre>
+    </div>
+
+    <!-- Slide 4: 데이터 변수 설명 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">데이터 변수 설명</h2>
+        <div class="overflow-x-auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>변수</th>
+                        <th>설명</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>medv</td>
+                        <td>타운별 집값(중위수) (우리가 예측할 목표 변수)</td>
+                    </tr>
+                    <tr>
+                        <td>crim</td>
+                        <td>범죄율</td>
+                    </tr>
+                    <tr>
+                        <td>zn</td>
+                        <td>25,000 평방피트를 초과 거주지역 비율</td>
+                    </tr>
+                    <tr>
+                        <td>indus</td>
+                        <td>비소매상업지역 면적 비율</td>
+                    </tr>
+                    <tr>
+                        <td>chas</td>
+                        <td>찰스강변 위치(범주 : 강변1, 아니면 0)</td>
+                    </tr>
+                    <tr>
+                        <td>nox</td>
+                        <td>일산화질소 농도</td>
+                    </tr>
+                    <tr>
+                        <td>rm</td>
+                        <td>주택당 방 수</td>
+                    </tr>
+                    <tr>
+                        <td>age</td>
+                        <td>1940년 이전에 건축된 주택의 비율</td>
+                    </tr>
+                    <tr>
+                        <td>dis</td>
+                        <td>직업센터의 거리</td>
+                    </tr>
+                    <tr>
+                        <td>rad</td>
+                        <td>방사형 고속도로까지의 거리</td>
+                    </tr>
+                    <tr>
+                        <td>tax</td>
+                        <td>재산세율</td>
+                    </tr>
+                    <tr>
+                        <td>ptratio</td>
+                        <td>학생/교사 비율</td>
+                    </tr>
+                    <tr>
+                        <td>lstat</td>
+                        <td>인구 중 하위 계층 비율</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Slide 5: 20 데이터 준비 - 1) 데이터 준비 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">20. 데이터 준비 (Data Preparation)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">1) 데이터 준비 : X, y 분리</h3>
+        <p class="text-lg mb-4">입력 변수(X)와 목표 변수(y)를 분리하고, 학습용/검증용 데이터로 나눕니다.</p>
+        <pre><code class="language-python"># 목표 변수(Target) 이름 지정
+target = 'medv'
+
+# data에서 target 변수('medv')를 제외한 나머지를 입력 변수 x로 지정
+x = data.drop(target, axis=1)
+
+# data에서 target 변수('medv')만 선택하여 목표 변수 y로 지정
+y = data.loc[:, target]
+
+# 데이터를 학습용(train)과 검증용(validation)으로 분리
+# test_size=.2 : 전체 데이터의 20%를 검증용으로 사용
+# random_state=2022 : 재현 가능성을 위해 난수 시드 고정
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=.2, random_state = 2022)</code></pre>
+    </div>
+
+    <!-- Slide 6: 20 데이터 준비 - 5) Scaling (Why?) -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">20. 데이터 준비 (Data Preparation)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">5) Scaling (특성 스케일링) - Why?</h3>
+        <ul class="list-disc pl-6 text-lg space-y-4">
+            <li>KNN 알고리즘은 데이터 포인트 간의 <strong>'거리'</strong>를 기반으로 예측합니다.</li>
+            <li>만약 변수들(특성들)이 서로 다른 범위(scale)를 가지고 있다면?
+                <br>(예: '방 수'는 1~10, '재산세율'은 100~700)
+            </li>
+            <li>범위가 큰 변수(재산세율)가 거리에 훨씬 큰 영향을 미치게 됩니다.</li>
+            <li>이를 방지하기 위해 모든 변수의 영향력을 동등하게 만들어주는 <strong>스케일링</strong> 작업이 필수입니다.</li>
+        </ul>
+        <pre class="mt-8"><code class="language-python"># scikit-learn에서 스케일러 2종류를 불러옴
+from sklearn.preprocessing import MinMaxScaler, StandardScaler</code></pre>
+    </div>
+
+    <!-- Slide 7: 20 데이터 준비 - 5) Scaling (Min-Max) -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">20. 데이터 준비 (Data Preparation)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">5) Scaling: 정규화 (Normalization)</h3>
+        <p class="text-lg mb-4">모든 변수의 값을 0 ~ 1 사이 값으로 변환합니다. (Min-Max 방식)</p>
+        <p class="text-lg mb-4 font-mono bg-gray-100 p-3 rounded-md">공식: (X - X_min) / (X_max - X_min)</p>
+        <pre><code class="language-python"># 1. MinMaxScaler 객체 선언
+scaler1 = MinMaxScaler()
+
+# 2. train 데이터로 .fit + .transform(적용)
+# .fit() : 각 변수의 min, max 값을 학습
+# .transform() : 학습한 min/max 값으로 모든 x_train 변수를 0~1 사이로 변환
+x_train_s1 = scaler1.fit_transform(x_train)
+
+# 3. val 데이터는 .transform(적용)만 수행
+# x_train에서 학습한 min/max 값(scaler1)을 그대로 가져와 변환만 수행
+x_val_s1 = scaler1.transform(x_val)</code></pre>
+    </div>
+
+    <!-- Slide 8: 20 데이터 준비 - 5) Scaling (Standard) -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">20. 데이터 준비 (Data Preparation)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">5) Scaling: 표준화 (Standardization)</h3>
+        <p class="text-lg mb-4">모든 변수의 값을 평균=0, 표준편차=1 을 갖도록 변환합니다.</p>
+        <p class="text-lg mb-4 font-mono bg-gray-100 p-3 rounded-md">공식: (X - X_mean) / X_std</p>
+        <pre><code class="language-python"># 1. StandardScaler 객체 선언
+scaler2 = StandardScaler()
+
+# 2. train 데이터로 .fit + .transform
+# .fit() : 각 변수의 평균(mean)과 표준편차(std)를 학습
+# .transform() : 학습한 mean/std로 모든 x_train 변수를 표준화
+x_train_s2 = scaler2.fit_transform(x_train)
+
+# 3. val 데이터는 .transform(적용)만 수행
+x_val_s2 = scaler2.transform(x_val)</code></pre>
+    </div>
+
+    <!-- Slide 9: 20 데이터 준비 - 5) Scaling (결과 비교) -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">20. 데이터 준비 (Data Preparation)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">5) Scaling: 결과 변환</h3>
+        <p class="text-lg mb-4">스케일링 결과는 NumPy 배열이므로, 사용 편의를 위해 다시 DataFrame으로 변환합니다.</p>
+        <pre><code class="language-python"># NumPy 배열을 DataFrame으로 변환하면서 컬럼 이름을 다시 붙여줍니다.
+x_train_s1 = pd.DataFrame(x_train_s1, columns = list(x))
+x_train_s2 = pd.DataFrame(x_train_s2, columns = list(x))
+
+# Min-Max 스케일링 (정규화) 결과
+# 모든 변수의 min이 0, max가 1로 변환된 것을 확인 (x_train 기준)
+x_train_s1.describe()
+
+# Standard 스케일링 (표준화) 결과
+# 모든 변수의 mean이 0에 가깝고, std가 1에 가까운 값으로 변환 (x_train 기준)
+x_train_s2.describe()</code></pre>
+    </div>
+
+    <!-- Slide 10: 20 데이터 준비 - 5) Scaling (분포 비교) -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">20. 데이터 준비 (Data Preparation)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">5) Scaling: 분포 비교</h3>
+        <p class="text-lg mb-4">스케일링은 값의 범위(x축)만 바꿀 뿐, 데이터의 분포 형태(히스토그램 모양)는 그대로 유지됩니다.</p>
+        <pre><code class="language-python"># 원본 'age' 변수의 히스토그램
+plt.hist(x_train['age'], bins = 30)
+# plt.show() # (슬라이드에서는 생략)
+
+# Min-Max 스케일링된 'age' 변수의 히스토그램
+# x축이 0~1 사이로 바뀜
+plt.hist(x_train_s1['age'], bins = 30)
+# plt.show() # (슬라이드에서는 생략)
+
+# Standard 스케일링된 'age' 변수의 히스토그램
+# x축이 약 -2.5 ~ 1.2 사이로 바뀜
+plt.hist(x_train_s2['age'], bins = 30)
+# plt.show() # (슬라이드에서는 생략)</code></pre>
+        <p class="mt-4 text-md text-gray-600 p-4 bg-gray-50 rounded-lg">※ [참고] 세 개의 히스토그램 이미지가 나란히 있다고 상상해 보세요. 모양은 모두 동일하고 x축의 숫자 범위만 다릅니다.</p>
+    </div>
+
+    <!-- Slide 11: 30 모델링 - 1) Import & 2) 모델 선언 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">30. 모델링 (Modeling)</h2>
+        
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">1) import</h3>
+        <p class="text-lg mb-2">모델링 및 평가에 필요한 함수들을 불러옵니다.</p>
+        <pre><code class="language-python"># 모델링용 : KNN 회귀 모델
+from sklearn.neighbors import KNeighborsRegressor
+
+# 회귀모델 평가용 : 모든 평가 지표 함수를 불러옴
+from sklearn.metrics import *</code></pre>
+
+        <h3 class="text-2xl font-semibold text-gray-700 mt-8 mb-4">2) 모델 선언</h3>
+        <p class="text-lg mb-2">모델 객체를 생성합니다. (k=3)</p>
+        <pre><code class="language-python"># 이웃의 수(k)를 3으로 설정하여 KNN 회귀 모델 객체 생성
+model = KNeighborsRegressor(n_neighbors = 3)</code></pre>
+    </div>
+    
+    <!-- Slide 12: 30 모델링 - 3) 학습 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">30. 모델링 (Modeling)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">3) 모델링 (학습)</h3>
+        <p class="text-lg mb-4"><code>.fit</code> 메소드로 모델을 학습시킵니다. (Min-Max 스케일링된 데이터 사용)</p>
+        <ul class="list-disc pl-6 text-lg mb-4 space-y-2">
+            <li>KNN은 'Lazy Learner'입니다.</li>
+            <li>'학습' 단계에서 복잡한 계산 없이, 단순히 학습 데이터(<code>x_train_s1</code>, <code>y_train</code>)를 모두 저장해 둡니다.</li>
+        </ul>
+        <pre><code class="language-python"># Min-Max 스케일링된 학습 데이터(x_train_s1)와
+# 학습 정답(y_train)을 모델에 주입하여 '학습' (데이터 저장)
+model.fit(x_train_s1, y_train)</code></pre>
+    </div>
+
+    <!-- Slide 13: 30 모델링 - 4) 예측 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">30. 모델링 (Modeling)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">4) 검증 : 예측</h3>
+        <p class="text-lg mb-4">학습된 모델을 사용하여 검증 데이터(<code>x_val_s1</code>)의 집값을 예측합니다.</p>
+        <ul class="list-disc pl-6 text-lg mb-4 space-y-2">
+            <li>예측 시, <code>x_val_s1</code>의 각 데이터 포인트마다...</li>
+            <li><code>x_train_s1</code>에서 가장 가까운 3개(k=3)를 찾고,</li>
+            <li>그 3개의 <code>y_train</code> 값(실제 집값)의 <strong>평균</strong>을 계산하여 예측값으로 반환합니다.</li>
+        </ul>
+        <pre><code class="language-python"># 스케일링된 검증 데이터(x_val_s1)로 예측 수행
+pred = model.predict(x_val_s1)</code></pre>
+    </div>
+
+    <!-- Slide 14: 30 모델링 - 5) 평가 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">30. 모델링 (Modeling)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">5) 검증 : 평가</h3>
+        <p class="text-lg mb-4">모델의 예측값(<code>pred</code>)과 실제 정답(<code>y_val</code>)을 비교하여 모델의 성능을 평가합니다.</p>
+        <pre><code class="language-python"># MSE (Mean Squared Error, 평균 제곱 오차)
+# (실제값 - 예측값)의 제곱의 평균.
+mean_squared_error( y_val, pred )
+
+# RMSE (Root Mean Squared Error, 루트 평균 제곱 오차)
+# MSE에 루트를 씌운 값. (squared=False 옵션)
+mean_squared_error(y_val, pred, squared=False)
+
+# MAE (Mean Absolute Error, 평균 절대 오차)
+# (실제값 - 예측값)의 절대값의 평균.
+mean_absolute_error(y_val, pred )
+
+# MAPE (Mean Absolute Percentage Error, 평균 절대 백분율 오차)
+# ( |(실제값 - 예측값)| / 실제값 )의 평균.
+mean_absolute_percentage_error(y_val, pred )
+
+# 1 - MAPE : 정확도처럼 해석
+1 - mean_absolute_percentage_error(y_val, pred )</code></pre>
+    </div>
+    
+    <!-- Slide 15: 30 모델링 - 5) 평가 결과 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">30. 모델링 (Modeling)</h2>
+        <h3 class="text-2xl font-semibold text-gray-700 mb-4">5) 검증 : 평가 결과 (k=3)</h3>
+        <pre><code class="language-python"># 평가 지표 종합 출력 (k=3)
+print('RMSE : ', mean_squared_error(y_val, pred, squared = False ))
+print('MAE  : ', mean_absolute_error(y_val, pred))
+print('MAPE : ', mean_absolute_percentage_error(y_val, pred))</code></pre>
+        <div class="mt-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+            <p class="text-xl font-medium text-gray-800">결과 해석 (예시 값)</p>
+            <ul class="list-disc pl-6 mt-4 text-lg space-y-3">
+                <li><strong>RMSE: 약 4.8 / MAE: 약 3.2</strong>
+                    <br><span class="text-base text-gray-600">→ 예측값이 실제 집값($1000)에서 평균 3,200 ~ 4,800 달러 차이.</span>
+                </li>
+                <li><strong>MAPE: 약 0.168</strong>
+                    <br><span class="text-base text-gray-600">→ 평균 약 16.8%의 오차율.</span>
+                </li>
+                <li><strong>(1 - MAPE): 약 0.831</strong>
+                    <br><span class="text-base text-gray-600">→ 약 83.1% 정도의 설명력(정확도)으로 해석 가능.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 16: 40 복습문제 - Hyperparameters -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">40. 복습문제 : 하이퍼파라미터</h2>
+        <p class="text-lg mb-8">KNN 모델의 하이퍼파라미터(설정값)를 변경하며 성능을 비교해 볼 수 있습니다.</p>
+        
+        <div class="p-6 bg-gray-50 rounded-lg border">
+            <h4 class="text-2xl font-semibold text-gray-700 mb-3">n_neighbors (k의 개수)</h4>
+            <p class="text-lg mb-4 ml-4">k가 달라지면 예측 결과와 성능도 달라집니다.</p>
+        </div>
+
+        <div class="mt-6 p-6 bg-gray-50 rounded-lg border">
+            <h4 class="text-2xl font-semibold text-gray-700 mb-3">metric (거리 계산 방식)</h4>
+            <ul class="list-disc pl-10 text-lg space-y-2">
+                <li><strong>euclidean</strong>: 유클리디안 거리 (일반적인 직선 거리)</li>
+                <li><strong>manhattan</strong>: 맨해튼 거리 (블록 단위 거리)</li>
+                <li><strong>minkowski</strong>: 위 두 거리의 일반화 (기본값)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Slide 17: 40 복습문제 - k=5, 10, 15 -->
+    <div class="slide-section">
+        <h2 class="text-3xl font-bold mb-6">40. 복습문제 : k값 변경 실습</h2>
+        <p class="text-lg mb-6">k를 5, 10, 15로 변경하며 모델링~평가 과정을 반복하고 성능을 비교해 봅시다.</p>
+        
+        <h4 class="text-xl font-semibold text-gray-700 mb-2">model1 : n_neighbors = 5</h4>
+        <pre><code class="language-python"># k=5로 실습 예시
+model1 = KNeighborsRegressor(n_neighbors = 5)
+model1.fit(x_train_s1, y_train)
+pred1 = model1.predict(x_val_s1)
+print('RMSE (k=5) : ', mean_squared_error(y_val, pred1, squared = False ))</code></pre>
+
+        <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">model2 : n_neighbors = 10</h4>
+        <pre><code class="language-python"># k=10으로 실습...</code></pre>
+        
+        <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">model3 : n_neighbors = 15</h4>
+        <pre><code class="language-python"># k=15로 실습...</code></pre>
+    </div>
+
+    <!-- Slide 18: End -->
+    <div class="slide-section title-slide">
+        <h1 class="text-5xl font-bold text-gray-800 mb-4">Q & A</h1>
+        <p class="text-3xl text-gray-600">감사합니다.</p>
+    </div>
+
+</body>
+</html>
