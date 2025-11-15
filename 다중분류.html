@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>딥러닝3 : 다중분류</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Urbanist:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+/* 1. THE SETUP */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f0f4f8; /* Lighter body background */
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px 0;
+  place-items: center;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.slide-container {
+  align-items: center;
+  background-color: #0F172A; /* Dark blue background */
+  border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 720px;
+  justify-content: center;
+  overflow: hidden;
+  padding: 60px;
+  position: relative;
+  width: 1280px;
+  color: #F1F5F9; /* Off-white text */
+}
+
+/* 1.1 BACKGROUND STYLING (Subtle Gradient) */
+.slide-container::before {
+  content: '';
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  background: radial-gradient(circle at 10% 10%, #67E8F91A, transparent 40%),
+              radial-gradient(circle at 90% 80%, #FDE0471A, transparent 50%);
+  z-index: 0;
+}
+
+.slide-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 2. CONSISTENT TYPOGRAPHY */
+
+/* Headings Font */
+.slide-container h1,
+.slide-container h2,
+.slide-container h3 {
+  color: #F1F5F9;
+  font-weight: 700;
+  font-family: 'Urbanist', 'Noto Sans KR', sans-serif;
+  margin: 0;
+}
+
+/* Body Text Font */
+.slide-container p,
+.slide-container li,
+.slide-container .subtitle {
+  color: #CBD5E1; /* Lighter grey for body */
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* Consistent Font Sizes */
+.slide-container h1 {
+  font-size: 70px;
+}
+
+.slide-container .slide-title {
+  /* This is an h2 */
+  font-size: 40px;
+  font-weight: 700;
+  color: #67E8F9; /* Bright Cyan */
+  margin-bottom: 40px;
+  text-align: left;
+  width: 100%;
+}
+
+.slide-container h3 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #FDE047; /* Yellow Accent */
+  margin-bottom: 15px;
+}
+
+/* Unified body text size */
+.slide-container p,
+.slide-container li,
+.slide-container .subtitle {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.slide-container .subtitle {
+  font-weight: 400;
+  margin: 20px auto;
+  font-size: 22px;
+}
+
+.slide-container .content-area {
+  align-items: flex-start; /* Align top */
+  display: flex;
+  flex-grow: 1;
+  justify-content: center;
+  width: 100%;
+  gap: 40px;
+}
+
+/* 3. LAYOUT DEFINITIONS */
+
+/* Title_Slide */
+.title-layout {
+  text-align: center;
+}
+
+/* Section_Title */
+.section-title-layout {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+}
+
+.section-title-layout h2 {
+  font-size: 60px;
+  margin-bottom: 20px;
+  color: #67E8F9;
+}
+
+.section-title-layout hr {
+  background-color: #67E8F9;
+  border: none;
+  height: 5px;
+  margin: 30px auto;
+  width: 100px;
+}
+
+/* Image_Right_Text_Left (Two Column) */
+.two-column {
+  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  width: 100%;
+  height: 100%;
+  max-height: 540px; /* Constrain height */
+}
+
+.two-column > div {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.image-wrapper {
+  border-radius: 12px;
+  height: 100%;
+  overflow: hidden;
+  width: 100%;
+  background-color: #1E293B;
+  border: 1px solid #334152;
+}
+
+.image-wrapper img {
+  height: 100%;
+  object-fit: cover; /* Use cover for plots */
+  width: 100%;
+}
+
+/* Q&A Layout */
+.qa-layout {
+  text-align: center;
+  width: 100%;
+  align-self: center;
+}
+
+.qa-layout h2 {
+  font-size: 80px;
+  margin-bottom: 20px;
+  color: #67E8F9;
+}
+
+.qa-layout p {
+  font-size: 22px;
+  color: #CBD5E1;
+}
+
+/* 4. CUSTOM CODE STYLING */
+.code-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  max-height: 540px; /* Match two-column height */
+  overflow-y: auto;
+  background-color: #1E293B; /* Darker grey-blue */
+  border-radius: 8px;
+  padding: 20px;
+  font-family: 'Courier New', Courier, monospace;
+  border: 1px solid #334152;
+}
+
+.code-container pre {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap; /* Allow wrapping */
+  word-wrap: break-word; /* Break long lines */
+  color: #E2E8F0;
+  font-size: 14px;
+}
+
+.code-container pre.output {
+  color: #A5F3FC; /* Lighter cyan for output */
+  border-top: 1px dashed #334152;
+  padding-top: 10px;
+  font-size: 13px;
+  white-space: pre; /* Keep output formatting */
+  overflow-x: auto; /* Allow horizontal scroll for wide output */
+}
+
+/* Style for markdown tables inside code blocks */
+.code-container table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #E2E8F0;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.code-container th,
+.code-container td {
+  border: 1px solid #334152;
+  padding: 8px;
+  text-align: left;
+}
+
+.code-container th {
+  background-color: #334152;
+}
+
+/* Scrollbar styling for code container */
+.code-container::-webkit-scrollbar {
+  width: 10px;
+}
+.code-container::-webkit-scrollbar-track {
+  background: #1E293B;
+  border-radius: 10px;
+}
+.code-container::-webkit-scrollbar-thumb {
+  background-color: #334152;
+  border-radius: 10px;
+  border: 2px solid #1E293B;
+}
+
+    </style>
+</head>
+<body>
+
+<!-- Slide 1: Title_Slide -->
+<div class="slide-container" id="slide1">
+    <div class="title-layout">
+        <h1 style="color: #67E8F9;">딥러닝3 : 다중분류</h1>
+        <p class="subtitle">Jupyter Notebook 기반 프레젠테이션</p>
+    </div>
+</div>
+
+<!-- Slide 2: Section_Title -->
+<div class="slide-container" id="slide2">
+    <div class="section-title-layout">
+        <h2>1. 환경준비</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Slide 3: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide3">
+    <h2 class="slide-title">(1) 라이브러리 로딩</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>라이브러리 로딩</h3>
+                <p>데이터 분석 및 딥러닝 모델링에 필요한 주요 라이브러리를 불러옵니다.</p>
+                <ul>
+                    <li><code>pandas</code>, <code>numpy</code>: 데이터 처리</li>
+                    <li><code>matplotlib</code>, <code>seaborn</code>: 시각화</li>
+                    <li><code>sklearn</code>: 데이터 분할, 평가, 스케일링</li>
+                    <li><code>keras</code>: 딥러닝 모델 구축</li>
+                </ul>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import *
+from sklearn.preprocessing import MinMaxScaler
+
+from keras.models import Sequential
+from keras.layers import Dense, Input
+from keras.backend import clear_session
+from keras.optimizers import Adam</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 4: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide4">
+    <h2 class="slide-title">(1) 함수 만들기</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>학습곡선 함수</h3>
+                <p>모델의 학습 과정(epoch별 loss)을 시각화하기 위한 헬퍼 함수 <code>dl_history_plot</code>를 정의합니다.</p>
+                <p>이 함수는 <code>history</code> 객체를 받아 훈련 손실(train_err)과 검증 손실(val_err)을 그래프로 출력합니다.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code># 학습곡선 함수
+def dl_history_plot(history):
+    plt.figure(figsize=(10,6))
+    plt.plot(history['loss'], label='train_err', marker = '.')
+    plt.plot(history['val_loss'], label='val_err', marker = '.')
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid()
+    plt.show()</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 5: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide5">
+    <h2 class="slide-title">(2) 데이터로딩</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>데이터로딩</h3>
+                <p>Github에 저장된 <code>iris.csv</code> 파일을 <code>pandas</code>를 이용해 불러옵니다.</p>
+                <p><code>.head()</code>를 사용해 데이터의 첫 5행을 확인합니다.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>path = "https://raw.githubusercontent.com/DA4BAM/dataset/master/iris.csv"
+data = pd.read_csv(path)
+data.head()</code></pre>
+<pre class="output">   Sepal.Length  Sepal.Width  Petal.Length  Petal.Width Species
+0           5.1          3.5           1.4          0.2  setosa
+1           4.9          3.0           1.4          0.2  setosa
+2           4.7          3.2           1.3          0.2  setosa
+3           4.6          3.1           1.5          0.2  setosa
+4           5.0          3.6           1.4          0.2  setosa</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 6: Section_Title -->
+<div class="slide-container" id="slide6">
+    <div class="section-title-layout">
+        <h2>2. 데이터 준비</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Slide 7: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide7">
+    <h2 class="slide-title">(1) y 값 변환</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>y 값 변환</h3>
+                <p>Keras의 <code>sparse_categorical_crossentropy</code> 손실 함수를 사용하기 위해, 문자열 타겟(Species)을 정수(0, 1, 2)로 변환합니다.</p>
+                <ul>
+                    <li>'setosa' -> 0</li>
+                    <li>'versicolor' -> 1</li>
+                    <li>'virginica' -> 2</li>
+                </ul>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>data['Species'] = data['Species'].map({'setosa':0, 'versicolor':1, 'virginica':2})
+data.head()</code></pre>
+<pre class="output">   Sepal.Length  Sepal.Width  Petal.Length  Petal.Width  Species
+0           5.1          3.5           1.4          0.2        0
+1           4.9          3.0           1.4          0.2        0
+2           4.7          3.2           1.3          0.2        0
+3           4.6          3.1           1.5          0.2        0
+4           5.0          3.6           1.4          0.2        0</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 8: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide8">
+    <h2 class="slide-title">(2-4) 데이터 분할 및 스케일링</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>데이터 분할 및 스케일링</h3>
+                <p>모델 학습을 위해 데이터를 준비합니다.</p>
+                <ol>
+                    <li><strong>X, y 분리</strong>: 타겟 변수('Species')를 y로, 나머지 특성들을 X로 분리합니다.</li>
+                    <li><strong>데이터 분할</strong>: <code>train_test_split</code>을 사용해 훈련 세트(70%)와 검증 세트(30%)로 분리합니다.</li>
+                    <li><strong>스케일링</strong>: <code>MinMaxScaler</code>를 사용해 X 데이터의 범위를 0과 1 사이로 조정합니다. (<code>fit_transform</code>, <code>transform</code>)</li>
+                </ol>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code># (2) 데이터 준비
+target = 'Species'
+x = data.drop(target, axis = 1)
+y = data.loc[:, target]
+
+# (3) 데이터 분할
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size = .3, random_state = 20)
+
+# (4) Scaling
+scaler = MinMaxScaler()
+x_train = scaler.fit_transform(x_train)
+x_val = scaler.transform(x_val)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 9: Section_Title -->
+<div class="slide-container" id="slide9">
+    <div class="section-title-layout">
+        <h2>3. 모델링 (기본)</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Slide 10: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide10">
+    <h2 class="slide-title">(1) 모델 설계</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>간단한 딥러닝 모델</h3>
+                <p>은닉층이 없는 가장 간단한 형태의 다중 분류 모델을 설계합니다.</p>
+                <ul>
+                    <li><code>clear_session()</code>: 이전 모델의 메모리를 정리합니다.</li>
+                    <li><code>Input</code>: 입력 특성의 수(nfeatures)를 지정합니다.</li>
+                    <li><code>Dense(3, activation='softmax')</code>: 3개의 클래스를 분류하기 위한 출력층. Softmax 활성화 함수는 각 클래스에 대한 확률을 반환합니다.</li>
+                </ul>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>nfeatures = x_train.shape[1] #num of columns
+nfeatures</code></pre>
+<pre class="output">4</pre>
+<pre><code># 메모리 정리
+clear_session()
+
+# Sequential
+model = Sequential( [Input(shape = (nfeatures,)),
+                     Dense( 3, activation = 'softmax')] )
+
+# 모델요약
+model.summary()</code></pre>
+<pre class="output">Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               (None, 3)                 15        
+                                                                 
+=================================================================
+Total params: 15 (60.00 Byte)
+Trainable params: 15 (60.00 Byte)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 11: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide11">
+    <h2 class="slide-title">(2) Compile + 학습</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>모델 컴파일 및 학습</h3>
+                <p>모델을 학습시킬 준비를 합니다.</p>
+                <ul>
+                    <li><strong>Optimizer</strong>: <code>Adam</code> (learning_rate=0.1)</li>
+                    <li><strong>Loss</strong>: <code>sparse_categorical_crossentropy</code>
+                        <br>(y가 정수 형태일 때 사용)</li>
+                </ul>
+                <p><code>.fit()</code> 함수로 50 epoch 동안 모델을 학습시킵니다. (검증 데이터 20% 활용)</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>model.compile(optimizer=Adam(learning_rate=0.1), loss= 'sparse_categorical_crossentropy')
+
+history = model.fit(x_train, y_train, epochs = 50,
+                    validation_split=0.2).history</code></pre>
+<pre class="output">Epoch 1/50
+3/3 [==============================] - 1s 63ms/step - loss: 1.1578 - val_loss: 0.9323
+Epoch 2/50
+3/3 [==============================] - 0s 12ms/step - loss: 0.8198 - val_loss: 0.7424
+Epoch 3/50
+...
+Epoch 49/50
+3/3 [==============================] - 0s 12ms/step - loss: 0.1345 - val_loss: 0.1601
+Epoch 50/50
+3/3 [==============================] - 0s 12ms/step - loss: 0.1319 - val_loss: 0.1607</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 12: Image_Right_Text_Left -->
+<div class="slide-container" id="slide12">
+    <h2 class="slide-title">(2) 학습결과 그래프</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Code -->
+            <div>
+                <h3>학습결과 시각화</h3>
+                <p><code>dl_history_plot</code> 함수를 사용해 50 epoch 동안의 훈련 손실과 검증 손실의 변화를 시각화합니다.</p>
+                <div class="code-container" style="height: 150px;">
+<pre><code>dl_history_plot(history)</code></pre>
+                </div>
+            </div>
+            <!-- Right Column: Image -->
+            <div>
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/8805743673746763031" alt="A line graph showing training and validation loss for a deep learning model. The training loss (blue) decreases, and the validation loss (orange) also decreases and stabilizes.">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 13: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide13">
+    <h2 class="slide-title">(3) 예측 및 검증</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>예측 (Softmax -> Label)</h3>
+                <p><code>model.predict()</code>는 각 클래스(0, 1, 2)에 대한 확률을 반환합니다.</p>
+                <p><code>np.argmax(axis=1)</code>을 사용해 각 행(샘플)에서 가장 높은 확률을 가진 인덱스(클래스)를 추출합니다.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>pred = model.predict(x_val)
+pred[:5]</code></pre>
+<pre class="output">[[9.8885149e-01 1.1147814e-02 6.7584113e-07]
+ [9.7719008e-01 2.2809181e-02 7.1994625e-07]
+ [1.7454807e-03 5.4807973e-01 4.5017481e-01]
+ [9.8456073e-01 1.5438596e-02 6.9427352e-07]
+ [2.4087818e-04 1.5411757e-01 8.4564155e-01]]</pre>
+<pre><code># 5개 행만 살펴보면
+np.argmax(pred[:5], axis = 1)</code></pre>
+<pre class="output">array([0, 0, 1, 0, 2])</pre>
+<pre><code>pred_1 = pred.argmax(axis=1)
+pred_1</code></pre>
+<pre class="output">array([0, 0, 1, 0, 2, 2, 1, 1, 0, 0, 2, 0, 0, 1, 1, 2, 1, 2, 1, 1, 0, 1,
+       1, 2, 2, 2, 0, 1, 0, 0, 2, 2, 1, 0, 2, 1, 1, 0, 1, 1, 2, 0, 1, 0,
+       2])</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 14: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide14">
+    <h2 class="slide-title">(3) 최종 평가</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>최종 평가</h3>
+                <p>실제값 <code>y_val</code> (정수 레이블)과 예측값 <code>pred_1</code> (정수 레이블)을 비교하여 모델의 성능을 평가합니다.</p>
+                <ul>
+                    <li><code>confusion_matrix</code></li>
+                    <li><code>classification_report</code></li>
+                </ul>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>print(confusion_matrix(y_val, pred_1))</code></pre>
+<pre class="output">[[17  0  0]
+ [ 0 13  2]
+ [ 0  0 13]]</pre>
+<pre><code>print(classification_report(y_val, pred_1))</code></pre>
+<pre class="output">              precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00        17
+           1       1.00      0.87      0.93        15
+           2       0.87      1.00      0.93        13
+
+    accuracy                           0.96        45
+   macro avg       0.96      0.96      0.95        45
+weighted avg       0.96      0.96      0.96        45</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 15: Section_Title -->
+<div class="slide-container" id="slide15">
+    <div class="section-title-layout">
+        <h2>4. 모델링 2 (은닉층)</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Slide 16: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide16">
+    <h2 class="slide-title">(1) 모델 설계 (은닉층 추가)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>은닉층(Hidden Layer) 추가</h3>
+                <p>모델의 복잡성과 표현력을 높이기 위해 입력층과 출력층 사이에 은닉층을 추가합니다.</p>
+                <ul>
+                    <li><code>Dense(8, activation='relu')</code>: 8개의 노드를 가진 은닉층. 'relu' 활성화 함수 사용.</li>
+                </ul>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code># 메모리 정리
+clear_session()
+
+# Sequential 타입 모델 선언
+model = Sequential([Input(shape = (nfeatures,)),
+                    Dense(8, activation = 'relu'),
+                    Dense(3 , activation = 'softmax')
+])
+
+# 모델요약
+model.summary()</code></pre>
+<pre class="output">Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               (None, 8)                 40        
+                                                                 
+ dense_1 (Dense)             (None, 3)                 27        
+                                                                 
+=================================================================
+Total params: 67 (268.00 Byte)
+Trainable params: 67 (268.00 Byte)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 17: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide17">
+    <h2 class="slide-title">(1) Compile + 학습 (은닉층)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>은닉층 모델 학습</h3>
+                <p>은닉층이 추가된 모델을 컴파일하고 학습시킵니다.</p>
+                <ul>
+                    <li><strong>Optimizer</strong>: <code>Adam</code> (learning_rate=0.01)</li>
+                    <li><strong>Loss</strong>: <code>sparse_categorical_crossentropy</code></li>
+                </ul>
+                <p>이번에도 50 epoch 동안 모델을 학습시킵니다.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>model.compile(optimizer=Adam(learning_rate=0.01),
+              loss= 'sparse_categorical_crossentropy')
+
+history = model.fit(x_train, y_train, epochs = 50,
+                    validation_split=0.2).history</code></pre>
+<pre class="output">Epoch 1/50
+3/3 [==============================] - 1s 54ms/step - loss: 1.0961 - val_loss: 1.0505
+Epoch 2/50
+3/3 [==============================] - 0s 12ms/step - loss: 1.0185 - val_loss: 0.9856
+...
+Epoch 49/50
+3/3 [==============================] - 0s 12ms/step - loss: 0.0898 - val_loss: 0.1293
+Epoch 50/50
+3/3 [==============================] - 0s 12ms/step - loss: 0.0864 - val_loss: 0.1226</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 18: Image_Right_Text_Left -->
+<div class="slide-container" id="slide18">
+    <h2 class="slide-title">(1) 학습결과 그래프 (은닉층)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Code -->
+            <div>
+                <h3>학습결과 시각화</h3>
+                <p>은닉층이 추가된 모델의 학습 손실과 검증 손실을 시각화합니다. 이전 모델보다 더 안정적으로 수렴하는 경향을 보일 수 있습니다.</p>
+                <div class="code-container" style="height: 150px;">
+<pre><code>dl_history_plot(history)</code></pre>
+                </div>
+            </div>
+            <!-- Right Column: Image -->
+            <div>
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/9360644006510547408" alt="A line graph of a deep learning model's loss, showing the training loss and validation loss converging nicely, indicating a well-generalized model.">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 19: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide19">
+    <h2 class="slide-title">(1) 예측 및 검증 (은닉층)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>최종 평가 (은닉층)</h3>
+                <p>은닉층이 추가된 모델의 예측 성능을 평가합니다.</p>
+                <p><code>argmax</code>로 예측 레이블을 추출하고, <code>confusion_matrix</code>와 <code>classification_report</code>로 성능을 확인합니다.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>pred = model.predict(x_val)
+pred_1 = pred.argmax(axis=1)</code></pre>
+<pre><code>print(confusion_matrix(y_val, pred_1))</code></pre>
+<pre class="output">[[17  0  0]
+ [ 0 15  0]
+ [ 0  0 13]]</pre>
+<pre><code>print(classification_report(y_val, pred_1))</code></pre>
+<pre class="output">              precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00        17
+           1       1.00      1.00      1.00        15
+           2       1.00      1.00      1.00        13
+
+    accuracy                           1.00        45
+   macro avg       1.00      1.00      1.00        45
+weighted avg       1.00      1.00      1.00        45</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 20: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide20">
+    <h2 class="slide-title">(2) 실습 1</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>실습 1: 모델 설계</h3>
+                <p>다음 요약표를 보고 2개의 은닉층을 가진 모델을 설계해 봅시다.</p>
+                <div class="code-container" style="max-height: 250px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Layer (type)</th>
+                                <th>Output Shape</th>
+                                <th>Param #</th>
+                                <th>옵션</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>dense (Dense)</td>
+                                <td>(None, 8)</td>
+                                <td>40</td>
+                                <td>node, input_shape, activation = 'relu'</td>
+                            </tr>
+                            <tr>
+                                <td>dense_1 (Dense)</td>
+                                <td>(None, 8)</td>
+                                <td>72</td>
+                                <td>node, activation = 'relu'</td>
+                            </tr>
+                            <tr>
+                                <td>dense_2 (Dense)</td>
+                                <td>(None, 3)</td>
+                                <td>27</td>
+                                <td>node, activation = 'softmax'</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code># 이 곳에 모델을 설계, 컴파일, 학습, 평가하는 코드를 작성하세요.
+# clear_session()
+# model = Sequential(...)
+# model.summary()
+
+# model.compile(...)
+# history = model.fit(...)
+
+# dl_history_plot(history)
+
+# pred = model.predict(x_val)
+# pred_1 = pred.argmax(axis=1)
+# print(classification_report(y_val, pred_1))</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 21: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide21">
+    <h2 class="slide-title">(3) 실습 2</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>실습 2: 자유 설계</h3>
+                <p>여러분이 원하는 형태로 자유롭게 모델을 설계해 봅시다.</p>
+                <ul>
+                    <li>은닉층의 수</li>
+                    <li>각 층의 노드 수</li>
+                    <li>Learning Rate 등</li>
+                </ul>
+                <p>다양하게 변경하며 성능을 테스트해 보세요.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code># 이 곳에 자유롭게 모델을 설계, 컴파일, 학습, 평가하는 코드를 작성하세요.
+# clear_session()
+# model = Sequential(...)
+# model.summary()
+
+# model.compile(...)
+# history = model.fit(...)
+
+# dl_history_plot(history)
+
+# pred = model.predict(x_val)
+# pred_1 = pred.argmax(axis=1)
+# print(classification_report(y_val, pred_1))</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 22: Section_Title -->
+<div class="slide-container" id="slide22">
+    <div class="section-title-layout">
+        <h2>5. 참조 (One-Hot Encoding)</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Slide 23: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide23">
+    <h2 class="slide-title">(1-3) y 가변수화 (One-Hot)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>y 가변수화 (One-Hot)</h3>
+                <p><code>sparse_categorical_crossentropy</code> 대신 <code>categorical_crossentropy</code>를 사용하기 위한 방법입니다.</p>
+                <p><code>keras.utils.to_categorical</code>을 사용해 y 값을 원-핫 인코딩 벡터로 변환합니다.</p>
+                <ul>
+                    <li>0 -> [1, 0, 0]</li>
+                    <li>1 -> [0, 1, 0]</li>
+                    <li>2 -> [0, 0, 1]</li>
+                </ul>
+                <p>이후 데이터 분할과 스케일링을 동일하게 진행합니다.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>from keras.utils import to_categorical
+
+# (1) y에 대한 가변수화
+y_c = to_categorical(y.values, 3)
+y_c[:5]</code></pre>
+<pre class="output">array([[1., 0., 0.],
+       [1., 0., 0.],
+       [1., 0., 0.],
+       [1., 0., 0.],
+       [1., 0., 0.]], dtype=float32)</pre>
+<pre><code># (2) 데이터 분할2
+x_train, x_val, y_train, y_val = train_test_split(x, y_c, test_size = .3, random_state = 2022)
+
+# (3) Scaling
+scaler = MinMaxScaler()
+x_train = scaler.fit_transform(x_train)
+x_val = scaler.transform(x_val)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 24: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide24">
+    <h2 class="slide-title">(4) 모델 설계 (One-Hot)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>모델 설계 (One-Hot)</h3>
+                <p>모델의 구조는 첫 번째 모델(은닉층 없음)과 동일합니다.</p>
+                <p>입력 특성(4개)을 받아 3개의 클래스 확률(softmax)을 출력합니다.</p>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>nfeatures = x_train.shape[1] #num of columns
+
+# 메모리 정리
+clear_session()
+
+# Sequential
+model = Sequential([Input(shape = (nfeatures,)),
+                    Dense(3, activation = 'softmax')])
+
+# 모델요약
+model.summary()</code></pre>
+<pre class="output">Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               (None, 3)                 15        
+                                                                 
+=================================================================
+Total params: 15 (60.00 Byte)
+Trainable params: 15 (60.00 Byte)
+Non-trainable params: 0 (0.00 Byte)
+_________________________________________________________________</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 25: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide25">
+    <h2 class="slide-title">(5) Compile + 학습 (One-Hot)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>Compile + 학습 (One-Hot)</h3>
+                <p>y가 원-핫 인코딩 벡터 형태이므로, 손실 함수(loss)로 <code>'categorical_crossentropy'</code>를 사용해야 합니다.</p>
+                <ul>
+                    <li><strong>Optimizer</strong>: <code>Adam</code> (learning_rate=0.1)</li>
+                    <li><strong>Loss</strong>: <code>categorical_crossentropy</code></li>
+                </ul>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>model.compile(optimizer=Adam(learning_rate=0.1), loss='categorical_crossentropy')
+
+history = model.fit(x_train, y_train, epochs = 100,
+                    validation_split=0.2).history</code></pre>
+<pre class="output">Epoch 1/100
+3/3 [==============================] - 1s 60ms/step - loss: 1.1448 - val_loss: 0.9634
+Epoch 2/100
+3/3 [==============================] - 0s 12ms/step - loss: 0.8876 - val_loss: 0.8149
+...
+Epoch 99/100
+3/3 [==============================] - 0s 12ms/step - loss: 0.1251 - val_loss: 0.1197
+Epoch 100/100
+3/3 [==============================] - 0s 12ms/step - loss: 0.1240 - val_loss: 0.1182</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 26: Image_Right_Text_Left -->
+<div class="slide-container" id="slide26">
+    <h2 class="slide-title">(5) 학습결과 그래프 (One-Hot)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Code -->
+            <div>
+                <h3>학습결과 시각화</h3>
+                <p><code>categorical_crossentropy</code> 손실 함수를 사용한 모델의 학습 과정을 시각화합니다.</p>
+                <div class="code-container" style="height: 150px;">
+<pre><code>dl_history_plot(history)</code></pre>
+                </div>
+            </div>
+            <!-- Right Column: Image -->
+            <div>
+                <div class="image-wrapper">
+                    <img src="http://googleusercontent.com/image_collection/image_retrieval/16914767340586982587" alt="A simple, clear line graph showing training and validation loss decreasing over epochs for a neural network.">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 27: Code Slide (Image_Right_Text_Left layout) -->
+<div class="slide-container" id="slide27">
+    <h2 class="slide-title">(6) 예측 및 평가 (One-Hot)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <!-- Left Column: Explanation -->
+            <div>
+                <h3>예측 및 평가 (One-Hot)</h3>
+                <p>One-Hot Encoding된 y값을 평가할 때는, 예측값과 실제값 모두 <code>argmax(axis=1)</code>을 적용하여 다시 정수 레이블로 변환한 뒤 비교합니다.</p>
+                <ul>
+                    <li><code>pred_1 = pred.argmax(axis=1)</code></li>
+                    <li><code>y_val_1 = y_val.argmax(axis=1)</code></li>
+                </ul>
+            </div>
+            <!-- Right Column: Code -->
+            <div>
+                <div class="code-container">
+<pre><code>pred = model.predict(x_val)
+pred[:5]</code></pre>
+<pre class="output">array([[7.8845184e-03, 2.5028047e-01, 7.4183500e-01],
+       [9.5638168e-01, 4.3618303e-02, 2.7712373e-07],
+       [9.7900987e-01, 2.0990098e-02, 1.9442657e-07],
+       [6.2625758e-03, 3.6559647e-01, 6.2814099e-01],
+       [6.0029314e-04, 9.1704231e-02, 9.0769547e-01]], dtype=float32)</pre>
+<pre><code># 예측값 변환
+pred_1 = pred.argmax(axis=1)
+
+# 실제값(y_val) 변환
+y_val_1 = y_val.argmax(axis=1)
+
+print(confusion_matrix(y_val_1, pred_1))</code></pre>
+<pre class="output">[[15  0  0]
+ [ 0 13  1]
+ [ 0  0 16]]</pre>
+<pre><code>print(classification_report(y_val_1, pred_1))</code></pre>
+<pre class="output">              precision    recall  f1-score   support
+
+           0       1.00      1.00      1.00        15
+           1       1.00      0.93      0.96        14
+           2       0.94      1.00      0.97        16
+
+    accuracy                           0.98        45
+   macro avg       0.98      0.98      0.98        45
+weighted avg       0.98      0.98      0.98        45</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 28: Q&A -->
+<div class="slide-container" id="slide28">
+    <div class="qa-layout">
+        <h2>Questions?</h2>
+        <p>발표를 들어주셔서 감사합니다.</p>
+    </div>
+</div>
+
+</body>
+</html>
