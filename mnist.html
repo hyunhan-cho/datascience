@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>07. 다중분류_MNIST (초보자 가이드 포함)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 40px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .card-header {
+            background: #f9fafb;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-body {
+            padding: 24px;
+        }
+        .markdown-content h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: #111827; }
+        .markdown-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 1rem; color: #374151; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; }
+        .markdown-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.8rem; color: #4b5563; }
+        .markdown-content p { margin-bottom: 1rem; }
+        .markdown-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        
+        pre {
+            margin: 0 !important;
+            border-radius: 8px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .output-area {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            border-left: 4px solid #10b981;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            background-color: #dbeafe;
+            color: #1e40af;
+            margin-right: 8px;
+        }
+
+        .fill-in {
+            border: 2px dashed #f59e0b;
+            background-color: #fffbeb;
+        }
+        .fill-in-badge {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Tip Box Style */
+        .tip-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .tip-title {
+            font-weight: bold;
+            color: #0369a1;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+        .section-marker {
+            scroll-margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">07. 다중분류 MNIST (초보자 가이드)</h1>
+        <p class="text-lg text-gray-600">Keras를 활용한 손글씨 숫자 분류 모델링 학습 노트입니다.<br>초보자를 위한 상세한 설명을 포함하고 있습니다.</p>
+    </div>
+
+    <!-- Section: Intro -->
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>다중분류_MNIST 시작하기</h1>
+            <p>이 실습에서는 <strong>0부터 9까지의 손글씨 숫자 이미지(MNIST 데이터셋)</strong>를 컴퓨터가 인식하도록 학습시키는 인공지능 모델을 만듭니다.</p>
+            <div class="tip-box">
+                <div class="tip-title">💡 다중 분류(Multi-class Classification)란?</div>
+                <p>정답(Class)이 3개 이상인 문제를 말합니다. 여기서는 정답이 0~9까지 총 10개이므로 다중 분류 문제입니다. (참고: 정답이 O/X 처럼 2개면 이진 분류라고 합니다.)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 1. 환경준비 -->
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h2>1. 환경준비</h2>
+            <h3>(1) 라이브러리 로딩</h3>
+            <p>데이터 분석과 딥러닝 모델링에 필요한 도구들을 불러옵니다.</p>
+        </div>
+    </div>
+
+    <!-- Code Cell -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 라이브러리 임포트
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import *
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
+# 딥러닝 모델링을 위한 케라스(Keras) 라이브러리
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Input
+from keras.backend import clear_session
+from keras.optimizers import Adam
+from keras.datasets import mnist, fashion_mnist</code></pre>
+            <div class="tip-box">
+                <div class="tip-title">📚 초보자 사전</div>
+                <ul class="list-disc pl-5 mt-2 space-y-1">
+                    <li><strong>Sequential</strong>: 블록을 쌓듯이 층(Layer)을 순서대로 쌓아 만드는 모델입니다.</li>
+                    <li><strong>Dense</strong>: 가장 기본적인 신경망 층입니다. 모든 뉴런이 서로 연결되어 있습니다.</li>
+                    <li><strong>Adam</strong>: 모델이 정답을 잘 찾도록 학습 속도와 방향을 조절해주는 최적화 도구(Optimizer)입니다. 가장 널리 쓰입니다.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Functions -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 학습 곡선 그래프 함수
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">모델이 공부(학습)를 잘 하고 있는지 시각적으로 확인하기 위해 미리 만들어두는 함수입니다.</p>
+            <pre><code class="language-python"># 학습곡선 그리기 함수
+def dl_history_plot(history):
+    plt.figure(figsize=(10,6))
+    plt.plot(history['loss'], label='train_err')
+    plt.plot(history['val_loss'], label='val_err')
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid()
+    plt.show()</code></pre>
+        </div>
+    </div>
+
+    <!-- Section: Data Loading -->
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h3>(2) 데이터 로딩</h3>
+            <p>Keras에서 제공하는 <code>mnist</code> 데이터셋을 다운로드합니다. 이미 훈련용(train)과 검증용(val)으로 나뉘어 있습니다.</p>
+        </div>
+    </div>
+
+    <!-- Code Cell: Load Data -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 데이터 불러오기
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 케라스 데이터셋으로 부터 mnist 불러오기
+(x_train, y_train), (x_val, y_val) = mnist.load_data()</code></pre>
+            <div class="output-area">Downloading data...
+11490434/11490434 [==============================] - 2s 0us/step</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Check Shape -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 데이터 형태(Shape) 확인
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">x_train.shape, y_train.shape</code></pre>
+            <div class="output-area">((60000, 28, 28), (60000,))</div>
+            <div class="tip-box">
+                <div class="tip-title">👀 해석</div>
+                <p><code>(60000, 28, 28)</code>: 28x28 픽셀 크기의 이미지가 60,000장 있다는 뜻입니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Class Names -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 클래스 이름 정의
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">class_names = ['0','1','2','3','4','5','6','7','8','9']</code></pre>
+        </div>
+    </div>
+
+    <!-- Section 2. 데이터 살펴보기 -->
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h2>2. 데이터 살펴보기</h2>
+            <p>실제 이미지가 어떻게 생겼는지 눈으로 확인해보는 과정입니다.</p>
+        </div>
+    </div>
+
+    <!-- Code Cell: Visualize Single Image -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 이미지 1장 확인해보기
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">n = 12229 # 확인하고 싶은 데이터 번호
+
+print(y_train[n]) # 실제 정답(숫자) 출력
+plt.figure()
+plt.imshow(x_train[n], cmap=plt.cm.binary) # 이미지 그리기
+plt.colorbar()
+plt.show()</code></pre>
+            <div class="output-area">5
+<Figure size 640x480 with 2 Axes></div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Visualize Multiple Images -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 여러 이미지 한눈에 보기
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">plt.figure(figsize=(10,10))
+for i in range(25): # 25개만 출력
+    plt.subplot(5,5,i+1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.imshow(x_train[i], cmap=plt.cm.binary)
+    plt.xlabel(class_names[y_train[i]])
+plt.tight_layout()
+plt.show()</code></pre>
+            <div class="output-area"><Figure size 1000x1000 with 25 Axes></div>
+        </div>
+    </div>
+
+    <!-- Section 3. 데이터 준비 -->
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h2>3. 데이터 준비 (전처리)</h2>
+            <h3>(1) 데이터 2차원으로 펼치기 (Flatten)</h3>
+            <p>우리가 사용할 기본 딥러닝 모델(Dense Layer)은 2차원 이미지(28x28 사각형)를 한 번에 이해하지 못합니다. 그래서 <strong>1줄짜리 긴 데이터(1차원, 784개 숫자)</strong>로 펴줘야 합니다.</p>
+        </div>
+    </div>
+
+    <!-- Code Cell: Reshape -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 데이터 모양 바꾸기 (Reshape)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 28 * 28 = 784 픽셀
+x_train = x_train.reshape(60000, -1) # -1은 남은 차원을 자동으로 계산하라는 뜻
+x_val = x_val.reshape(10000, -1)
+
+print(x_train.shape, x_val.shape)</code></pre>
+            <div class="output-area">((60000, 784), (10000, 784))</div>
+        </div>
+    </div>
+
+    <!-- Section: Scaling -->
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h3>(2) 스케일링 (Scaling) : Min-Max</h3>
+            <p>이미지 데이터는 0(검은색)부터 255(흰색)까지의 숫자로 되어 있습니다. 컴퓨터는 숫자가 크면 계산이 느려지거나 학습이 잘 안 될 수 있습니다. 이를 <strong>0과 1 사이의 소수</strong>로 바꿔줍니다.</p>
+        </div>
+    </div>
+
+    <!-- Code Cell: Scaling -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 0~1 사이 값으로 나누기
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 최대값인 255로 나누어 줍니다.
+x_train = x_train / 255.
+x_val = x_val / 255.</code></pre>
+        </div>
+    </div>
+
+    <!-- Section 4. 모델링 -->
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h2>4. 모델링</h2>
+            <p>가장 단순한 형태의 딥러닝 모델을 만들어 봅니다.</p>
+        </div>
+    </div>
+
+    <!-- Code Cell: Features Check -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 입력 데이터 개수 확인
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">nfeatures = x_train.shape[1] # 784개
+print(nfeatures)</code></pre>
+            <div class="output-area">784</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Model 1 Define -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 모델 1 설계 (단일 층)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">clear_session() # 기존 메모리 정리
+
+model = Sequential([
+    # Input: 784개의 숫자가 들어옴을 알려줍니다.
+    Input(shape = (nfeatures,)),
+    
+    # Output Layer: 정답이 0~9까지 10개이므로 노드는 10개입니다.
+    # activation='softmax': 10개 중 확률이 가장 높은 하나를 고르기 위해 사용합니다.
+    Dense(10, activation = 'softmax')
+])
+
+model.summary() # 모델 구조 요약 보기</code></pre>
+            <div class="output-area">Model: "sequential"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense (Dense)               (None, 10)                7850      
+=================================================================
+Total params: 7,850
+Trainable params: 7,850</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Compile & Fit -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 학습 설정 및 시작 (Compile & Fit)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 컴파일: 학습 방법 설정
+# loss='sparse_categorical_crossentropy': 정답이 0, 1, 2 같은 정수일 때 사용하는 오차 계산법
+model.compile(optimizer=Adam(learning_rate=0.001), loss= 'sparse_categorical_crossentropy')
+
+# 학습 시작
+# epochs=20: 문제집을 20번 반복해서 풉니다.
+history = model.fit(x_train, y_train, epochs = 20, validation_split=0.2).history</code></pre>
+            <div class="output-area">Epoch 1/20
+...
+Epoch 20/20
+1500/1500 [==============================] - 4s 2ms/step - loss: 0.2444 - val_loss: 0.2640</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Learning Curve -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 학습 결과 그래프 확인
+        </div>
+        <div class="card-body">
+            <p class="text-sm text-gray-600 mb-2">그래프가 아래로 내려갈수록 오차(Loss)가 줄어들어 학습이 잘 되었다는 의미입니다.</p>
+            <pre><code class="language-python">dl_history_plot(history)</code></pre>
+            <div class="output-area">[학습 곡선 그래프 출력]</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Predict -->
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 모델 성능 평가
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">pred = model.predict(x_val) # 예측하기
+pred_1 = pred.argmax(axis=1) # 확률 중 가장 높은 값의 번호(0~9) 찾기
+
+# 정답(y_val)과 예측값(pred_1) 비교
+print(confusion_matrix(y_val, pred_1))
+print(classification_report(y_val, pred_1, digits = 4))</code></pre>
+            <div class="output-area">    accuracy                         0.9264     10000
+   macro avg     0.9261    0.9253    0.9253     10000
+weighted avg     0.9268    0.9264    0.9263     10000</div>
+            <div class="tip-box">
+                <div class="tip-title">🔍 결과 분석</div>
+                <p><strong>accuracy(정확도): 0.9264</strong> <br> 약 92.6%의 정답률을 보입니다. 단순한 모델치고 나쁘지 않지만, 더 높일 수 있습니다!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5. 실습 (모델 2) -->
+    <div class="card section-marker fill-in">
+        <div class="card-body markdown-content">
+            <h2>5. 실습 : 더 똑똑한 모델 만들기 (Hidden Layer 추가)</h2>
+            <p>위에서는 층이 하나뿐인 단순한 모델이었습니다. 이번에는 중간에 <strong>은닉층(Hidden Layer)</strong>을 추가하여 더 복잡한 패턴을 학습할 수 있게 만들어 봅시다.</p>
+            <ul class="list-disc pl-5 text-sm text-gray-700">
+                <li>입력층과 출력층 사이에 <code>Dense</code> 레이어를 하나 더 끼워 넣습니다.</li>
+                <li><code>activation='relu'</code>: 은닉층에서 가장 많이 쓰이는 활성화 함수입니다. 성능 향상에 도움을 줍니다.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Code Cell: Model 2 Define -->
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">실습 완성</span> 모델 2 설계 (Deep Learning)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">clear_session()
+
+# 은닉층(Hidden Layer)을 추가한 모델
+model2 = Sequential([
+    Input(shape = (nfeatures,)),
+    
+    # [추가된 층] 128개의 뉴런을 가진 은닉층
+    # relu: 학습 효율이 좋은 활성화 함수
+    Dense(128, activation='relu'),
+    
+    # 출력층은 그대로 10개 (0~9 분류)
+    Dense(10, activation = 'softmax')
+])
+
+model2.summary()</code></pre>
+            <div class="output-area">Model: "sequential_1"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense_1 (Dense)             (None, 128)               100480    
+ dense_2 (Dense)             (None, 10)                1290      
+=================================================================
+Total params: 101,770
+Trainable params: 101,770</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Model 2 Compile & Fit (Filled) -->
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">실습 완성</span> 모델 2 학습
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 컴파일: 학습 도구 설정
+model2.compile(optimizer=Adam(learning_rate=0.001), loss = 'sparse_categorical_crossentropy')
+
+# 학습: 10번 반복 (Epochs 10)
+hist2 = model2.fit(x_train, y_train, epochs = 10, validation_split=.2).history</code></pre>
+            <div class="output-area">Epoch 1/10
+1500/1500 [==============================] - 7s 3ms/step - loss: 0.4786 - val_loss: 0.1563
+...
+Epoch 10/10
+1500/1500 [==============================] - 5s 2ms/step - loss: 0.0148 - val_loss: 0.0956</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Model 2 Plot (Filled) -->
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">실습 완성</span> 학습 결과 그래프
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 오차가 얼마나 줄었는지 확인
+dl_history_plot(hist2)</code></pre>
+            <div class="output-area">[그래프를 보면 모델1보다 Loss가 훨씬 더 낮게, 빠르게 떨어지는 것을 볼 수 있습니다.]</div>
+        </div>
+    </div>
+
+    <!-- Code Cell: Model 2 Evaluation (Filled) -->
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">실습 완성</span> 최종 성능 평가
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 예측하기
+pred2 = model2.predict(x_val)
+pred_2 = pred2.argmax(axis=1)
+
+# 성능표 출력
+print(confusion_matrix(y_val, pred_2))
+print("-" * 60)
+print(classification_report(y_val, pred_2, digits = 4))</code></pre>
+            <div class="output-area">[[ 971    1    1    2    1    1    0    1    1    1]
+ [   0 1124    2    2    0    1    3    1    2    0]
+ ...
+    accuracy                         0.9763     10000
+   macro avg     0.9765    0.9762    0.9762     10000
+weighted avg     0.9766    0.9763    0.9763     10000</div>
+            <div class="tip-box">
+                <div class="tip-title">🎉 결론</div>
+                <p><strong>accuracy(정확도): 0.9763</strong> <br> 은닉층을 하나 추가했을 뿐인데 정확도가 <strong>약 92% → 97.6%</strong>로 크게 향상되었습니다! 층을 깊게 쌓을수록(Deep Learning) 모델이 더 복잡한 특징을 잘 학습하기 때문입니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-12 mb-20">
+        <p class="text-gray-500">수고하셨습니다! 이제 여러분은 딥러닝으로 이미지를 분류할 수 있습니다.</p>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>
