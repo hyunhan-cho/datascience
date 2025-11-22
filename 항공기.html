@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10. 항공기 탑승객 만족도 예측 (실습 가이드)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Pretendard', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        /* 카드 스타일 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 40px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .card-header {
+            background: #f9fafb;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-body {
+            padding: 24px;
+        }
+        .markdown-content h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: #111827; }
+        .markdown-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 1rem; color: #374151; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; }
+        .markdown-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.8rem; color: #4b5563; }
+        .markdown-content p { margin-bottom: 1rem; }
+        
+        /* 코드 블록 */
+        pre {
+            margin: 0 !important;
+            border-radius: 8px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        /* 출력 결과창 */
+        .output-area {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            border-left: 4px solid #10b981;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            background-color: #dbeafe;
+            color: #1e40af;
+            margin-right: 8px;
+        }
+
+        /* 빈칸 채우기 강조 스타일 */
+        .fill-in {
+            border: 2px dashed #f59e0b;
+            background-color: #fffbeb;
+        }
+        .fill-in-badge {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .tip-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .tip-title {
+            font-weight: bold;
+            color: #0369a1;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        html { scroll-behavior: smooth; }
+        .section-marker { scroll-margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">10. 항공기 탑승객 만족도 예측</h1>
+        <p class="text-lg text-gray-600">비행 경험 데이터를 분석하여<br>고객이 만족(Satisfied)했는지 예측하는 분류 모델을 만들어 봅시다.</p>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>1. 환경 준비 및 데이터 로딩</h1>
+            <p>필요한 라이브러리를 불러오고 데이터를 확인합니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 라이브러리 및 데이터 로드
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
+from sklearn.preprocessing import StandardScaler
+
+# 모델 라이브러리
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import *
+
+# 데이터 로드
+path = 'https://raw.githubusercontent.com/DA4BAM/dataset/master/Air_Satisfaction.csv'
+data = pd.read_csv(path)
+
+# Target 변수 전처리 (satisfied: 1, neutral or dissatisfied: 0)
+data['satisfaction'] = np.where(data['satisfaction'] =='satisfied', 1 ,0)
+
+print(data.head())</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>2. 데이터 전처리 (Preprocessing)</h1>
+            <p>결측치를 처리하고, 범주형 데이터를 숫자로 변환하며, 스케일링을 수행합니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 결측치 처리
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 결측치 확인
+print(data.isna().sum())
+
+# 결측치 제거 (행 기준)
+data.dropna(axis=0, inplace=True)
+
+# x, y 분리
+target = 'satisfaction'
+x = data.drop([target, 'id'], axis=1) # id는 예측에 불필요하므로 제거
+y = data.loc[:, target]</code></pre>
+            <div class="output-area">Flight Distance      0
+Arrival Delay in Minutes    <-- 결측치 존재
+...</div>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Solution</span> 가변수화 (One-Hot Encoding)
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">범주형 변수(성별, 좌석 등급 등)를 0과 1의 숫자로 변환해야 모델이 이해할 수 있습니다.</p>
+            <pre><code class="language-python"># 가변수화 대상 컬럼
+dum_cols = ['Gender', 'Customer Type', 'Type of Travel', 'Class']
+
+# get_dummies 사용 (drop_first=True로 다중공선성 방지)
+x = pd.get_dummies(x, columns=dum_cols, drop_first=True)
+
+print(x.head())</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Solution</span> 데이터 분할 및 스케일링
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600"><strong>KNN, 로지스틱 회귀</strong> 등 거리 기반 알고리즘을 위해 데이터를 정규화(Scaling)합니다.</p>
+            <pre><code class="language-python"># 1. 학습용/검증용 데이터 분할 (7:3)
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.3, random_state=42)
+
+# 2. 스케일링 (StandardScaler)
+scaler = StandardScaler()
+
+# 학습 데이터 기준 학습 및 변환
+x_train_s = scaler.fit_transform(x_train)
+
+# 검증 데이터 변환
+x_val_s = scaler.transform(x_val)</code></pre>
+            <div class="tip-box">
+                <div class="tip-title">💡 주의</div>
+                <p>트리 모델(Decision Tree, Random Forest)은 스케일링이 필요 없지만, KNN과 로지스틱 회귀는 필수입니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>3. 모델링 (기본 모델)</h1>
+            <p>3가지 기본 알고리즘으로 모델을 만들고 성능을 비교해 봅니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Model 1</span> 로지스틱 회귀 (Logistic Regression)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 모델 선언 및 학습 (스케일링된 데이터 사용 권장)
+model_lr = LogisticRegression()
+model_lr.fit(x_train_s, y_train)
+
+# 예측 및 평가
+pred_lr = model_lr.predict(x_val_s)
+print("Logistic Accuracy:", accuracy_score(y_val, pred_lr))
+print(classification_report(y_val, pred_lr))</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Model 2</span> 의사결정 나무 (Decision Tree)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 모델 선언 (스케일링 필요 없음, 원본 x_train 사용 가능)
+model_dt = DecisionTreeClassifier(max_depth=5, random_state=42)
+model_dt.fit(x_train, y_train)
+
+# 예측 및 평가
+pred_dt = model_dt.predict(x_val)
+print("Decision Tree Accuracy:", accuracy_score(y_val, pred_dt))
+print(classification_report(y_val, pred_dt))</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Model 3</span> KNN (K-Nearest Neighbors)
+        </div>
+        <div class="card-body">
+            <div class="tip-box">
+                <div class="tip-title">⚠️ 중요</div>
+                <p>KNN은 거리 계산을 하므로 반드시 <strong>스케일링 된 데이터(x_train_s)</strong>를 넣어야 성능이 제대로 나옵니다.</p>
+            </div>
+            <pre><code class="language-python"># 모델 선언 (k=5)
+model_knn = KNeighborsClassifier(n_neighbors=5)
+model_knn.fit(x_train_s, y_train)
+
+# 예측 및 평가
+pred_knn = model_knn.predict(x_val_s)
+print("KNN Accuracy:", accuracy_score(y_val, pred_knn))
+print(classification_report(y_val, pred_knn))</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>4. 교차 검증 (K-Fold Cross Validation)</h1>
+            <p>한 번의 분할로 인한 운(Luck)을 배제하고, 모델의 일반화 성능을 측정합니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">CV 1</span> 의사결정 나무 교차 검증
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600"><code>cross_val_score</code>를 사용하여 5번 반복 평가합니다. (전체 데이터 x 사용)</p>
+            <pre><code class="language-python"># 모델 선언
+dt_cv = DecisionTreeClassifier(max_depth=5, random_state=42)
+
+# 교차 검증 (cv=5)
+score_dt = cross_val_score(dt_cv, x, y, cv=5)
+
+print("DT CV 점수:", score_dt)
+print("DT 평균 점수:", score_dt.mean())</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">CV 2</span> KNN 교차 검증 (스케일링 주의)
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">KNN 교차 검증 시에는 <strong>전체 데이터(x)를 스케일링</strong>한 후 넣어야 합니다.</p>
+            <pre><code class="language-python"># 전체 데이터 스케일링
+scaler = StandardScaler()
+x_scaled = scaler.fit_transform(x)
+
+# 모델 선언
+knn_cv = KNeighborsClassifier(n_neighbors=5)
+
+# 교차 검증
+score_knn = cross_val_score(knn_cv, x_scaled, y, cv=5)
+
+print("KNN CV 점수:", score_knn)
+print("KNN 평균 점수:", score_knn.mean())</code></pre>
+        </div>
+    </div>
+
+    <div class="text-center mt-12 mb-20">
+        <p class="text-gray-500">수고하셨습니다! 이제 어떤 모델이 가장 성능이 좋은지 비교해 보세요.</p>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>

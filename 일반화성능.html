@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>08. 일반화 성능과 교차 검증 (초보자 가이드)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Pretendard', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        /* 카드 스타일 */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 40px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .card-header {
+            background: #f9fafb;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-body {
+            padding: 24px;
+        }
+        /* 마크다운 스타일 */
+        .markdown-content h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: #111827; }
+        .markdown-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 1rem; color: #374151; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; }
+        .markdown-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.8rem; color: #4b5563; }
+        .markdown-content p { margin-bottom: 1rem; }
+        .markdown-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        
+        /* 코드 블록 스타일 */
+        pre {
+            margin: 0 !important;
+            border-radius: 8px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        /* 출력 결과창 스타일 */
+        .output-area {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            border-left: 4px solid #10b981;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            background-color: #dbeafe;
+            color: #1e40af;
+            margin-right: 8px;
+        }
+
+        /* 설명 팁 박스 */
+        .tip-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .tip-title {
+            font-weight: bold;
+            color: #0369a1;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 스크롤 관련 */
+        html { scroll-behavior: smooth; }
+        .section-marker { scroll-margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">08. 일반화 성능과 교차 검증</h1>
+        <p class="text-lg text-gray-600">머신러닝 모델, 한 번만 평가하면 위험한 이유와<br>이를 해결하는 <strong>K-Fold Cross Validation</strong> 완벽 가이드</p>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>일반화 성능 (Generalization)</h1>
+            <p>머신러닝 모델을 만들 때 가장 중요한 목표는 <strong>"안 본 데이터(New Data)도 잘 맞추는 것"</strong>입니다. 이를 <strong>일반화 성능</strong>이라고 합니다.</p>
+            <div class="tip-box">
+                <div class="tip-title">🤔 왜 한 번만 평가하면 안 되나요?</div>
+                <p>데이터를 나눌 때(Train/Validation) <strong>운(Luck)</strong>이 작용하기 때문입니다.<br>
+                - <strong>운 좋음:</strong> 쉬운 문제만 시험(Validation)에 나옴 ➔ 점수 뻥튀기<br>
+                - <strong>운 나쁨:</strong> 어려운 문제만 시험에 나옴 ➔ 점수 폭락<br>
+                <br>
+                즉, 한 번의 결과로는 이 모델이 진짜 똑똑한 건지, 운이 좋았던 건지 알 수 없습니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h2>1. 데이터 준비 및 전처리</h2>
+            <p>직원의 정보를 보고 이 사람이 <strong>이직할지(Attrition=1) 안 할지(Attrition=0)</strong> 맞추는 데이터셋입니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 데이터 로드 및 정리
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+
+# 데이터 불러오기
+path = "https://raw.githubusercontent.com/DA4BAM/dataset/master/Attrition_simple2.CSV"
+data = pd.read_csv(path)
+
+# [중요] 사번(EmployeeNumber) 제거
+# 이유: 사번은 그냥 번호표일 뿐, 이직과는 아무 상관이 없는 정보라서 학습에 방해만 됩니다.
+data.drop('EmployeeNumber', axis=1, inplace=True)
+
+print(data.head())</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 가변수화 (One-Hot Encoding)
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">컴퓨터는 'Sales', 'Research' 같은 <strong>글자(범주형)</strong>를 계산할 수 없습니다. 이를 0과 1의 숫자로 바꿔줘야 합니다.</p>
+            <pre><code class="language-python"># 1. X(문제)와 Y(정답) 분리
+target = 'Attrition'
+x = data.drop(target, axis=1)
+y = data.loc[:, target]
+
+# 2. 가변수화 대상 지정 (글자로 된 컬럼들)
+dum_cols = ['Department', 'Gender', 'JobSatisfaction', 'MaritalStatus', 'OverTime']
+
+# 3. 가변수화 실행
+# drop_first=True: '남자', '여자' 컬럼을 둘 다 만들 필요 없이, '남자' 컬럼 하나만 있어도 0이면 여자임을 알 수 있으므로 하나를 지웁니다.
+x = pd.get_dummies(x, columns=dum_cols, drop_first=True)
+
+print(x.head())</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h2>2. 실험: 랜덤 분할의 위험성 확인</h2>
+            <p>데이터를 나누는 작업을 <strong>50번 반복</strong>해 보겠습니다. 똑같은 모델인데 데이터를 어떻게 나누느냐에 따라 점수가 얼마나 널뛰기하는지 확인해 봅시다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 50번 반복 실험 (시뮬레이션)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import MinMaxScaler
+
+# 점수를 기록할 빈 리스트 생성
+r_dt = []  # Decision Tree용
+r_knn = [] # KNN용
+scaler = MinMaxScaler()
+
+# 50번 반복 (Loop)
+for i in range(50):
+    # 1. 데이터 분할 (random_state를 안 쓰면 매번 다르게 섞임!)
+    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
+
+    # [모델 1] Decision Tree (질문 스무고개 방식)
+    model_dt = DecisionTreeClassifier(max_depth=3)
+    model_dt.fit(x_train, y_train)
+    pred_dt = model_dt.predict(x_val)
+    r_dt.append(accuracy_score(y_val, pred_dt)) # 점수 기록
+
+    # [모델 2] KNN (거리 기반, 스케일링 필수!)
+    # KNN은 거리 계산을 하므로 숫자의 크기를 맞춰주는 스케일링이 꼭 필요합니다.
+    x_train_s = scaler.fit_transform(x_train)
+    x_val_s = scaler.transform(x_val)
+    
+    model_knn = KNeighborsClassifier()
+    model_knn.fit(x_train_s, y_train)
+    pred_knn = model_knn.predict(x_val_s)
+    r_knn.append(accuracy_score(y_val, pred_knn)) # 점수 기록</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 결과 눈으로 확인하기 (그래프)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">plt.figure(figsize=(10, 6))
+
+# KDE Plot: 데이터의 분포를 산 모양으로 그려줍니다.
+sns.kdeplot(r_dt, label='Decision Tree', fill=True, alpha=0.3)
+sns.kdeplot(r_knn, label='KNN', fill=True, alpha=0.3)
+
+# 평균값에 점선 표시
+plt.axvline(np.mean(r_dt), color='blue', linestyle='--', label='DT Mean')
+plt.axvline(np.mean(r_knn), color='orange', linestyle='--', label='KNN Mean')
+
+plt.title("모델 성능 분포 (50번 반복)")
+plt.xlabel("정확도 (Accuracy)")
+plt.legend()
+plt.grid()
+plt.show()</code></pre>
+            <div class="tip-box">
+                <div class="tip-title">📊 그래프 해석 방법</div>
+                <ul class="list-disc pl-5 space-y-2 text-sm">
+                    <li><strong>그래프의 위치 (평균):</strong> 오른쪽으로 치우칠수록 성능이 좋은 모델입니다.</li>
+                    <li><strong>그래프의 폭 (표준편차):</strong> 폭이 좁고 뾰족할수록 <strong>안정적인 모델</strong>입니다. (데이터 운빨을 덜 탐)</li>
+                    <li>폭이 너무 넓으면, 내가 만든 모델이 내일은 성능이 뚝 떨어질 수도 있다는 뜻이므로 위험합니다.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h2>3. 해결책: 교차 검증 (Cross Validation)</h2>
+            <p>위처럼 반복문을 짜는 건 귀찮습니다. 그래서 나온 방법이 <strong>K-Fold Cross Validation</strong>입니다.</p>
+            
+            <div class="bg-gray-100 p-4 rounded-lg border border-gray-300 mb-4">
+                <h3 class="font-bold text-gray-700 mb-2">💡 핵심 아이디어</h3>
+                <p>데이터를 케이크 자르듯 10조각(Fold) 냅니다.<br>
+                모든 조각이 한 번씩은 '시험 문제(Validation)' 역할을 돌아가면서 맡습니다.<br>
+                이렇게 나온 10개의 점수를 <strong>평균</strong> 내면 가장 공정한 평가가 됩니다.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 교차 검증 한 줄로 끝내기
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600"><code>cross_val_score</code> 함수가 알아서 나누고, 학습하고, 평가까지 다 해줍니다.</p>
+            <pre><code class="language-python">from sklearn.model_selection import cross_val_score
+
+# 1. 모델 선언 (아직 학습 전)
+model_dt = DecisionTreeClassifier(max_depth=3)
+
+# 2. 교차 검증 수행 (cv=10 : 10등분 하겠다는 뜻)
+# 주의: x, y 전체 데이터를 넣어줍니다. 함수가 알아서 쪼개 씁니다.
+cv_result = cross_val_score(model_dt, x, y, cv=10)
+
+print("10번의 시험 점수:", cv_result)
+print("-" * 30)
+print(f"평균 점수: {cv_result.mean():.4f}")
+print(f"점수 편차: {cv_result.std():.4f}")</code></pre>
+            <div class="output-area">10번의 시험 점수: [0.84 0.81 0.89 0.82 ... ]
+------------------------------
+평균 점수: 0.8452 (이것이 모델의 진짜 실력!)
+점수 편차: 0.0213</div>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> KNN 교차 검증 시 주의사항
+        </div>
+        <div class="card-body">
+            <div class="tip-box">
+                <div class="tip-title">⚠️ 스케일링 주의!</div>
+                <p>KNN은 스케일링이 안 된 데이터를 넣으면 성능이 엉망이 됩니다.<br>
+                교차 검증을 할 때는 편의상 <strong>전체 데이터를 미리 스케일링</strong>해서 넣어주는 방법을 많이 씁니다.</p>
+            </div>
+            <pre><code class="language-python"># 1. 전체 데이터 스케일링하기
+scaler = MinMaxScaler()
+x_scaled = scaler.fit_transform(x) # 전체 x를 변환
+
+# 2. 모델 만들기
+model_knn = KNeighborsClassifier()
+
+# 3. 스케일링 된 데이터(x_scaled)로 교차 검증
+cv_result_knn = cross_val_score(model_knn, x_scaled, y, cv=10)
+
+print(f"KNN 평균 점수: {cv_result_knn.mean():.4f}")
+print(f"KNN 점수 편차: {cv_result_knn.std():.4f}")</code></pre>
+        </div>
+    </div>
+
+    <div class="text-center mt-12 mb-20">
+        <p class="text-gray-500 text-lg">"현업에서는 <strong>Cross Validation의 평균 점수</strong>를<br>가장 신뢰할 수 있는 성능 지표로 사용합니다."</p>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>09. 와인 품질 분류 (초보자 실습 가이드)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Pretendard', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 40px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .card-header {
+            background: #f9fafb;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-body {
+            padding: 24px;
+        }
+        .markdown-content h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: #111827; }
+        .markdown-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 1rem; color: #374151; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; }
+        .markdown-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.2rem; margin-bottom: 0.8rem; color: #4b5563; }
+        .markdown-content p { margin-bottom: 1rem; }
+        .markdown-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        
+        pre {
+            margin: 0 !important;
+            border-radius: 8px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .output-area {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            border-left: 4px solid #10b981;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            background-color: #dbeafe;
+            color: #1e40af;
+            margin-right: 8px;
+        }
+
+        /* 빈칸 채우기 스타일 */
+        .fill-in {
+            border: 2px dashed #8b5cf6;
+            background-color: #f5f3ff;
+        }
+        .fill-in-badge {
+            background-color: #ede9fe;
+            color: #5b21b6;
+        }
+
+        .tip-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 4px;
+        }
+        .tip-title {
+            font-weight: bold;
+            color: #0369a1;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        html { scroll-behavior: smooth; }
+        .section-marker { scroll-margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">09. 와인 품질 분류 (다중 분류)</h1>
+        <p class="text-lg text-gray-600">화이트 와인의 성분 데이터를 분석하여<br>품질 등급(0~4)을 예측하는 딥러닝 모델을 만들어 봅시다.</p>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>1. 환경 준비 및 데이터 로딩</h1>
+            <p>딥러닝에 필요한 라이브러리를 불러오고 데이터를 준비합니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 라이브러리 임포트
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import *
+from sklearn.preprocessing import MinMaxScaler
+
+# 딥러닝 핵심 라이브러리
+from keras.models import Sequential
+from keras.layers import Dense, Input
+from keras.backend import clear_session
+from keras.optimizers import Adam</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 학습 곡선 함수 (미리 정의)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python">def dl_history_plot(history):
+    plt.figure(figsize=(10,6))
+    plt.plot(history['loss'], label='train_err', marker = '.')
+    plt.plot(history['val_loss'], label='val_err', marker = '.')
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid()
+    plt.show()</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 데이터 로드 및 전처리
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">와인 품질(quality)은 원래 3~9점 사이의 값입니다. 이를 학습하기 좋게 <strong>0~4 (5개 등급)</strong>으로 정리합니다.</p>
+            <pre><code class="language-python">path = "https://raw.githubusercontent.com/DA4BAM/dataset/master/winequality-white.csv"
+data = pd.read_csv(path)
+
+# 품질(Target) 범주 재조정 (3~9 -> 0~4)
+# (이 코드는 제공된 데이터셋 특성에 맞춘 전처리입니다)
+data['quality'] = np.where(data['quality'] == 3, 4, np.where(data['quality'] == 9, 8, data['quality']))
+data['quality'] = data['quality'] - 4
+
+print(data['quality'].value_counts().sort_index())</code></pre>
+            <div class="output-area">0    183  (최하)
+1    1457
+2    2198
+3    880
+4    180  (최상)
+Name: quality, dtype: int64</div>
+            <div class="tip-box">
+                <div class="tip-title">🎯 목표 확인</div>
+                <p>우리의 목표는 와인 성분(알코올, 산도 등)을 보고 이 와인이 <strong>0, 1, 2, 3, 4 중 어디에 속하는지</strong> 맞추는 것입니다. (5개 클래스 다중 분류)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-body markdown-content">
+            <h1>2. 데이터 준비 (빈칸 채우기)</h1>
+            <p>노트북에서 비어있던 부분입니다. 데이터를 나누고 스케일링을 수행해야 합니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Solution</span> 데이터 분할 (x, y 나누기 & Train/Test 분리)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 1. x, y 분리
+target = 'quality'
+x = data.drop(target, axis=1)
+y = data.loc[:, target]
+
+# 2. Train / Validation 분리 (7:3 또는 8:2)
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2, random_state=42)
+
+print(f"Train shape: {x_train.shape}")
+print(f"Val shape: {x_val.shape}")</code></pre>
+            <div class="output-area">Train shape: (3918, 11)
+Val shape: (980, 11)</div>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Solution</span> 스케일링 (MinMaxScaler)
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">딥러닝에서는 데이터의 범위(Scale)를 0~1 사이로 맞춰주는 것이 매우 중요합니다.</p>
+            <pre><code class="language-python"># 스케일러 선언
+scaler = MinMaxScaler()
+
+# 학습 데이터(Train) 기준으로 스케일링 학습 및 변환
+x_train = scaler.fit_transform(x_train)
+
+# 검증 데이터(Validation)는 학습 데이터 기준으로 변환만 수행
+x_val = scaler.transform(x_val)</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-body markdown-content">
+            <h1>3. 모델링 (3가지 버전)</h1>
+            <p>성능을 높이기 위해 모델의 구조를 조금씩 바꿔가며 3가지 실험을 진행합니다.</p>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Model 1</span> 기본 모델 (은닉층 없음)
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">가장 단순하게, 입력층과 출력층만 연결해 봅니다.</p>
+            <pre><code class="language-python">nfeatures = x_train.shape[1] # 11개
+
+clear_session()
+
+model1 = Sequential([
+    Input(shape=(nfeatures,)),
+    # 출력층: 0~4까지 5개로 분류하므로 노드수 5, 활성화함수는 softmax
+    Dense(5, activation='softmax')
+])
+
+model1.compile(optimizer=Adam(learning_rate=0.01), loss='sparse_categorical_crossentropy')
+
+history1 = model1.fit(x_train, y_train, epochs=20, validation_split=0.2).history
+dl_history_plot(history1)</code></pre>
+            <div class="tip-box">
+                <div class="tip-title">💡 Tip: 출력층 설정</div>
+                <ul class="list-disc pl-5 text-sm">
+                    <li><strong>노드 수 5:</strong> 정답(Class)이 0, 1, 2, 3, 4 총 5개이기 때문입니다.</li>
+                    <li><strong>softmax:</strong> 5개 중 확률이 가장 높은 하나를 고르기 위한 함수입니다.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Model 2</span> 은닉층 추가 (Deep Learning)
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">중간에 학습을 도와줄 은닉층(Hidden Layer)을 2개 추가합니다.</p>
+            <pre><code class="language-python">clear_session()
+
+model2 = Sequential([
+    Input(shape=(nfeatures,)),
+    
+    # 은닉층 추가: relu는 학습 효율이 좋습니다.
+    Dense(32, activation='relu'),
+    Dense(16, activation='relu'),
+    
+    # 출력층
+    Dense(5, activation='softmax')
+])
+
+model2.compile(optimizer=Adam(learning_rate=0.001), loss='sparse_categorical_crossentropy')
+
+history2 = model2.fit(x_train, y_train, epochs=30, validation_split=0.2).history
+dl_history_plot(history2)</code></pre>
+        </div>
+    </div>
+
+    <div class="card section-marker fill-in">
+        <div class="card-header">
+            <span class="badge fill-in-badge">Model 3</span> 더 깊고 넓은 모델
+        </div>
+        <div class="card-body">
+            <p class="mb-2 text-sm text-gray-600">뉴런의 개수를 늘리고 층을 더 쌓아서 성능 변화를 확인합니다.</p>
+            <pre><code class="language-python">clear_session()
+
+model3 = Sequential([
+    Input(shape=(nfeatures,)),
+    
+    Dense(64, activation='relu'),
+    Dense(32, activation='relu'),
+    Dense(16, activation='relu'),
+    
+    Dense(5, activation='softmax')
+])
+
+model3.compile(optimizer=Adam(learning_rate=0.001), loss='sparse_categorical_crossentropy')
+
+history3 = model3.fit(x_train, y_train, epochs=50, validation_split=0.2).history
+dl_history_plot(history3)</code></pre>
+            <div class="output-area">[그래프 비교]
+보통 층을 깊게 쌓을수록(Model 3) 학습 데이터에 대한 오차(Loss)는 줄어들지만,
+검증 데이터(Val Loss)가 다시 튀어 오르는 '과적합(Overfitting)' 현상이 발생할 수 있습니다.</div>
+        </div>
+    </div>
+
+    <div class="card section-marker">
+        <div class="card-header">
+            <span class="badge">Code</span> 최종 결과 확인 (Model 3 기준)
+        </div>
+        <div class="card-body">
+            <pre><code class="language-python"># 예측값 생성
+pred = model3.predict(x_val)
+pred_class = pred.argmax(axis=1) # 확률 중 가장 큰 값의 인덱스 추출
+
+# 성능 평가
+print(confusion_matrix(y_val, pred_class))
+print("-" * 50)
+print(classification_report(y_val, pred_class))</code></pre>
+        </div>
+    </div>
+
+    <div class="text-center mt-12 mb-20">
+        <p class="text-gray-500">수고하셨습니다! 이제 여러분은 직접 모델의 구조를 바꿔가며 성능을 비교할 수 있습니다.</p>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>
