@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기초통계와 회귀분석: 상관분석 & 신뢰도분석 (밝은 테마)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-coy.min.css" />
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Pretendard', sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .slide {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-bottom: 1px solid #ddd;
+            padding: 40px 0;
+            background-color: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            border-radius: 12px;
+            padding: 40px;
+        }
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #0066ff;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 2rem;
+            color: #0066ff;
+            margin-bottom: 20px;
+            border-left: 5px solid #00c6ff;
+            padding-left: 15px;
+        }
+        h3 {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        p {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 15px;
+        }
+        ul {
+            list-style-type: disc;
+            padding-left: 20px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        li { margin-bottom: 8px; }
+        
+        /* 코드 블록 커스텀 (밝은 테마용) */
+        pre {
+            border-radius: 10px !important;
+            background: #f4f7f6 !important;
+            border: 1px solid #dce4ec;
+        }
+        code {
+            font-family: 'Consolas', monospace !important;
+            font-size: 1rem !important;
+        }
+
+        /* 설명 박스 */
+        .box {
+            background: #e7f5ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #0066ff;
+        }
+        .box-title {
+            font-weight: bold;
+            color: #0066ff;
+            margin-bottom: 10px;
+            display: block;
+            font-size: 1.1rem;
+        }
+        
+        /* 비교 박스 */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .compare-item {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .highlight { color: #e74c3c; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="slide" style="text-align: center; border-bottom: none;">
+        <p style="font-size: 1.5rem; color: #0066ff; font-weight: 600;">STATA 실습 노트 정리</p>
+        <h1>기초통계와 회귀분석<br>Ch4. 상관분석 & Ch5. 신뢰도분석</h1>
+        <p>데이터 간의 관계(Correlation)와<br>측정 도구의 정확성(Reliability)을 검증하는 방법</p>
+        <br>
+        <div style="display: inline-block; padding: 12px 24px; background: #0066ff; color: white; border-radius: 30px; font-weight: bold;">
+            👇 아래로 스크롤하여 시작
+        </div>
+    </div>
+
+    <div class="slide">
+        <h2>CHAPTER 4. 상관분석 (Correlation Analysis)</h2>
+        <p>두 변수가 서로 얼마나 밀접하게 관련되어 있는지(-1 ~ +1) 분석합니다.</p>
+        
+        <h3>1. 산포도 (Scatter Plot)</h3>
+        <p>숫자를 계산하기 전에, 눈으로 먼저 관계를 확인하는 단계입니다.</p>
+        <pre><code class="language-stata">twoway (scatter write read)
+twoway (scatter math read, msymbol(square_hollow))</code></pre>
+        <div class="box">
+            <span class="box-title">💡 해석 가이드</span>
+            점이 우상향하면 <strong>양의 상관관계</strong>(비례),<br>
+            우하향하면 <strong>음의 상관관계</strong>(반비례)입니다.
+        </div>
+    </div>
+
+    <div class="slide">
+        <h2>2. 상관계수 계산: pwcorr vs corr</h2>
+        <p>가장 중요한 부분입니다. 두 명령어의 결정적인 차이를 알아야 합니다.</p>
+
+        <div class="compare-grid">
+            <div class="compare-item">
+                <h3 style="color:#e74c3c">pwcorr (Pairwise)</h3>
+                <pre><code class="language-stata">pwcorr read write math science</code></pre>
+                <ul>
+                    <li><strong>짝별 삭제 (Pairwise deletion)</strong></li>
+                    <li>A, B 두 변수 값만 있으면 계산에 포함함.</li>
+                    <li>데이터 손실이 적음.</li>
+                    <li>보통 이걸 더 많이 씀.</li>
+                </ul>
+            </div>
+            <div class="compare-item">
+                <h3 style="color:#3498db">corr (Listwise)</h3>
+                <pre><code class="language-stata">corr read write math science</code></pre>
+                <ul>
+                    <li><strong>목록별 삭제 (Listwise deletion)</strong></li>
+                    <li>변수 중 <strong>하나라도 결측치(누락)</strong>가 있으면 그 사람 데이터 통째로 날림.</li>
+                    <li>표본 수가 확 줄어들 수 있음.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <h2>2-1. 유의성 검정 (P-value)</h2>
+        <p>"이 상관관계가 진짜 있는 건가? 아니면 우연인가?"를 판단합니다.</p>
+
+        <pre><code class="language-stata">pwcorr read write math science, sig</code></pre>
+        <div class="box">
+            <span class="box-title">🔍 결과 해석 (sig 옵션)</span>
+            <ul>
+                <li>출력된 표 아래쪽 숫자가 <strong>P-value (유의확률)</strong>입니다.</li>
+                <li>이 값이 <strong>0.05보다 작으면</strong> "상관관계가 통계적으로 유의하다(진짜 있다)"고 봅니다.</li>
+                <li><code>corr</code> 명령어는 <code>sig</code> 옵션을 쓸 수 없습니다.</li>
+            </ul>
+        </div>
+
+        <h3>그룹별 비교 (Group Comparison)</h3>
+        <p>남/녀 그룹 간 상관관계가 다른지 확인할 때 씁니다.</p>
+        <pre><code class="language-stata">by female, sort: corr read write ... 
+cortesti 0.648 91 0.625 106</code></pre>
+        <p>👉 <code>cortesti</code>: 두 그룹의 상관계수(r값) 차이가 유의미한지 검정하는 명령어.</p>
+    </div>
+
+    <div class="slide">
+        <h2>3. 편상관계수 (Partial Correlation)</h2>
+        <p>제 3의 변수 효과를 제거하고 순수한 관계만 보고 싶을 때 사용합니다.</p>
+
+        <pre><code class="language-stata">pcorr mpg price weight foreign</code></pre>
+        
+        <div class="box">
+            <span class="box-title">🍦 예시: 아이스크림 판매량 & 익사 사고율</span>
+            두 변수는 상관관계가 높지만, 사실 <strong>기온(여름)</strong> 때문입니다.<br>
+            이때 '기온'의 효과를 제거(통제)하고 계산하는 것이 <strong>편상관계수</strong>입니다.
+        </div>
+    </div>
+
+    <div class="slide">
+        <h2>4. 순위 상관계수 (Non-parametric)</h2>
+        <p>데이터가 정규분포가 아니거나, 등수(순서) 데이터일 때 사용합니다.</p>
+
+        <div class="compare-grid">
+            <div class="compare-item">
+                <h3>Spearman (스피어만)</h3>
+                <pre><code class="language-stata">spearman age liberal</code></pre>
+                <p>값을 <strong>등수(Rank)</strong>로 바꾼 뒤 상관계수를 구합니다.</p>
+            </div>
+            <div class="compare-item">
+                <h3>Kendall's Tau (켄달)</h3>
+                <pre><code class="language-stata">ktau iq tv_hours</code></pre>
+                <p>두 변수의 <strong>순위 일치성</strong>을 봅니다. (표본이 적을 때 좋음)</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide">
+        <h2>CHAPTER 5. 신뢰도 분석 (Reliability)</h2>
+        <p>설문조사나 척도가 믿을만한지 검증하는 단계입니다.</p>
+
+        <h3>1. 크론바흐 알파 (Cronbach's Alpha)</h3>
+        <p><strong>내적 일관성(Internal Consistency)</strong> 측정: 설문 문항들이 같은 내용을 묻고 있는가?</p>
+        <pre><code class="language-stata">alpha psmoke97 pdrink97 pgang97, std</code></pre>
+
+        <div class="box">
+            <span class="box-title">📊 기준 (Rule of Thumb)</span>
+            <ul>
+                <li><strong>0.8 이상:</strong> 매우 좋음 (강한 일관성)</li>
+                <li><strong>0.6 이상:</strong> 수용 가능 (봐줄만 함)</li>
+                <li><strong>0.6 미만:</strong> 문항 수정 필요 (신뢰도 낮음)</li>
+            </ul>
+            <p>※ <code>generate(gc)</code> 옵션: 신뢰도를 깎아먹는 문항을 찾아서 지울 때 유용함.</p>
+        </div>
+    </div>
+
+    <div class="slide">
+        <h2>2. 코헨의 카파 (Cohen's Kappa)</h2>
+        <p><strong>평가자 간 일치도(Inter-rater Reliability)</strong> 측정: 두 명의 심사위원(의사)의 판정이 얼마나 일치하는가?</p>
+
+        <pre><code class="language-stata">kap rada radb</code></pre>
+        <pre><code class="language-stata">kap rada radb, wgt(w) // 순서가 있는 경우 가중치 부여</code></pre>
+
+        <div class="box">
+            <span class="box-title">🩺 해석 (의사 A와 B의 진단)</span>
+            <ul>
+                <li>단순히 우연히 일치할 확률을 제외하고, 진짜 얼마나 일치하는지 계산합니다.</li>
+                <li><strong>0.6 ~ 0.8:</strong> 일치도가 높음.</li>
+                <li><strong>0.4 ~ 0.6:</strong> 적당히 일치함.</li>
+                <li><strong>0.2 이하:</strong> 일치하지 않음 (따로 노는 중).</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="slide" style="text-align: center; border-bottom: none;">
+        <h2>🎉 요약 및 정리</h2>
+        <div style="text-align: left; display: inline-block; max-width: 600px; background: #f0f8ff; padding: 30px; border-radius: 15px;">
+            <ul style="font-size: 1.2rem; line-height: 2; margin-bottom: 0; color: #333;">
+                <li>✅ <strong>관계 확인:</strong> Scatter Plot (눈으로) ➡ Correlation (수치로)</li>
+                <li>✅ <strong>결측치 중요:</strong> <code>pwcorr</code>(보존) vs <code>corr</code>(삭제)</li>
+                <li>✅ <strong>변수 통제:</strong> 제3의 변수가 의심되면 <code>pcorr</code></li>
+                <li>✅ <strong>신뢰도:</strong> 설문지 문항 검증은 <code>alpha</code>, 평가자 일치는 <code>kappa</code></li>
+            </ul>
+        </div>
+        <br><br>
+        <p style="font-weight: bold; color: #0066ff;">수고하셨습니다! 실습 파일(.dta)을 열어 직접 실행해 보세요.</p>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-stata.min.js"></script>
+</body>
+</html>

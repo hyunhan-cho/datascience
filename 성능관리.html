@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>08. 성능관리 - 상세 해설판</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #F8F9FA;
+            --cell-bg: #FFFFFF;
+            --code-bg: #F0F0F0;
+            --border-color: #DADCE0;
+            --accent-color: #1A73E8;
+            --text-color: #202124;
+        }
+
+        body {
+            font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .notebook-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--cell-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            border-radius: 8px;
+            padding: 40px;
+        }
+
+        /* 셀 스타일 */
+        .cell { margin-bottom: 30px; }
+
+        /* 마크다운 제목 스타일 */
+        .markdown-cell h1 { border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0; }
+        .markdown-cell h2 { margin-top: 30px; color: #333; }
+        .markdown-cell h3 { color: #555; }
+
+        /* --- 상세 설명 박스 (튜터 노트) --- */
+        .explanation-box {
+            background-color: #e8f0fe; /* 연한 파란색 배경 */
+            border-left: 5px solid var(--accent-color);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.95rem;
+            color: #3c4043;
+        }
+        .explanation-box strong {
+            color: #174ea6;
+            font-weight: 700;
+        }
+        .explanation-box ul {
+            margin: 5px 0 0 0;
+            padding-left: 20px;
+        }
+
+        /* 코드 영역 스타일 */
+        .code-wrapper {
+            display: flex;
+            align-items: flex-start;
+        }
+        .input-prompt {
+            font-family: monospace;
+            font-size: 12px;
+            color: #9AA0A6;
+            width: 50px;
+            text-align: right;
+            padding-right: 10px;
+            padding-top: 10px;
+            user-select: none;
+        }
+        .code-area {
+            flex-grow: 1;
+            background-color: var(--code-bg);
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+        .code-area pre { margin: 0; padding: 12px; overflow-x: auto; }
+        .code-area code { font-family: 'Consolas', monospace; font-size: 14px; background: transparent; }
+
+        /* 섹션 구분선 */
+        hr { border: 0; height: 1px; background: #eee; margin: 50px 0; }
+    </style>
+</head>
+<body>
+
+<div class="notebook-container">
+
+    <div class="cell markdown-cell">
+        <h1>성능관리 - 일반화 성능, 미리 멈춤</h1>
+        <p>이 노트북은 모델이 과적합(Overfitting)되는 것을 방지하기 위해 <strong>Early Stopping(조기 종료)</strong>과 <strong>Model Checkpoint(모델 저장)</strong> 기술을 사용하는 방법을 다룹니다.</p>
+    </div>
+
+    <div class="cell markdown-cell">
+        <h2>1. 환경 준비</h2>
+        <h3>(1) 라이브러리 로딩</h3>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            데이터 분석과 딥러닝 모델링에 필요한 핵심 라이브러리들을 불러옵니다.<br>
+            <ul>
+                <li><code>pandas, numpy</code>: 데이터 처리 및 수치 연산</li>
+                <li><code>matplotlib, seaborn</code>: 데이터 및 학습 결과 시각화</li>
+                <li><code>sklearn</code>: 데이터셋 분할, 전처리(스케일링), 성능 평가 지표</li>
+                <li><code>keras</code>: 딥러닝 모델 설계(Sequential), 레이어 구성(Dense), 최적화(Adam)</li>
+            </ul>
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[1]</div>
+            <div class="code-area">
+<pre><code class="python">import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import *
+from sklearn.preprocessing import MinMaxScaler
+
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Input
+from keras.backend import clear_session
+from keras.optimizers import Adam
+from keras.datasets import mnist</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell markdown-cell">
+        <ul><li>함수 만들기</li></ul>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            모델 학습 후 결과를 그래프로 그려주는 <code>dl_history_plot</code> 함수입니다.<br>
+            학습이 진행됨에 따라 <strong>Train Error(학습 오차)</strong>와 <strong>Validation Error(검증 오차)</strong>가 어떻게 변하는지 비교하여 과적합 여부를 판단할 수 있게 해줍니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[2]</div>
+            <div class="code-area">
+<pre><code class="python"># 학습곡선 함수
+def dl_history_plot(history):
+    plt.plot(history['loss'], label='train_err', marker = '.')
+    plt.plot(history['val_loss'], label='val_err', marker = '.')
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid()
+    plt.show()</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell markdown-cell">
+        <h3>(2) 데이터 로딩</h3>
+        <p>과적합을 유도하기 위해 특성(feature)이 많은 예제 데이터를 불러옵니다.</p>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            GitHub에 저장된 CSV 파일을 <code>pandas</code>를 이용해 읽어옵니다.<br>
+            <code>data.head()</code>를 통해 상위 5개 행을 출력하여 데이터의 생김새를 확인합니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[3]</div>
+            <div class="code-area">
+<pre><code class="python">path = "https://raw.githubusercontent.com/DA4BAM/dataset/master/overfit_sample.csv"
+data = pd.read_csv(path)
+data.head()</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            <code>data.shape</code>로 데이터의 크기를 확인합니다.<br>
+            이 데이터셋은 행(데이터 수)에 비해 열(특성 수)이 많아 과적합이 발생하기 쉬운 구조입니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[4]</div>
+            <div class="code-area">
+<pre><code class="python">data.shape</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="cell markdown-cell">
+        <h2>2. Early Stopping (조기 종료)</h2>
+        <h3>(1) 데이터 준비</h3>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            1. <strong>x, y 분리:</strong> <code>target</code> 컬럼을 y(정답)로, 나머지를 x(입력 데이터)로 나눕니다.<br>
+            2. <strong>Train/Val 분리:</strong> 학습용 데이터(Train)와 검증용 데이터(Validation)를 8:2 비율로 나눕니다. 모델이 학습하지 않은 데이터에서도 잘 맞추는지 확인하기 위함입니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[5]</div>
+            <div class="code-area">
+<pre><code class="python"># 데이터분할 : x, y
+target = 'target'
+x = data.drop(target, axis = 1)
+y = data.loc[:, target]
+
+# 데이터분할 : train, validation
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=.2, random_state = 20)</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            <strong>스케일링(MinMaxScaler):</strong> 모든 데이터 값을 0과 1 사이로 변환합니다.<br>
+            딥러닝에서는 값의 범위가 크면 학습이 불안정해지므로 스케일링이 필수적입니다.<br>
+            <em>주의: train 데이터로 fit하고, 그 기준으로 val 데이터를 transform 합니다.</em>
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[6]</div>
+            <div class="code-area">
+<pre><code class="python"># 스케일링
+scaler = MinMaxScaler()
+x_train = scaler.fit_transform(x_train)
+x_val = scaler.transform(x_val)</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell markdown-cell">
+        <h3>(2) 모델링 (기본 학습)</h3>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            딥러닝 모델 구조를 정의합니다.<br>
+            <ul>
+                <li><code>Input</code>: 입력 데이터의 특성 개수(nfeatures)만큼 입력을 받습니다.</li>
+                <li><code>Dense</code>: 완전 연결 레이어(Fully Connected Layer)입니다.</li>
+                <li><code>activation='sigmoid'</code>: 이진 분류(0이냐 1이냐) 문제이므로 마지막 층은 시그모이드 함수를 사용합니다.</li>
+                <li><code>compile</code>: 학습 방법(Optimizer: Adam)과 오차 계산법(Loss: binary_crossentropy)을 설정합니다.</li>
+            </ul>
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[7]</div>
+            <div class="code-area">
+<pre><code class="python"># input_shape : feature 수 도출
+nfeatures = x_train.shape[1]
+
+# 메모리 정리
+clear_session()
+
+# Sequential 타입
+model1 = Sequential( [Input(shape = (nfeatures,)),
+                      Dense(128, activation= 'relu'),
+                      Dense(64, activation= 'relu'),
+                      Dense(32, activation= 'relu'),
+                      Dense(1, activation= 'sigmoid')] )
+
+# 컴파일
+model1.compile(optimizer= Adam(learning_rate = 0.001), loss='binary_crossentropy')</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            모델을 100번(epochs=100) 반복 학습시킵니다.<br>
+            이때 조기 종료(Early Stopping)가 없으므로, 과적합이 발생하더라도 100번을 끝까지 채우게 됩니다.<br>
+            그래프를 확인해보면 <strong>Val Loss가 줄어들다가 다시 튀어 오르는(과적합)</strong> 지점을 볼 수 있습니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[8]</div>
+            <div class="code-area">
+<pre><code class="python"># 학습
+hist = model1.fit(x_train, y_train, epochs = 100, validation_split=0.2, verbose = 0).history
+
+# 학습결과 그래프
+dl_history_plot(hist)</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell markdown-cell">
+        <h3>(3) 미리 멈춤! (Early Stopping)</h3>
+        <h4>1) 함수 불러오기</h4>
+    </div>
+
+    <div class="cell">
+        <div class="code-wrapper">
+            <div class="input-prompt">[9]</div>
+            <div class="code-area">
+<pre><code class="python">from keras.callbacks import EarlyStopping</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell markdown-cell">
+        <h4>2) 모델링 with Early Stopping</h4>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            <strong>EarlyStopping 설정:</strong>
+            <ul>
+                <li><code>monitor='val_loss'</code>: 검증 데이터의 오차(val_loss)를 감시합니다.</li>
+                <li><code>min_delta</code>: 오차가 이 값보다 적게 줄어들면 개선되지 않은 것으로 봅니다.</li>
+                <li><code>patience=5</code>: 오차가 개선되지 않아도 5번(epoch)까지는 참습니다. 그래도 개선이 없으면 학습을 멈춥니다.</li>
+            </ul>
+            <code>callbacks=[es]</code>를 <code>.fit()</code> 안에 넣어주면 설정이 적용됩니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[10]</div>
+            <div class="code-area">
+<pre><code class="python"># 모델 선언 (초기화)
+clear_session()
+
+model2 = Sequential( [Input(shape = (nfeatures,)),
+                      Dense(128, activation= 'relu'),
+                      Dense(64, activation= 'relu'),
+                      Dense(32, activation= 'relu'),
+                      Dense(1, activation= 'sigmoid')] )
+model2.compile(optimizer= Adam(learning_rate = 0.001), loss='binary_crossentropy')
+
+# EarlyStopping 설정 ------------
+min_de = 0.001
+pat = 5
+
+es = EarlyStopping(monitor = 'val_loss', min_delta = min_de, patience = pat)
+# --------------------------------
+
+# 학습 (callbacks 옵션 추가)
+hist = model2.fit(x_train, y_train, epochs = 100, validation_split=0.2,
+                  callbacks = [es]).history
+dl_history_plot(hist)</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="cell markdown-cell">
+        <h2>3. 모델 저장하기</h2>
+        <h3>(1) 모델 저장하기 및 로딩하기</h3>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            <code>model.save()</code>를 사용하면 모델의 구조와 학습된 가중치(weight)를 파일(.keras)로 저장할 수 있습니다.<br>
+            이후 <code>load_model()</code>로 언제든지 다시 불러와 사용할 수 있습니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[11]</div>
+            <div class="code-area">
+<pre><code class="python"># 모델 저장
+model1.save('hanky.keras')
+
+# 모델 로딩
+from keras.models import load_model
+model2 = load_model('hanky.keras')</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            불러온 모델로 예측을 수행하고 성능을 평가합니다.<br>
+            <code>np.where(pred2 > 0.5, 1, 0)</code>: 시그모이드 출력값(0~1 확률)을 0.5 기준으로 0 또는 1로 변환합니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[12]</div>
+            <div class="code-area">
+<pre><code class="python">pred2 = model2.predict(x_val)
+pred2_1 = np.where(pred2 > .5, 1, 0)
+
+print(accuracy_score(y_val, pred2_1))
+print('-'*60)
+print(classification_report(y_val, pred2_1))</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell markdown-cell">
+        <h3>(3) 중간 체크포인트 저장 (ModelCheckpoint)</h3>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            실습을 위해 기존에 저장된 모델 파일들을 삭제하는 유틸리티 코드입니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[13]</div>
+            <div class="code-area">
+<pre><code class="python">import os
+
+def delete_model_files(directory):
+    for filename in os.listdir(directory):
+        if filename.endswith(".keras"):
+            os.remove(os.path.join(directory, filename))
+            print(f"Deleted: {filename}")
+
+delete_model_files("/content/")</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            <strong>ModelCheckpoint:</strong> 학습 도중 성능이 좋을 때마다 모델을 자동으로 저장해주는 콜백함수입니다.<br>
+            EarlyStopping은 멈추는 기능만 있지만, 이건 <strong>"가장 좋았던 순간"</strong>을 파일로 남깁니다.<br>
+            <ul>
+                <li><code>save_best_only=True</code>: 이전보다 성능이 좋아졌을 때만 저장합니다. (용량 절약)</li>
+                <li><code>verbose=1</code>: 저장할 때마다 "저장했습니다!"라고 메시지를 띄웁니다.</li>
+            </ul>
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[14]</div>
+            <div class="code-area">
+<pre><code class="python">from keras.callbacks import ModelCheckpoint
+
+# 모델 초기화
+clear_session()
+model1 = Sequential( [Input(shape = (nfeatures,)),
+                      Dense(64, activation= 'relu'),
+                      Dense(32, activation= 'relu'),
+                      Dense(16, activation= 'relu'),
+                      Dense(1, activation= 'sigmoid')] )
+model1.compile(optimizer= Adam(learning_rate = 0.0001), loss='binary_crossentropy')
+
+# 체크포인트 설정: 에포크 번호를 파일명에 포함
+cp_path = '/content/{epoch:03d}.keras'
+mcp = ModelCheckpoint(cp_path, monitor='val_loss', verbose = 1, save_best_only=True)
+
+# 학습
+hist = model1.fit(x_train, y_train, epochs = 50, validation_split=.2, callbacks=[mcp]).history
+dl_history_plot(hist)</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell markdown-cell">
+        <h4>3) 최종 Best 모델만 저장하기</h4>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box">
+            <strong>💡 상세 설명:</strong><br>
+            매번 다른 이름으로 저장하는 게 아니라, <code>best_model.keras</code>라는 <strong>하나의 파일에 가장 성능이 좋은 모델만 덮어쓰기</strong> 합니다.<br>
+            학습이 끝나면 이 파일에는 "전체 과정 중 가장 성능이 좋았던 모델"이 들어있게 됩니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[15]</div>
+            <div class="code-area">
+<pre><code class="python"># 모델 초기화 및 컴파일 (생략)
+# ...
+
+cp_path = '/content/best_model.keras'
+mcp = ModelCheckpoint(cp_path, monitor='val_loss', verbose = 1, save_best_only=True)
+
+# 학습
+hist = model1.fit(x_train, y_train, epochs = 50, validation_split=.2, callbacks=[mcp]).history</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="cell markdown-cell">
+        <h2>4. 복습 문제 (완성본)</h2>
+        <p><strong>미리 멈춤(Early Stopping)</strong>과 <strong>베스트 모델 저장(Model Checkpoint)</strong>을 동시에 적용해봅시다.</p>
+    </div>
+
+    <div class="cell">
+        <div class="code-wrapper">
+            <div class="input-prompt">[16]</div>
+            <div class="code-area">
+<pre><code class="python"># 모델 정의 및 컴파일
+clear_session()
+model3 = Sequential( [Input(shape = (nfeatures,)),
+                      Dense(64, activation= 'relu'),
+                      Dense(32, activation= 'relu'),
+                      Dense(16, activation= 'relu'),
+                      Dense(1, activation= 'sigmoid')] )
+
+model3.compile(optimizer= Adam(learning_rate = 0.0001), loss='binary_crossentropy')</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell">
+        <div class="explanation-box" style="border-left-color: #34a853; background-color: #e6f4ea;">
+            <strong>✅ 정답 설명:</strong><br>
+            실무에서 가장 많이 쓰는 패턴입니다.<br>
+            1. <code>EarlyStopping</code>으로 과적합이 시작되면 학습을 멈춥니다. (시간 절약)<br>
+            2. <code>ModelCheckpoint</code>로 가장 성능이 좋았던 순간의 모델을 저장해둡니다. (성능 보장)<br>
+            3. <code>callbacks=[es, mcp]</code> 처럼 리스트로 묶어서 전달하면 두 기능이 동시에 작동합니다.
+        </div>
+        <div class="code-wrapper">
+            <div class="input-prompt">[17]</div>
+            <div class="code-area">
+<pre><code class="python"># 1. EarlyStopping 설정 (기다리는 횟수 5회)
+min_de = 0.001
+pat = 5
+es = EarlyStopping(monitor = 'val_loss', min_delta = min_de, patience = pat)
+
+# 2. ModelCheckpoint 설정 (best_model.keras 파일에 최고 성능 모델만 저장)
+cp_path = '/content/best_model.keras'
+mcp = ModelCheckpoint(cp_path, monitor='val_loss', verbose = 1, save_best_only=True)
+
+# 3. 학습 실행 (두 콜백을 리스트로 전달)
+hist = model3.fit(x_train, y_train, epochs = 100, validation_split=0.2, 
+                  callbacks = [es, mcp]).history
+
+dl_history_plot(hist)</code></pre>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+</body>
+</html>
