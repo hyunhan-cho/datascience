@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초보자를 위한 Stata 회귀분석 진단 해설</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .code-block {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            background-color: #1f2937; /* gray-800 */
+            color: #e5e7eb; /* gray-200 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+            border: 1px solid #374151;
+        }
+        .code-comment {
+            color: #9ca3af; /* gray-400 */
+            font-style: italic;
+        }
+        .command-highlight {
+            color: #fbbf24; /* amber-400 */
+            font-weight: bold;
+        }
+        .output-highlight {
+            color: #34d399; /* emerald-400 */
+            font-weight: bold;
+        }
+        .step-container {
+            border-left: 3px solid #cbd5e1;
+            padding-left: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .step-title {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .explanation-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            color: #475569;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
+
+    <!-- Hero Section -->
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-lg">
+                    <i data-lucide="stethoscope" class="w-6 h-6 text-white"></i>
+                </div>
+                <h1 class="text-xl font-bold">Stata 회귀분석 진단 가이드</h1>
+            </div>
+            <div class="text-xs bg-indigo-600 px-3 py-1 rounded-full text-indigo-100 hidden md:block">
+                Code & Interpretation
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-12 space-y-16">
+
+        <!-- Intro -->
+        <section class="max-w-4xl mx-auto text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">분석 결과를 믿을 수 있을까?</h2>
+            <p class="text-lg text-gray-600 mb-8">
+                단순히 <code>regress</code>를 돌리는 것이 끝이 아닙니다.<br>
+                아래 과정을 통해 데이터의 '건강 상태'를 체크하고 문제를 해결해야 합니다.
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="#chapter10" class="px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition text-indigo-600 font-medium">Ch 10. 이상치 진단</a>
+                <a href="#chapter11" class="px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition text-blue-600 font-medium">Ch 11. 이분산성</a>
+                <a href="#chapter12" class="px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition text-green-600 font-medium">Ch 12. 자기상관</a>
+            </div>
+        </section>
+
+        <hr class="border-gray-200">
+
+        <!-- Chapter 10 -->
+        <section id="chapter10" class="max-w-5xl mx-auto scroll-mt-24">
+            <div class="flex items-center space-x-3 mb-8">
+                <span class="bg-purple-100 text-purple-700 font-bold px-3 py-1 rounded-full text-sm">Chapter 10</span>
+                <h2 class="text-2xl font-bold text-gray-900">회귀모형 진단 (이상한 데이터 찾아내기)</h2>
+            </div>
+
+            <!-- Step 1: Leverage -->
+            <div class="step-container border-purple-200">
+                <div class="step-title text-purple-900">
+                    <i data-lucide="crosshair" class="w-5 h-5 mr-2 text-purple-600"></i>
+                    1. Leverage (레버리지): X값이 유독 튀는 관측치 찾기
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> 다른 데이터들은 다들 10~20 근처인데, 혼자 100인 데이터가 있다면? 회귀선이 이 점 하나 때문에 휘어질 수 있습니다. 이를 'Leverage(지렛대)'라고 합니다.<br>
+                    <strong>코드 설명:</strong> <code>predict lev, leverage</code> 명령어로 각 데이터의 레버리지 값을 계산하고, 기준치(평균의 2배)를 넘는 녀석들만 골라냅니다.
+                </div>
+                <div class="code-block">
+<span class="code-comment">* 데이터 불러오기 및 회귀분석 실행 (qui는 결과 숨김 옵션)</span>
+use R_data10_1, clear
+qui reg mpg weight foreign
+
+<span class="code-comment">* 레버리지 값(lev) 계산</span>
+<span class="command-highlight">predict lev, leverage</span>
+
+<span class="code-comment">* 기준값 설정 (변수 개수 k=3, 데이터 수 n=74일 때 평균 레버리지의 2배)</span>
+scalar meanh=3/74
+gen lev1=(lev>2*meanh)
+
+<span class="code-comment">* 기준을 넘는 이상치가 몇 개인지 확인</span>
+tab lev1
+<span class="code-comment">
+       lev1 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         69       93.24       93.24
+          1 |          5        6.76      100.00  <-- 5개가 기준 초과!
+</span>
+
+<span class="code-comment">* 레버리지가 가장 큰 순서대로 상위 5개 데이터 확인</span>
+gsort -lev
+list mpg weight foreign lev in 1/5
+<span class="code-comment">
+     +------------------------------------+
+     | mpg   weight    foreign        lev |
+     |------------------------------------|
+  1. |  12    4,840   Domestic   .1003283 | <--- 1등 이상치
+  2. |  28    1,800   Domestic    .099715 |
+...
+</span>
+</div>
+            </div>
+
+            <!-- Step 2: Residuals -->
+            <div class="step-container border-purple-200">
+                <div class="step-title text-purple-900">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 mr-2 text-purple-600"></i>
+                    2. 잔차 분석: 모델이 예측을 유독 못하는 데이터 찾기
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> 모델은 A라고 예측했는데 실제값은 B라서 차이(잔차)가 엄청 큰 경우입니다.<br>
+                    <strong>코드 설명:</strong> <code>rstandard</code>(표준화 잔차)나 <code>rstudent</code>(스튜던트화 잔차)를 구해서, 그 크기가 2보다 큰(표준편차 2배 이상 벗어난) 데이터를 찾습니다.
+                </div>
+                <div class="code-block">
+<span class="code-comment">* 표준화 잔차(rstandard) 계산</span>
+<span class="command-highlight">predict sta_resid, rstandard</span>
+
+<span class="code-comment">* 절대값이 2보다 큰 경우(이상치)만 표시</span>
+gen sta1=(abs(sta_resid)>2)
+list sta_resid if sta1==1
+<span class="code-comment">
+     +----------+
+     | sta_re~d |
+     |----------|
+ 15. | 2.286094 |
+ 23. | 4.334917 | <--- 예측값과 실제값 차이가 매우 큼!
+</span>
+
+<span class="code-comment">* 스튜던트화 잔차(rstudent) 계산 - 좀 더 엄격한 기준</span>
+<span class="command-highlight">predict stu_resid, rstudent</span>
+gen stu1=(abs(stu_resid)>2)
+list stu_resid if stu1==1
+</div>
+            </div>
+
+            <!-- Step 3: Cook's Distance -->
+            <div class="step-container border-purple-200">
+                <div class="step-title text-purple-900">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-purple-600"></i>
+                    3. Cook's Distance: 종합적인 영향력 진단
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> X값도 튀고 Y값도 튀어서 혼자서 회귀분석 결과를 좌지우지하는 '슈퍼 이상치'를 찾습니다.<br>
+                    <strong>코드 설명:</strong> <code>cooksd</code>를 계산하여 기준값(4/n)을 넘는 데이터를 확인합니다.
+                </div>
+                <div class="code-block">
+<span class="command-highlight">predict cook, cooksd</span>
+
+<span class="code-comment">* 기준값(4/74)보다 큰지 확인</span>
+gen cook1=(cook>(4/74))
+tab cook1
+<span class="code-comment">
+      cook1 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         68       91.89       91.89
+          1 |          6        8.11      100.00  <-- 6개의 데이터가 영향력이 너무 큼
+</span>
+</div>
+            </div>
+
+            <!-- Step 4: VIF -->
+            <div class="step-container border-purple-200">
+                <div class="step-title text-purple-900">
+                    <i data-lucide="layers" class="w-5 h-5 mr-2 text-purple-600"></i>
+                    4. 다중공선성 (VIF): 변수끼리 너무 겹치지 않나?
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> 예를 들어 '연봉'과 '월급'을 둘 다 변수로 넣으면 컴퓨터는 혼란스러워합니다(다중공선성).<br>
+                    <strong>코드 설명:</strong> <code>vif</code> 명령어를 칩니다. 보통 10을 넘으면 위험하다고 보는데, 여기서는 60이 넘는 변수가 발견되었습니다.
+                </div>
+                <div class="code-block">
+use R_data10_3, clear
+qui reg HRS AGE NEIN ASSET
+
+<span class="code-comment">* 다중공선성 진단 명령어</span>
+<span class="command-highlight">vif</span>
+
+<span class="code-comment">
+    Variable |       VIF       1/VIF  
+-------------+----------------------
+        NEIN |     60.84    0.016436  <-- 위험! (매우 높음)
+       ASSET |     56.07    0.017836  <-- 위험! (매우 높음)
+         AGE |      1.74    0.573178
+-------------+----------------------
+    Mean VIF |     39.55
+</span>
+
+<span class="code-comment">* 해결책: NEIN 변수를 제거하고 다시 돌려본다.</span>
+qui reg HRS AGE ASSET
+vif
+<span class="code-comment">
+    Variable |       VIF       1/VIF  
+-------------+----------------------
+         AGE |      1.19    0.840402  <-- 아주 양호해짐 (10 이하)
+       ASSET |      1.19    0.840402
+</span>
+</div>
+            </div>
+        </section>
+
+        <hr class="border-gray-200">
+
+        <!-- Chapter 11 -->
+        <section id="chapter11" class="max-w-5xl mx-auto scroll-mt-24">
+            <div class="flex items-center space-x-3 mb-8">
+                <span class="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full text-sm">Chapter 11</span>
+                <h2 class="text-2xl font-bold text-gray-900">이분산성 (오차의 크기가 들쭉날쭉함)</h2>
+            </div>
+
+            <!-- Step 1: Detect -->
+            <div class="step-container border-blue-200">
+                <div class="step-title text-blue-900">
+                    <i data-lucide="search" class="w-5 h-5 mr-2 text-blue-600"></i>
+                    1. 이분산성 탐지 (검정)
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> 데이터 값이 커질수록 오차도 커지는지(이분산) 확인합니다. 회귀분석은 오차가 일정해야(동분산) 결과가 정확합니다.<br>
+                    <strong>코드 설명:</strong> Breusch-Pagan 검정(<code>hettest</code>)과 White 검정(<code>imtest, white</code>)을 사용합니다. p-value(Prob > chi2)가 0.05보다 작으면 "이분산성이 있다(문제 있음)"는 뜻입니다.
+                </div>
+                <div class="code-block">
+reg price mpg weight foreign
+
+<span class="code-comment">* 1) 잔차 그래프로 눈으로 확인</span>
+rvfplot, yline(0)
+
+<span class="code-comment">* 2) Breusch-Pagan 검정</span>
+<span class="command-highlight">estat hettest</span>
+<span class="code-comment">
+         Ho: Constant variance (귀무가설: 오차가 일정하다)
+         Prob > chi2  =   0.0118  <-- 0.05보다 작으므로 귀무가설 기각! (즉, 이분산성 있음)
+</span>
+
+<span class="code-comment">* 3) White 검정 (더 깐깐한 검정)</span>
+<span class="command-highlight">estat imtest, white</span>
+<span class="code-comment">
+         Prob > chi2  =    0.0066 <-- 역시 0.05보다 작음. 이분산성 확실함.
+</span>
+</div>
+            </div>
+
+            <!-- Step 2: Solution -->
+            <div class="step-container border-blue-200">
+                <div class="step-title text-blue-900">
+                    <i data-lucide="shield-check" class="w-5 h-5 mr-2 text-blue-600"></i>
+                    2. 해결책: Robust Standard Error
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> 이분산성이 있다는 걸 알았으니, 이를 감안해서 계산하도록 컴퓨터에게 시킵니다.<br>
+                    <strong>코드 설명:</strong> 명령어 뒤에 <code>, vce(robust)</code> 옵션을 붙입니다. 이렇게 하면 계수값(Coef)은 같지만 표준오차(Std. Err.)와 P값(P>|t|)이 올바르게 수정됩니다.
+                </div>
+                <div class="code-block">
+<span class="code-comment">* 일반적인 회귀분석 (문제가 있는 상태)</span>
+regress price lotsize sqrft bdrms
+
+<span class="code-comment">* Robust 옵션을 사용한 회귀분석 (수정된 상태)</span>
+<span class="command-highlight">regress price lotsize sqrft bdrms, vce(robust)</span>
+
+<span class="code-comment">
+             |               Robust
+       price |      Coef.   Std. Err.      t    P>|t|
+-------------+---------------------------------------
+     lotsize |   2.067707   1.251424     1.65   0.102  <-- P값 등이 보정됨
+       sqrft |   122.7782   17.72533     6.93   0.000
+</span>
+</div>
+            </div>
+        </section>
+
+        <hr class="border-gray-200">
+
+        <!-- Chapter 12 -->
+        <section id="chapter12" class="max-w-5xl mx-auto scroll-mt-24">
+            <div class="flex items-center space-x-3 mb-8">
+                <span class="bg-green-100 text-green-700 font-bold px-3 py-1 rounded-full text-sm">Chapter 12</span>
+                <h2 class="text-2xl font-bold text-gray-900">자기상관 (시간의 영향력)</h2>
+            </div>
+
+            <!-- Step 1: Detect -->
+            <div class="step-container border-green-200">
+                <div class="step-title text-green-900">
+                    <i data-lucide="history" class="w-5 h-5 mr-2 text-green-600"></i>
+                    1. 자기상관 탐지 (Durbin-Watson)
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> 시계열 데이터(연도별, 일별 데이터)에서 '작년의 결과'가 '올해'에 영향을 미치는지 확인합니다.<br>
+                    <strong>코드 설명:</strong> <code>tsset</code>으로 시간 변수를 지정한 후, <code>estat dwatson</code>을 실행합니다. 결과값이 **2 근처면 정상**, 0이나 4에 가까우면 문제입니다.
+                </div>
+                <div class="code-block">
+<span class="code-comment">* 먼저 데이터가 시간 데이터임을 선언 (yr 변수가 연도임)</span>
+<span class="command-highlight">tsset yr</span>
+
+<span class="code-comment">* 회귀분석 실행</span>
+reg consump wagegovt
+
+<span class="code-comment">* 잔차 그래프 그려보기 (패턴이 보이면 자기상관 의심)</span>
+predict ehat, resid
+twoway (tsline ehat), yline(0)
+
+<span class="code-comment">* Durbin-Watson 통계량 확인</span>
+<span class="command-highlight">estat dwatson</span>
+<span class="code-comment">
+ Durbin-Watson d-statistic(  2,    22) =  .3217998
+ 
+ [해석] 2에서 한참 먼 0.32가 나왔습니다.
+ 0에 가까우므로 '양의 자기상관(어제 높으면 오늘도 높음)'이 매우 심각합니다.
+</span>
+</div>
+            </div>
+
+            <!-- Step 2: Solution -->
+            <div class="step-container border-green-200">
+                <div class="step-title text-green-900">
+                    <i data-lucide="tool" class="w-5 h-5 mr-2 text-green-600"></i>
+                    2. 해결책: Prais-Winsten / Newey-West
+                </div>
+                <div class="explanation-box">
+                    <strong>목적:</strong> 자기상관 문제를 해결하기 위해 특수한 추정법을 사용합니다.<br>
+                    <strong>코드 설명:</strong>
+                    <ul class="list-disc ml-5 mt-1">
+                        <li><code>prais</code>: 과거의 오차를 반영하여 회귀계수를 다시 계산합니다. (DW값이 1.6대로 좋아짐)</li>
+                        <li><code>newey</code>: 계수는 그대로 두고, 표준오차만 튼튼하게(robust) 수정합니다. <code>lag(2)</code>는 2년 전까지 영향을 고려한다는 뜻입니다.</li>
+                    </ul>
+                </div>
+                <div class="code-block">
+<span class="code-comment">* 방법 1: Prais-Winsten 추정법 사용</span>
+<span class="command-highlight">prais inv gnp interest</span>
+
+<span class="code-comment">
+...
+Durbin-Watson statistic (original)    0.852153
+Durbin-Watson statistic (transformed) 1.619036  <-- 0.85에서 1.61로 2에 가까워짐(개선됨)
+</span>
+
+<span class="code-comment">* 방법 2: Newey-West 표준오차 사용</span>
+<span class="command-highlight">newey inv gnp interest, lag(2)</span>
+
+<span class="code-comment">
+Regression with Newey-West standard errors
+             |             Newey-West
+         inv |      Coef.   Std. Err.      t    P>|t|
+-------------+---------------------------------------
+         gnp |   .7699114   .0761921    10.10   0.000
+</span>
+</div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-100 border-t border-gray-200 py-8 text-center text-gray-500 text-sm">
+        <div class="container mx-auto px-6">
+            <p>&copy; 2024 Stata Regression Diagnostics Guide. Created with AI.</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        window.addEventListener('load', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>
