@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제3장: 분산분석 (ANOVA)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- MathJax Configuration for LaTeX rendering -->
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']]
+        }
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+/* 1. CORE SETUP & RESET */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f1f5f9; /* Slate 100 */
+    display: grid;
+    place-items: center;
+    margin: 0;
+    padding: 20px 0;
+    min-height: 100vh;
+    font-family: 'DM Sans', sans-serif;
+    word-break: keep-all; /* 한국어 줄바꿈 최적화 */
+}
+
+/* 2. SLIDE CONTAINER */
+.slide-container {
+    width: 1280px;
+    /* height: 720px;  공부용이므로 고정 높이 해제하여 내용이 많으면 늘어나도록 변경 고려 가능하나, 디자인 유지를 위해 min-height로 변경 */
+    min-height: 720px;
+    background-color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 60px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    border-radius: 16px;
+    margin-bottom: 40px; /* 블로그처럼 스크롤하며 볼 수 있게 간격 추가 */
+}
+
+/* 3. TYPOGRAPHY */
+h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
+    color: #1e293b; /* Slate 800 */
+    margin: 0;
+}
+
+p, li, th, td {
+    color: #475569; /* Slate 600 */
+    font-size: 20px;
+    line-height: 1.6;
+}
+
+.slide-title {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 40px;
+    border-left: 6px solid #0f172a; /* Slate 900 */
+    padding-left: 20px;
+    width: 100%;
+}
+
+/* 4. LAYOUT UTILITIES */
+.content-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+}
+
+.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    height: 100%;
+    align-items: center;
+}
+
+/* 5. SPECIFIC COMPONENT STYLES */
+
+/* Code Block Styling */
+.code-block {
+    background-color: #1e293b;
+    color: #e2e8f0;
+    font-family: 'Fira Code', monospace;
+    padding: 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    line-height: 1.4;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    border-left: 5px solid #38bdf8; /* Sky 400 */
+}
+
+.code-annotation {
+    font-size: 16px;
+    color: #64748b;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* Stata Output Imitation */
+.stata-output {
+    font-family: 'Fira Code', monospace;
+    font-size: 14px;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    padding: 15px;
+    border-radius: 6px;
+    color: #334155;
+    white-space: pre;
+    overflow-x: auto;
+}
+
+.highlight-stat {
+    background-color: #fef08a; /* Yellow 200 */
+    font-weight: bold;
+    color: #000;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+/* Tiled Layouts */
+.tiled-content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    width: 100%;
+}
+
+.tile {
+    background: #f1f5f9;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    transition: transform 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.tile .icon {
+    font-size: 48px;
+    color: #0f172a;
+    margin-bottom: 20px;
+}
+
+.tile h3 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+}
+
+/* Table Layout */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+th {
+    background-color: #0f172a;
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+}
+
+td {
+    padding: 15px;
+    border-bottom: 1px solid #e2e8f0;
+    font-family: 'Fira Code', monospace;
+    font-size: 16px;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Highlighted Numbers */
+.highlight-numbers-layout {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+}
+
+.highlight-box {
+    text-align: center;
+}
+
+.number-big {
+    font-size: 140px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1;
+    font-family: 'Playfair Display', serif;
+}
+
+.number-label {
+    font-size: 24px;
+    color: #64748b;
+    margin-top: 10px;
+}
+
+/* Background Variations */
+.bg-dark {
+    background-color: #0f172a;
+}
+.bg-dark h1, .bg-dark p, .bg-dark .subtitle {
+    color: white;
+}
+.bg-dark .slide-title {
+    border-left-color: #38bdf8;
+    color: white;
+}
+
+/* Title Slide Specifics */
+.title-layout {
+    text-align: center;
+    z-index: 2;
+}
+.title-layout h1 {
+    font-size: 80px;
+    margin-bottom: 20px;
+}
+.title-layout .subtitle {
+    font-size: 28px;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Data Transformation Visualization */
+.data-viz-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+}
+
+.mini-table {
+    width: 100%;
+    font-size: 14px;
+    margin: 0;
+    border: 1px solid #e2e8f0;
+    background: white;
+}
+.mini-table th { padding: 8px; background: #cbd5e1; color: #1e293b; font-size: 12px; }
+.mini-table td { padding: 8px; text-align: center; }
+
+.arrow-down {
+    color: #38bdf8;
+    font-size: 24px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+  40% {transform: translateY(-10px);}
+  60% {transform: translateY(-5px);}
+}
+
+/* Interaction Plot CSS */
+.interaction-plot {
+    width: 100%;
+    height: 250px;
+    background: white;
+    position: relative;
+    border-left: 2px solid #333;
+    border-bottom: 2px solid #333;
+    margin-bottom: 20px;
+}
+.plot-line {
+    position: absolute;
+    width: 80%;
+    height: 2px;
+    top: 50%;
+    left: 10%;
+    transform-origin: center;
+}
+.line-1 { background: #ef4444; transform: rotate(-15deg); top: 40%; }
+.line-2 { background: #3b82f6; transform: rotate(15deg); top: 60%; }
+.plot-label { position: absolute; font-size: 12px; color: #666; }
+
+    </style>
+</head>
+<body>
+
+<!-- Slide 1: Title Slide -->
+<div class="slide-container bg-dark full-bg-image" id="slide1" style="background: linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.9)), url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1280&auto=format&fit=crop'); background-size: cover; background-position: center;">
+    <div class="content-area">
+        <div class="title-layout">
+            <h1>분산분석<br>(ANOVA)</h1>
+            <p class="subtitle">Stata 기초통계와 회귀분석<br>제3장 학습자료</p>
+            <div style="margin-top: 40px; width: 100px; height: 4px; background: #38bdf8; margin-left: auto; margin-right: auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 2: Concept - What is ANOVA? -->
+<div class="slide-container" id="slide2">
+    <h2 class="slide-title">1. 분산분석(ANOVA)이란?</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <p><strong>분산분석 (ANOVA)</strong>은 세 개 이상의 집단 간 평균 차이를 검정하는 통계적 방법입니다. "평균"을 비교하는데 왜 "분산"분석일까요?</p>
+                <ul style="margin-top: 20px; list-style-type: none; padding: 0;">
+                    <li style="margin-bottom: 20px;"><i class="fa-solid fa-scale-balanced" style="color: #0f172a; margin-right: 10px;"></i> <strong>핵심 원리:</strong> 전체 변동(Total Variance)을 "집단 간 차이(Between)"와 "집단 내 오차(Within)"로 나누어 비율(F-값)을 봅니다.</li>
+                    <li style="margin-bottom: 20px;"><i class="fa-solid fa-users-viewfinder" style="color: #0f172a; margin-right: 10px;"></i> <strong>장점:</strong> 여러 번의 T-test를 수행할 때 발생하는 1종 오류의 증가를 방지합니다.</li>
+                    <li><i class="fa-solid fa-flask" style="color: #0f172a; margin-right: 10px;"></i> <strong>역사:</strong> R.A. Fisher가 고안한 F-분포를 사용합니다.</li>
+                </ul>
+            </div>
+            <div style="background: #f8fafc; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <h3 style="font-family: 'DM Sans', sans-serif; font-size: 24px; margin-bottom: 20px;">가설 설정 (Hypothesis)</h3>
+                <p style="font-size: 18px;"><strong>H<sub>0</sub> (귀무가설):</strong> $\mu_1 = \mu_2 = \mu_3 = \dots = \mu_k$ <br>(모든 집단의 평균은 같다)</p>
+                <hr style="border: 0; border-top: 1px solid #cbd5e1; margin: 20px 0;">
+                <p style="font-size: 18px;"><strong>H<sub>1</sub> (대립가설):</strong> 적어도 한 집단의 평균은 다르다.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 3: Assumptions -->
+<div class="slide-container" id="slide3">
+    <h2 class="slide-title">2. 기본 가정 (Assumptions)</h2>
+    <div class="content-area">
+        <p style="margin-bottom: 40px; text-align: center;">분산분석의 결과가 유효하기 위해서는 다음의 세 가지 조건이 충족되어야 합니다. 데이터 분석 전 확인이 필요합니다.</p>
+        <div class="tiled-content">
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-chart-area"></i></div>
+                <h3>정규성 (Normality)</h3>
+                <p>각 집단의 데이터는 정규분포를 따라야 합니다.<br>(Shapiro-Wilk test 등으로 확인)</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-equals"></i></div>
+                <h3>등분산성 (Homogeneity)</h3>
+                <p>각 집단의 분산은 서로 같아야 합니다.<br>(Bartlett's test로 확인)</p>
+            </div>
+            <div class="tile">
+                <div class="icon"><i class="fa-solid fa-people-arrows"></i></div>
+                <h3>독립성 (Independence)</h3>
+                <p>관측치는 서로 독립적이어야 합니다.<br>(실험 설계 단계에서 확보)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 4: One-way ANOVA Data Prep (Viz Restored) -->
+<div class="slide-container" id="slide4">
+    <h2 class="slide-title">3. 데이터 준비: Wide to Long 변환</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>Step 1: stack 명령어 사용</h3>
+                <p>ANOVA 분석을 위해서는 데이터가 옆으로 긴 "Wide" 형태가 아닌, 아래로 긴 "Long" 형태여야 합니다.</p>
+                
+                <div class="code-block" style="margin-top: 20px; font-size: 14px;">
+* 1. 데이터 불러오기
+use "/Users/NewSung/Dropbox/TEACHING/R_data3_1", clear
+
+* 2. Wide -> Long 변환
+stack stemcell_1-female_4, group(4)
+rename (stemcell_1 female_1 _stack) (stemcell female party)
+drop if stemcell==.
+                </div>
+                <div class="code-annotation">
+                    <ul style="list-style: none; padding: 0;">
+                        <li><i class="fa-solid fa-arrow-right"></i> <strong>stack:</strong> 변수들을 세로로 쌓음</li>
+                        <li><i class="fa-solid fa-arrow-right"></i> <strong>group(4):</strong> 4개의 그룹 생성</li>
+                        <li><i class="fa-solid fa-arrow-right"></i> <strong>rename:</strong> 변수명 정리 (종속, 요인)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Data Visualization Restored Here -->
+            <div class="data-viz-container">
+                <div style="width: 100%;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 16px; color: #475569;">변경 전 (Wide Format)</h4>
+                    <table class="mini-table">
+                        <tr>
+                            <th>stemcell_1</th><th>female_1</th><th>stemcell_2</th><th>female_2</th><th>...</th>
+                        </tr>
+                        <tr>
+                            <td>8</td><td>1</td><td>5</td><td>0</td><td>...</td>
+                        </tr>
+                        <tr>
+                            <td>...</td><td>...</td><td>...</td><td>...</td><td>...</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <i class="fa-solid fa-arrow-down arrow-down"></i>
+
+                <div style="width: 100%;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 16px; color: #475569;">변경 후 (Long Format)</h4>
+                    <table class="mini-table">
+                        <tr>
+                            <th style="background:#38bdf8; color:white;">stemcell</th>
+                            <th style="background:#38bdf8; color:white;">female</th>
+                            <th style="background:#0f172a; color:white;">party</th>
+                        </tr>
+                        <tr>
+                            <td>8</td><td>1</td><td>1</td>
+                        </tr>
+                        <tr>
+                            <td>5</td><td>0</td><td>2</td>
+                        </tr>
+                        <tr>
+                            <td>...</td><td>...</td><td>...</td>
+                        </tr>
+                    </table>
+                    <p style="font-size: 14px; text-align: center; margin-top: 5px; color: #64748b;">(Stata 분석 가능한 형태)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 5: Interpreting Output -->
+<div class="slide-container" id="slide5">
+    <h2 class="slide-title">4. Stata 결과 해석 (oneway)</h2>
+    <div class="content-area">
+        <div class="two-column" style="grid-template-columns: 1fr 1fr;">
+            <div>
+                 <h3>분석 실행</h3>
+                 <p>집단(party)에 따른 찬성정도(stemcell) 차이를 분석합니다.</p>
+                <div class="code-block" style="font-size: 14px; margin-bottom: 20px;">
+* 일원분산분석 실행
+oneway stemcell party
+                </div>
+                <h3>주요 지표 해석</h3>
+                <ul class="fa-ul" style="margin-left: 20px; font-size: 18px;">
+                    <li style="margin-bottom: 10px;"><span class="fa-li"><i class="fa-solid fa-arrow-right"></i></span><strong>Source (변동의 원인):</strong><br>Between groups (집단 간) / Within groups (집단 내)</li>
+                    <li style="margin-bottom: 10px;"><span class="fa-li"><i class="fa-solid fa-magnifying-glass-chart"></i></span><strong>F (12.46):</strong><br>집단 간 분산이 집단 내 분산보다 12배 큼.</li>
+                    <li style="margin-bottom: 10px;"><span class="fa-li"><i class="fa-solid fa-check-double"></i></span><strong>Prob > F (0.0000):</strong><br>p-value < 0.05 이므로 <strong>"차이가 있다"</strong>고 결론.</li>
+                </ul>
+            </div>
+            <div class="stata-output" style="font-size: 12px;">
+. oneway stemcell party
+
+                    Analysis of Variance
+Source          SS         df      MS            F     Prob > F
+----------------------------------------------------------------
+Between groups  92.7028    3   30.9009     <span class="highlight-stat">12.46</span>     <span class="highlight-stat">0.0000</span>
+Within groups   104.1666   42   2.4801
+----------------------------------------------------------------
+Total           196.8695   45   4.3748
+
+Bartlett's test for equal variances:  
+chi2(3) =  20.1167  Prob>chi2 = 0.000
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 6: Checking Assumptions (Keep) -->
+<div class="slide-container" id="slide6">
+    <h2 class="slide-title">참고: 등분산성 검정 (Bartlett)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>Bartlett's Test 결과</h3>
+                <p><code>oneway</code> 명령어 실행 시 하단에 자동 출력됩니다.</p>
+                <div class="stata-output" style="margin-top: 20px;">
+Bartlett's test for equal variances:  
+chi2(3) =  20.1167  Prob>chi2 = 0.000
+                </div>
+            </div>
+            <div style="background: #fffbeb; padding: 40px; border-radius: 12px; border-left: 8px solid #f59e0b;">
+                <h3 style="color: #b45309; margin-bottom: 15px;">해석 주의</h3>
+                <p style="font-size: 22px; font-weight: 500; color: #78350f;">Prob > chi2 = 0.000 < 0.05</p>
+                <p style="font-size: 18px; margin-top: 15px;">귀무가설(분산이 같다)이 기각되었습니다. 즉, <strong>이분산(분산이 다름)</strong>이 존재합니다. <br>※ 엄격한 분석 시 Welch ANOVA 등을 고려해야 합니다.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 7: Post-Hoc Analysis -->
+<div class="slide-container" id="slide7">
+    <h2 class="slide-title">5. 사후 검정 (Bonferroni)</h2>
+    <div class="content-area">
+        <p>어느 집단 간에 차이가 있는지 구체적으로 확인하기 위해 사후 검정을 실시합니다. ANOVA가 "차이 있음"을 알려준다면, 사후 검정은 "누구와 누구의 차이인지"를 알려줍니다.</p>
+        
+        <div class="code-block" style="margin-bottom: 20px; font-size: 14px;">
+* Bonferroni 사후 검정 옵션 추가
+oneway stemcell party, bonferroni tabulate
+        </div>
+
+        <table style="font-size: 16px; margin-top: 10px;">
+            <thead>
+                <tr>
+                    <th>Row Mean vs Col Mean</th>
+                    <th>Party 1</th>
+                    <th>Party 2</th>
+                    <th>Party 3</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight: bold;">Party 2</td>
+                    <td><span style="color: #ef4444; font-weight: bold;">-3.33 (p=0.000)</span></td>
+                    <td>-</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Party 3</td>
+                    <td>-1.00 (p=0.684)</td>
+                    <td><span style="color: #10b981; font-weight: bold;">2.33 (p=0.003)</span></td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Party 4</td>
+                    <td><span style="color: #ef4444; font-weight: bold;">-3.25 (p=0.000)</span></td>
+                    <td>0.08 (p=1.000)</td>
+                    <td><span style="color: #ef4444; font-weight: bold;">-2.25 (p=0.015)</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="code-annotation" style="text-align: right; margin-top: 10px;">* 유의한 차이가 있는 경우(p < 0.05) 색상으로 표시됨.</p>
+    </div>
+</div>
+
+<!-- Slide 8: Two-way ANOVA Concept -->
+<div class="slide-container" id="slide8">
+    <h2 class="slide-title">3.2 다원분산분석 (이원분산분석)</h2>
+    <div class="content-area">
+        <div class="two-column tiled">
+            <div>
+                <h3>분석 목적</h3>
+                <p>종속변수에 영향을 미치는 요인이 <strong>두 개 이상</strong>일 때 사용합니다.</p>
+                <div style="margin-top: 20px; font-weight: bold; font-size: 18px;">
+                    종속변수: 찬성정도 (stemcell)<br>
+                    요인 1: 정당 (party)<br>
+                    요인 2: 성별 (female)
+                </div>
+            </div>
+            <div>
+                <h3>상호작용 (Interaction)</h3>
+                <p>정당의 효과가 성별에 따라 달라지는지 확인합니다.</p>
+                <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <p style="font-size: 16px; color: #0369a1;">예: 2x2, 4x3 설계 (Factorial Design) <br> "여성은 정당 A를 선호하지만 남성은 정당 B를 선호하는가?"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 9: Two-way ANOVA Output -->
+<div class="slide-container" id="slide9">
+    <h2 class="slide-title">다원분산분석 실행 및 해석</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>Stata 명령어</h3>
+                <div class="code-block" style="font-size: 14px; margin-bottom: 20px;">
+* 1. 다원분산분석 실행
+anova stemcell party female
+
+* 2. (옵션) 부분 제곱합 확인
+anova stemcell party female, partial
+
+* 3. 상호작용 및 집단별 평균 확인
+anova stemcell party female party#female
+table female party, contents(mean stemcell) f(%9.2f)
+                </div>
+            </div>
+            <div class="stata-output" style="font-size: 13px;">
+. anova stemcell party female
+
+Source    Partial SS    df    MS        F      Prob>F
+------------------------------------------------------
+Model     93.0622       4     23.2655   9.19   0.0000
+                                       
+party     92.6169       3     30.8723   <span class="highlight-stat">12.19  0.0000</span>
+female    0.3593        1     0.3593    <span class="highlight-stat">0.14   0.7083</span>
+                                       
+Residual  103.8073      41    2.5318
+------------------------------------------------------
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 20px; font-size: 18px;">
+            <strong>해석:</strong> Party는 유의하지만(p<0.05), Female은 유의하지 않음(p=0.708). <br> 즉, 성별에 따른 차이는 없으나 정당에 따른 차이는 존재함.
+        </p>
+    </div>
+</div>
+
+<!-- Slide 10: ANCOVA (Fixed Layout with Code) -->
+<div class="slide-container" id="slide10">
+    <h2 class="slide-title">3.3 공분산분석 (ANCOVA)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>연속형 변수(공변량) 추가</h3>
+                <p>범주형 변수(sex)와 연속형 변수(age)를 함께 분석합니다. <strong>실수하기 쉬운 부분</strong>을 주의하세요!</p>
+                
+                <div class="code-block" style="margin: 20px 0; font-size: 13px;">
+* [잘못된 예] age를 범주형으로 인식 (df=72)
+anova prestg80 sex age
+
+* [올바른 예] c.를 붙여 연속형으로 인식 (df=1)
+anova prestg80 sex c.age
+
+* 상호작용항 추가 (sex X age)
+anova prestg80 sex c.age sex#c.age
+                </div>
+            </div>
+            <div style="background: #f1f5f9; padding: 30px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <h3 style="margin-bottom: 20px;">결과 해석 요약</h3>
+                <div style="font-size: 18px; line-height: 1.8;">
+                    <p><i class="fa-solid fa-check" style="color: green;"></i> <strong>Age (나이):</strong> <br>F=6.53, p=0.0107 (유의함)</p>
+                    <p><i class="fa-solid fa-xmark" style="color: red;"></i> <strong>Sex (성별):</strong> <br>F=0.83, p=0.3638 (유의하지 않음)</p>
+                    <hr>
+                    <p><strong>상호작용 (sex#age):</strong> <br>p=0.1801 (유의하지 않음) <br>→ 나이의 효과는 성별에 따라 다르지 않음.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 11: End -->
+<div class="slide-container" id="slide11">
+    <div class="qa-layout" style="text-align: center;">
+        <h2 style="font-size: 60px; margin-bottom: 30px;">학습 완료</h2>
+        <p style="font-size: 24px; max-width: 800px; margin: 0 auto 50px auto;">
+            분산분석(ANOVA)의 개념부터 Stata 실습까지<br>
+            데이터 구조 변환(Stack)과 결과 해석에 유의하세요.
+        </p>
+        <div class="contact-info" style="margin-top: 40px; color: #64748b;">
+            제3장: 분산분석 | Stata 기초통계
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floorida Project Presentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme Color Palette */
+            --bg-color: #f0f2f5;       /* 윈도우 배경 (연한 회색) */
+            --slide-bg: #ffffff;       /* 슬라이드 배경 (흰색) */
+            --text-main: #2c3e50;      /* 본문 텍스트 (진한 네이비/회색) */
+            --text-sub: #596275;       /* 보조 텍스트 */
+            
+            /* Accent Colors */
+            --accent-blue: #2980b9;    /* 주요 강조색 (파랑) */
+            --accent-green: #27ae60;   /* 성공/강조 (초록) */
+            --accent-red: #c0392b;     /* 코드 키워드 등 (빨강) */
+            --accent-yellow: #f39c12;  /* 주의/강조 (오렌지 옐로우) */
+            --accent-purple: #8e44ad;  /* 기술 스택 등 (보라) */
+            
+            --border-color: #dcdde1;   /* 테두리 색상 */
+            --shadow: 0 4px 20px rgba(0,0,0,0.08); /* 부드러운 그림자 */
+            --code-bg: #f7f9fa;        /* 코드 블럭 배경 */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Slide Container */
+        .slide-container {
+            width: 1280px;
+            height: 720px;
+            background-color: var(--slide-bg);
+            box-shadow: var(--shadow);
+            position: absolute; /* Changed to absolute for easier scaling centering */
+            border-radius: 12px;
+            overflow: hidden;
+            display: none; /* Flex when active */
+            flex-direction: column;
+            padding: 50px 70px;
+            border: 1px solid var(--border-color); /* Fixed border color */
+            transform-origin: center center; /* Scale from center */
+        }
+
+        .slide-container.active {
+            display: flex;
+            animation: fadeIn 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Layouts */
+        .slide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 3px solid var(--accent-blue);
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+        }
+
+        .slide-title {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: -1px;
+        }
+
+        .slide-subtitle {
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            height: 100%;
+        }
+
+        .full-content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 20px;
+        }
+
+        /* Typography & Components */
+        h3 { 
+            color: var(--accent-blue); 
+            margin-bottom: 20px; 
+            font-size: 1.6rem; 
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        p { 
+            margin-bottom: 15px; 
+            line-height: 1.7; 
+            font-size: 1.15rem; 
+            color: var(--text-sub);
+        }
+        
+        ul { list-style: none; }
+        li { 
+            margin-bottom: 14px; 
+            padding-left: 24px; 
+            position: relative; 
+            font-size: 1.1rem;
+            color: #444;
+        }
+        li::before { 
+            content: "✔"; 
+            color: var(--accent-green); 
+            position: absolute; 
+            left: 0; 
+            font-weight: bold;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 6px;
+            border: 1px solid transparent;
+        }
+        /* Light Theme Tags */
+        .tag.green { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+        .tag.blue { background: #e3f2fd; color: #1565c0; border-color: #bbdefb; }
+        .tag.purple { background: #f3e5f5; color: #7b1fa2; border-color: #e1bee7; }
+
+        /* Code Blocks (Light Theme) */
+        pre {
+            background: var(--code-bg);
+            padding: 25px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #333;
+            max-height: 480px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+        }
+
+        /* Syntax Highlighting for Light Theme */
+        .code-keyword { color: #a626a4; font-weight: bold; } /* Purple for keywords */
+        .code-type { color: #c18401; }    /* Yellow/Gold for types */
+        .code-string { color: #50a14f; }  /* Green for strings */
+        .code-comment { color: #a0a1a7; font-style: italic; } /* Light Gray for comments */
+        .code-func { color: #4078f2; }    /* Blue for functions */
+        .code-annot { color: #986801; }   /* Annotation color */
+
+        /* Visual Elements */
+        .architecture-box {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px dashed var(--border-color);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .db-table {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .db-header {
+            background: #f1f2f6;
+            padding: 12px 15px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .db-row {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #eee;
+            color: #555;
+        }
+        .db-row:last-child { border-bottom: none; }
+        .pk { color: #d63031; font-weight: bold; font-size: 0.8rem; }
+        .type { color: #0984e3; font-size: 0.8rem; }
+
+        /* Icons (SVG) */
+        .icon-svg {
+            width: 1.5em;
+            height: 1.5em;
+            vertical-align: -0.3em;
+            fill: currentColor;
+        }
+        .icon-large {
+            width: 6rem;
+            height: 6rem;
+            fill: var(--accent-blue);
+            margin-bottom: 30px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+
+        /* Navigation */
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            display: flex;
+            gap: 12px;
+            z-index: 100; /* Ensure controls are clickable */
+        }
+        .btn {
+            background: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover { 
+            background: var(--accent-blue); 
+            color: white; 
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(41, 128, 185, 0.3);
+        }
+        .btn svg {
+            width: 1em;
+            height: 1em;
+            fill: currentColor;
+        }
+        .page-indicator {
+            position: absolute;
+            bottom: 42px;
+            left: 70px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #999;
+            font-size: 1.1rem;
+        }
+
+        /* Title Slide Special */
+        .title-slide {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            /* 부드러운 그라데이션 배경 */
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border: none;
+        }
+        .main-title { 
+            font-size: 6rem; 
+            font-weight: 800; 
+            color: #2c3e50;
+            margin-bottom: 10px; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .sub-title { 
+            font-size: 2.2rem; 
+            color: #576574; 
+            margin-bottom: 60px; 
+            font-weight: 400; 
+        }
+        .presenter { 
+            font-size: 1.3rem; 
+            color: #596275; 
+            background: rgba(255,255,255,0.6);
+            padding: 20px 40px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+        }
+        
+    </style>
+</head>
+<body>
+
+    <!-- SVG Definitions (Hidden) -->
+    <svg style="display: none;">
+        <symbol id="icon-bullseye" viewBox="0 0 512 512">
+            <path d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm0 448c-110.5 0-200-89.5-200-200S145.5 56 256 56s200 89.5 200 200-89.5 200-200 200zm0-338c-76.2 0-138 61.8-138 138s61.8 138 138 138 138-61.8 138-138-61.8-138-138-138zm0 224c-47.5 0-86-38.5-86-86s38.5-86 86-86 86 38.5 86 86-38.5 86-86 86z"/>
+        </symbol>
+        <symbol id="icon-users" viewBox="0 0 640 512">
+            <path d="M96 224c35.3 0 64-28.7 64-64s-28.7-64-64-64-64 28.7-64 64 28.7 64 64 64zm448 0c35.3 0 64-28.7 64-64s-28.7-64-64-64-64 28.7-64 64 28.7 64 64 64zm32 32h-64c-17.6 0-33.5 7.1-45.1 18.6 40.3 35.6 68.9 86.1 76.6 143.2 14.6-16.7 21.7-40.4 12.8-63.4-9.3-24.1-32.8-40.4-58.7-40.4 7.4-18 11.5-37.9 11.5-58.6-26.1-5.1-50.5-19.4-69.2-39.7 20.8 17.5 47.6 28.3 76.7 28.3 17.7 0 34.6-3.8 50.1-10.7zM224 256c70.7 0 128-57.3 128-128S294.7 0 224 0 96 57.3 96 128s57.3 128 128 128zm89.6 32h-16.7c-22.2 10.2-46.9 16-72.9 16s-50.6-5.8-72.9-16h-16.7C60.2 288 0 348.2 0 422.4V464c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48v-41.6c0-74.2-60.2-134.4-134.4-134.4z"/>
+        </symbol>
+        <symbol id="icon-building" viewBox="0 0 384 512">
+            <path d="M48 0C21.5 0 0 21.5 0 48v416c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V48c0-26.5-21.5-48-48-48H48zM96 48h192c8.8 0 16 7.2 16 16v384c0 8.8-7.2 16-16 16H96c-8.8 0-16-7.2-16-16V64c0-8.8 7.2-16 16-16zm48 80c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32zm0 96c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32zm0 96c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32zm96-272c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32zm0 96c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32zm0 96c0 8.8-7.2 16-16 16h-32c-8.8 0-16-7.2-16-16v-32c0-8.8 7.2-16 16-16h32c8.8 0 16 7.2 16 16v32z"/>
+        </symbol>
+        <symbol id="icon-chevron-right" viewBox="0 0 320 512">
+            <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"/>
+        </symbol>
+        <symbol id="icon-chevron-left" viewBox="0 0 320 512">
+            <path d="M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z"/>
+        </symbol>
+        <symbol id="icon-arrow-down" viewBox="0 0 448 512">
+            <path d="M413.1 222.5l22.2 22.2c9.4 9.4 9.4 24.6 0 33.9L241 473c-9.4 9.4-24.6 9.4-33.9 0L12.7 278.6c-9.4-9.4-9.4-24.6 0-33.9l22.2-22.2c9.5-9.5 25-9.3 34.3.4L184 343.4V56c0-13.3 10.7-24 24-24h32c13.3 0 24 10.7 24 24v287.4l114.8-120.5c9.3-9.8 24.8-10 34.3-.4z"/>
+        </symbol>
+    </svg>
+
+    <!-- Slide 1: Title -->
+    <div class="slide-container active title-slide" id="slide-1">
+        <h1 class="main-title">Floorida</h1>
+        <h2 class="sub-title">게이미피케이션 기반 목표 달성 플랫폼</h2>
+        <div class="presenter">
+            <p style="margin:0; font-weight:700;">Back-end Development Team</p>
+            <p style="font-family: 'JetBrains Mono', monospace; margin-top:10px; font-size: 1rem; color: var(--accent-blue);">
+                Spring Boot • JPA • Supabase • OpenAI
+            </p>
+        </div>
+    </div>
+
+    <!-- Slide 2: Project Overview -->
+    <div class="slide-container" id="slide-2">
+        <div class="slide-header">
+            <div class="slide-title">Project Overview</div>
+            <div class="slide-subtitle">01. INTRODUCTION</div>
+        </div>
+        <div class="content-grid">
+            <div>
+                <h3><svg class="icon-svg"><use href="#icon-bullseye"></use></svg> 기획 의도</h3>
+                <p>계획은 세우지만 실천이 어려운 사용자들을 위해, <br><strong>"건물을 한 층씩 쌓아 올리는(Floor)"</strong> 시각적 성취감을 제공합니다.</p>
+                <br>
+                <h3><svg class="icon-svg"><use href="#icon-users"></use></svg> Target Audience</h3>
+                <ul>
+                    <li>딱딱한 To-do 리스트에 지친 사용자</li>
+                    <li>막연한 목표("살 빼기", "공부하기")만 있고 실행 계획이 없는 사람</li>
+                    <li>RPG 게임처럼 성장하는 재미를 느끼고 싶은 사람</li>
+                </ul>
+            </div>
+            <div>
+                <div class="architecture-box">
+                    <svg class="icon-large"><use href="#icon-building"></use></svg>
+                    <h2 style="color:var(--text-main); margin-bottom: 10px;">Core Concept</h2>
+                    <div style="font-family: 'JetBrains Mono', monospace; color: var(--text-sub); font-size: 1.2rem; background: #eef2f3; padding: 10px 20px; border-radius: 8px;">
+                        Schedule(건물) <svg class="icon-svg" style="width:0.8em; margin:0 10px;"><use href="#icon-chevron-right"></use></svg> 
+                        Floor(층) <svg class="icon-svg" style="width:0.8em; margin:0 10px;"><use href="#icon-chevron-right"></use></svg> 
+                        Completion(완공)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Tech Stack -->
+    <div class="slide-container" id="slide-3">
+        <div class="slide-header">
+            <div class="slide-title">Tech Stack</div>
+            <div class="slide-subtitle">02. ARCHITECTURE</div>
+        </div>
+        <div class="content-grid">
+            <div>
+                <h3>Core Framework</h3>
+                <ul>
+                    <li><span class="tag green">Spring Boot 3.5.7</span> Java 17 기반</li>
+                    <li><span class="tag green">Spring Security</span> JWT 인증/인가</li>
+                    <li><span class="tag green">JPA (Hibernate)</span> ORM 표준</li>
+                </ul>
+                <br>
+                <h3>Infrastructure & DB</h3>
+                <ul>
+                    <li><span class="tag blue">PostgreSQL</span> Supabase Cloud DB</li>
+                    <li><span class="tag blue">AWS S3</span> 캐릭터/배지 이미지 저장소</li>
+                    <li><span class="tag blue">H2 Database</span> 테스트 환경 (In-memory)</li>
+                </ul>
+            </div>
+            <div>
+                <h3>External APIs</h3>
+                <ul>
+                    <li><span class="tag purple">OpenAI GPT-4o-mini</span> 일정 자동 생성</li>
+                    <li><span class="tag purple">Swagger (SpringDoc)</span> API 문서화</li>
+                </ul>
+                <br>
+                <h3>Build & Deploy</h3>
+                <pre>
+<span class="code-comment">// build.gradle dependencies</span>
+implementation <span class="code-string">'org.springframework.boot:spring-boot-starter-web'</span>
+implementation <span class="code-string">'org.springframework.boot:spring-boot-starter-data-jpa'</span>
+implementation <span class="code-string">'org.postgresql:postgresql'</span>
+implementation <span class="code-string">'io.jsonwebtoken:jjwt-api:0.11.5'</span>
+implementation <span class="code-string">'software.amazon.awssdk:s3:2.20.26'</span>
+</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Database Modeling -->
+    <div class="slide-container" id="slide-4">
+        <div class="slide-header">
+            <div class="slide-title">ERD Modeling</div>
+            <div class="slide-subtitle">03. DATABASE</div>
+        </div>
+        <div class="content-grid">
+            <div>
+                <div class="db-table">
+                    <div class="db-header">Users (회원)</div>
+                    <div class="db-row"><span class="pk">PK</span> <span>user_id</span></div>
+                    <div class="db-row"><span class="pk">UK</span> <span>email</span></div>
+                </div>
+                <div class="db-table">
+                    <div class="db-header">UserProfiles (1:1)</div>
+                    <div class="db-row"><span class="pk">PK,FK</span> <span>user_id</span></div>
+                    <div class="db-row"><span class="type">INT</span> <span>points (재화)</span></div>
+                    <div class="db-row"><span class="type">INT</span> <span>personal_level (층수)</span></div>
+                </div>
+                <div class="db-table">
+                    <div class="db-header">Characters (1:1)</div>
+                    <div class="db-row"><span class="pk">PK</span> <span>character_id</span></div>
+                    <div class="db-row"><span class="type">JSON</span> <span style="color:var(--accent-red); font-weight:bold;">equipped_items</span></div>
+                    <div class="db-row"><span class="type">STR</span> <span>image_url (S3)</span></div>
+                </div>
+            </div>
+            <div>
+                <div class="db-table" style="border-top: 3px solid var(--accent-green);">
+                    <div class="db-header" style="color: var(--accent-green);">Schedules (일정/프로젝트)</div>
+                    <div class="db-row"><span class="pk">PK</span> <span>schedule_id</span></div>
+                    <div class="db-row"><span class="type">STR</span> <span>title (예: 토익 900)</span></div>
+                    <div class="db-row"><span class="type">STR</span> <span>original_goal (AI 입력값)</span></div>
+                </div>
+                <div style="text-align:center; color:#999; margin: 5px 0; font-size: 0.9rem;">▼ 1:N (Cascade Delete)</div>
+                <div class="db-table" style="border-top: 3px solid var(--accent-green);">
+                    <div class="db-header" style="color: var(--accent-green);">Floors (세부 계획)</div>
+                    <div class="db-row"><span class="pk">PK</span> <span>floor_id</span></div>
+                    <div class="db-row"><span class="type">STR</span> <span>title (예: 문법 복습)</span></div>
+                    <div class="db-row"><span class="type">DATE</span> <span>scheduled_date</span></div>
+                </div>
+                <div style="text-align:center; color:#999; margin: 5px 0; font-size: 0.9rem;">▼ 1:N</div>
+                <div class="db-table" style="border-top: 3px solid var(--accent-yellow);">
+                    <div class="db-header" style="color: var(--accent-yellow);">FloorStatuses (완료 상태)</div>
+                    <div class="db-row"><span class="pk">UK</span> <span>floor_id, user_id</span></div>
+                    <div class="db-row"><span class="type">BOOL</span> <span>is_completed</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Core Feature - AI Planning -->
+    <div class="slide-container" id="slide-5">
+        <div class="slide-header">
+            <div class="slide-title">Feature: AI Schedule Generation</div>
+            <div class="slide-subtitle">04. AI INTEGRATION</div>
+        </div>
+        <div class="content-grid">
+            <div class="full-content">
+                <h3>Natural Language Processing</h3>
+                <p>사용자가 자연어로 목표를 입력하면, <strong>GPT-4o-mini</strong>가 기간에 맞춰 일별 계획(Floor)을 JSON으로 구조화하여 반환합니다.</p>
+                <div style="background: white; border:1px solid var(--border-color); padding:20px; border-radius:12px; margin-top:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                    <p style="font-size:0.9rem; color:#888; margin-bottom:5px;">Input:</p>
+                    <p style="color:var(--text-main); font-weight:bold; font-size: 1.2rem;">"일주일 동안 자료구조 마스터하기"</p>
+                    <div style="text-align:center; margin:10px 0; color:var(--accent-blue);"><svg class="icon-svg"><use href="#icon-arrow-down"></use></svg></div>
+                    <p style="font-size:0.9rem; color:#888; margin-bottom:5px;">Output (Schedule + Floors):</p>
+                    <ul style="font-size:0.95rem; color:#555;">
+                        <li style="margin-bottom:5px;">Schedule: "자료구조 집중 학습"</li>
+                        <li style="margin-bottom:5px;">Floor 1: (11/30) 배열과 리스트 개념 이해</li>
+                        <li style="margin-bottom:5px;">Floor 2: (12/01) 스택과 큐 구현 연습</li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <pre><span class="code-keyword">public</span> <span class="code-type">List&lt;AiFloor&gt;</span> <span class="code-func">plan</span>(String goal, LocalDate start, LocalDate end) {
+    <span class="code-comment">// Prompt Engineering: 강제 JSON 포맷 요청</span>
+    String prompt = <span class="code-string">"Split the user's goal into daily steps. "</span> +
+                    <span class="code-string">"Return ONLY strict JSON: "</span> +
+                    <span class="code-string">"{\"floors\":[{\"title\":string,\"date\":\"YYYY-MM-DD\"}...]}"</span>;
+
+    <span class="code-comment">// OpenAI API Call</span>
+    ObjectNode body = om.createObjectNode();
+    body.put(<span class="code-string">"model"</span>, <span class="code-string">"gpt-4o-mini"</span>);
+    <span class="code-comment">// ... (Request Building)</span>
+
+    <span class="code-comment">// Fallback Logic: API 실패 시 기본 계획 생성</span>
+    <span class="code-keyword">if</span> (content == <span class="code-keyword">null</span> || content.isBlank()) {
+        <span class="code-keyword">return</span> fallbackPlan(goal, start, end);
+    }
+    <span class="code-comment">// JSON Parsing & Return</span>
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Core Feature - Floor System -->
+    <div class="slide-container" id="slide-6">
+        <div class="slide-header">
+            <div class="slide-title">Feature: Floor & Status</div>
+            <div class="slide-subtitle">05. CORE LOGIC</div>
+        </div>
+        <div class="content-grid">
+            <div class="full-content">
+                <h3>Today's Floor (오늘 할 일)</h3>
+                <p><code>FloorService.java</code>는 로그인한 유저의 오늘 날짜 일정을 조회합니다.</p>
+                
+                <h3>Completion Logic (완료 처리)</h3>
+                <p>사용자가 Floor를 완료(Check)하면 다음과 같은 비즈니스 로직이 수행됩니다.</p>
+                <br>
+                <pre><span class="code-comment">// FloorService.java</span>
+<span class="code-annot">@Transactional</span>
+<span class="code-keyword">public void</span> <span class="code-func">completeFloor</span>(Long floorId) {
+    <span class="code-comment">// 1. 권한 확인 (본인 생성 여부)</span>
+    <span class="code-keyword">if</span> (!floor.getCreatorUserId().equals(user.getUserId())) {
+        <span class="code-keyword">throw new</span> IllegalArgumentException(...);
+    }
+
+    <span class="code-comment">// 2. 중복 완료 방지</span>
+    <span class="code-keyword">if</span> (floorStatusRepository.existsBy...(floorId, userId)) {
+        <span class="code-keyword">throw new</span> IllegalArgumentException(<span class="code-string">"Already completed"</span>);
+    }
+
+    <span class="code-comment">// 3. 상태 저장 & 보상 지급</span>
+    floorStatusRepository.save(status);
+    userProfileService.addPoints(userId, 10); <span class="code-comment">// +10 Coin</span>
+    userProfileService.incrementPersonalLevel(userId); <span class="code-comment">// +1 Level</span>
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Feature - Gamification & Character -->
+    <div class="slide-container" id="slide-7">
+        <div class="slide-header">
+            <div class="slide-title">Feature: Gamification</div>
+            <div class="slide-subtitle">06. CHARACTER SYSTEM</div>
+        </div>
+        <div class="content-grid">
+            <div>
+                <h3>Character Customization</h3>
+                <p>캐릭터의 장착 아이템은 유동적이므로 <strong>JSON 타입</strong>을 활용해 DB 스키마 변경 없이 유연하게 저장합니다.</p>
+                <br>
+                <div class="db-table">
+                    <div class="db-header">characters 테이블 데이터 예시</div>
+                    <div class="db-row" style="display:block;">
+                        <span style="color:#888; font-size:0.85rem;">equipped_items (JSON Column):</span><br>
+                        <span style="color:var(--accent-red); font-weight:bold; font-size: 1.1rem;">{ "hat": 5, "face": 12, "acc": 3 }</span>
+                    </div>
+                </div>
+                <br>
+                <h3>Welcome Bonus</h3>
+                <p>신규 유저의 이탈을 막기 위해 최초 로그인 시 보너스 로직을 <code>UserService</code>에 구현했습니다.</p>
+            </div>
+            <div>
+                 <pre><span class="code-comment">// UserProfileService.java</span>
+<span class="code-keyword">public void</span> <span class="code-func">ensureSignupBonusOnFirstLogin</span>(User user) {
+    userProfileRepository.findById(user.getUserId())
+        .orElseGet(() -> {
+            UserProfile profile = <span class="code-keyword">new</span> UserProfile();
+            profile.setUser(user);
+            
+            <span class="code-comment">// 가입 축하금 50코인 지급</span>
+            profile.setPoints(50); 
+            profile.setPersonalLevel(1);
+            
+            <span class="code-keyword">return</span> userProfileRepository.save(profile);
+        });
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Security & API -->
+    <div class="slide-container" id="slide-8">
+        <div class="slide-header">
+            <div class="slide-title">Security & API Docs</div>
+            <div class="slide-subtitle">07. SECURITY</div>
+        </div>
+        <div class="content-grid">
+            <div>
+                <h3>Spring Security + JWT</h3>
+                <ul>
+                    <li><strong>Stateless Architecture:</strong> Session 미사용</li>
+                    <li><strong>Bearer Token:</strong> Authorization 헤더 검증</li>
+                    <li><strong>SecurityConfig:</strong> CSRF 비활성화, CORS 허용</li>
+                </ul>
+                <br>
+                <h3>Swagger UI (OpenAPI 3.0)</h3>
+                <p>프론트엔드 협업을 위해 API 문서를 자동화했습니다.</p>
+                <ul>
+                    <li><code>/api/auth/**</code> : 인증 (가입/로그인)</li>
+                    <li><code>/api/schedules/**</code> : 일정 관리</li>
+                    <li><code>/api/floors/**</code> : 투두/완료 처리</li>
+                    <li><code>/api/me/**</code> : 내 정보/프로필</li>
+                </ul>
+            </div>
+            <div>
+                <pre><span class="code-comment">// SecurityConfig.java</span>
+<span class="code-annot">@Bean</span>
+<span class="code-keyword">public</span> SecurityFilterChain <span class="code-func">filterChain</span>(HttpSecurity http) {
+    http
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(<span class="code-string">"/api/auth/**"</span>, <span class="code-string">"/swagger-ui/**"</span>).permitAll()
+            .anyRequest().authenticated() <span class="code-comment">// 그 외 모든 요청 인증 필요</span>
+        )
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthFilter.class);
+    <span class="code-keyword">return</span> http.build();
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Troubleshooting -->
+    <div class="slide-container" id="slide-9">
+        <div class="slide-header">
+            <div class="slide-title">Troubleshooting</div>
+            <div class="slide-subtitle">08. ISSUES & SOLUTIONS</div>
+        </div>
+        <div class="content-grid">
+            <div>
+                <h3>Issue 1: Character JSON Data Null</h3>
+                <p><strong>문제:</strong> 기존 가입 유저의 <code>equipped_items</code> 컬럼이 NULL이라 조회 시 500 에러 발생.</p>
+                <p><strong>해결:</strong> <code>@Column(nullable=true)</code> 설정 및 마이그레이션 SQL 실행.</p>
+                <div class="architecture-box" style="padding: 15px; border: 1px solid var(--accent-red); background: #fff5f5;">
+                    <code style="color:var(--accent-red); font-weight:bold;">UPDATE characters SET equipped_items = '{}' WHERE equipped_items IS NULL;</code>
+                </div>
+            </div>
+            <div>
+                <h3>Issue 2: AI Response Instability</h3>
+                <p><strong>문제:</strong> GPT 응답이 가끔 JSON 형식이 깨지거나 Markdown backtick(```)을 포함함.</p>
+                <p><strong>해결:</strong> 문자열 전처리 로직 추가 및 예외 발생 시 로컬 알고리즘으로 대체하는 <code>fallbackPlan</code> 구현.</p>
+                <pre><span class="code-comment">// JSON Cleaning Logic</span>
+<span class="code-keyword">if</span> (cleaned.startsWith(<span class="code-string">"```"</span>)) {
+    cleaned = cleaned.substring(idx + 1, last);
+}</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 10: Conclusion -->
+    <div class="slide-container" id="slide-10">
+        <div class="slide-header">
+            <div class="slide-title">Conclusion</div>
+            <div class="slide-subtitle">09. WRAP UP</div>
+        </div>
+        <div class="full-content" style="text-align: center; justify-content: center; align-items: center;">
+            <h1 class="main-title" style="font-size: 5rem; color: var(--accent-blue);">Floorida</h1>
+            <p style="font-size: 1.8rem; max-width: 900px; color: var(--text-main); font-weight:300;">
+                단순한 일정 관리를 넘어,<br>
+                <strong style="color:var(--accent-blue);">AI의 도움</strong>으로 계획을 세우고<br>
+                <strong style="color:var(--accent-green);">게이미피케이션</strong>으로 실행을 지속하게 만드는 플랫폼
+            </p>
+            <div style="margin-top: 60px; font-size: 1.3rem; color: var(--text-sub);">
+                <p>Thank you for listening.</p>
+                <p style="margin-top:15px; font-size:1.1rem; font-weight:bold;">Q & A</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="page-indicator" id="page-indicator">01 / 10</div>
+    <div class="controls">
+        <button class="btn" onclick="prevSlide()"><svg viewBox="0 0 320 512"><use href="#icon-chevron-left"></use></svg> Prev</button>
+        <button class="btn" onclick="nextSlide()">Next <svg viewBox="0 0 320 512"><use href="#icon-chevron-right"></use></svg></button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 10;
+
+        function showSlide(n) {
+            // Remove active class from all slides
+            document.querySelectorAll('.slide-container').forEach(slide => {
+                slide.classList.remove('active');
+            });
+            
+            // Add active class to current slide
+            const slide = document.getElementById(`slide-${n}`);
+            if (slide) {
+                slide.classList.add('active');
+            }
+
+            // Update Page Indicator
+            const indicator = document.getElementById('page-indicator');
+            indicator.textContent = `${String(n).padStart(2, '0')} / ${totalSlides}`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                showSlide(currentSlide);
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                showSlide(currentSlide);
+            }
+        }
+
+        // Auto Scaling Logic
+        function scaleSlides() {
+            const baseWidth = 1280;
+            const baseHeight = 720;
+            const padding = 20; // safe margin
+
+            const windowWidth = window.innerWidth - (padding * 2);
+            const windowHeight = window.innerHeight - (padding * 2);
+
+            const scaleX = windowWidth / baseWidth;
+            const scaleY = windowHeight / baseHeight;
+            
+            // Fit within window, maintaining aspect ratio
+            const scale = Math.min(scaleX, scaleY);
+
+            const slides = document.querySelectorAll('.slide-container');
+            slides.forEach(slide => {
+                // Since we used absolute positioning and centering transform
+                // we don't need translate here, just scale
+                // But the base CSS has no transform, so we can just set it.
+                // However, we want to center it. 
+                // Best way: set top/left 50% and translate -50% in CSS, then add scale here.
+                
+                // Let's modify the style dynamically to ensure it centers and scales
+                slide.style.position = 'absolute';
+                slide.style.top = '50%';
+                slide.style.left = '50%';
+                slide.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            });
+        }
+
+        // Event Listeners
+        window.addEventListener('resize', scaleSlides);
+        window.addEventListener('load', scaleSlides);
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "ArrowRight" || event.key === " ") {
+                nextSlide();
+            } else if (event.key === "ArrowLeft") {
+                prevSlide();
+            }
+        });
+
+        // Initialize
+        showSlide(currentSlide);
+        scaleSlides(); // Initial scale
+    </script>
+</body>
+</html>

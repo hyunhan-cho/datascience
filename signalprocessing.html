@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>음성 신호처리 스터디</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .header {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 3.2em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 1.1em;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
+        .study-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; padding: 20px 0; max-width: 100%; }
+        .study-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease; }
+        .study-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        .study-link { display: block; text-decoration: none; color: inherit; }
+        .study-card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; position: relative; }
+        .study-number { font-size: 3em; font-weight: bold; opacity: 0.25; position: absolute; right: 20px; top: 10px; }
+        .study-card-title { font-size: 1.7em; font-weight: 800; margin-bottom: 6px; }
+        .study-card-subtitle { opacity: 0.92; font-size: 1.05em; }
+        .study-card-body { padding: 22px 25px; }
+        .study-card-description { color: #5b6470; margin-bottom: 14px; }
+        .study-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag { background: #f8f9fa; color: #667eea; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; font-weight: 600; }
+        .footer { text-align: center; padding: 40px 20px; color: white; opacity: 0.85; }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.4em; }
+            .study-grid { grid-template-columns: 1fr; }
+            .main-content { padding: 0 15px 40px; }
+        }
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .study-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (min-width: 1025px) {
+            .study-grid { grid-template-columns: repeat(3, 1fr); max-width: 1200px; margin: 0 auto; }
+        }
+        /* Embed section */
+        .embed { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .embed-header { background: #111827; color: #e5e7eb; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
+        .embed-header a { color: #93c5fd; text-decoration: none; font-weight: 700; }
+        .embed iframe { width: 100%; height: 680px; border: 0; display: block; }
+        .hidden { display: none; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta name="description" content="음성 신호처리 핵심 주제와 실전 분석 사례를 한 페이지에서 학습합니다." />
+</head>
+<body>
+    <div class="header">
+        <a href="studies.html" class="back-button">← 학습 자료로 돌아가기</a>
+        <h1>🎙️ 음성 신호처리 Study</h1>
+        <p>음향 신호 분석과 음성 처리 핵심 개념을 정리했습니다</p>
+    </div>
+
+    <div class="main-content">
+        <div class="study-grid">
+            <!-- 01 음성신호처리 개요 -->
+            <div class="study-card">
+                <a href="음성신호처리개요1.html" class="study-link">
+                    <div class="study-card-header">
+                        <div class="study-number">01</div>
+                        <div class="study-card-title">음성신호처리 개요</div>
+                        <div class="study-card-subtitle">아날로그에서 디지털로</div>
+                    </div>
+                    <div class="study-card-body">
+                        <div class="study-card-description">
+                            음성 신호의 기본 개념부터 디지털 신호 처리의 핵심 원리까지 학습합니다. 샘플링 이론, Aliasing, DFT/FFT 파이프라인, STFT와 스펙트로그램을 단계별로 다룹니다.
+                        </div>
+                        <div class="study-tags">
+                            <span class="tag">Sampling</span>
+                            <span class="tag">Aliasing</span>
+                            <span class="tag">DFT/FFT</span>
+                            <span class="tag">STFT</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 02 FFT 알고리즘 -->
+            <div class="study-card">
+                <a href="FFT.html" class="study-link">
+                    <div class="study-card-header">
+                        <div class="study-number">02</div>
+                        <div class="study-card-title">FFT 알고리즘의 이해</div>
+                        <div class="study-card-subtitle">O(N²)에서 O(N log N)으로의 혁명</div>
+                    </div>
+                    <div class="study-card-body">
+                        <div class="study-card-description">
+                            Fast Fourier Transform의 수학적 원리와 구조를 심층 분석합니다. DFT 정의부터 짝수/홀수 분해, Butterfly 연산, 복잡도 분석까지 Cooley-Tukey 알고리즘을 완벽하게 이해합니다.
+                        </div>
+                        <div class="study-tags">
+                            <span class="tag">FFT</span>
+                            <span class="tag">Butterfly</span>
+                            <span class="tag">Algorithm</span>
+                            <span class="tag">Complexity</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="study-card">
+                <div class="study-card-header">
+                    <div class="study-number">03</div>
+                    <div class="study-card-title">MFCC와 특징 벡터</div>
+                    <div class="study-card-subtitle">Mel-Frequency Cepstral Coefficients</div>
+                </div>
+                <div class="study-card-body">
+                    <div class="study-card-description">
+                        음성 인식의 핵심 특징인 MFCC 추출 과정을 상세히 학습합니다. Cepstrum 개념, 델타 계수, 정규화 기법을 실습 예제와 함께 다룹니다.
+                    </div>
+                    <div class="study-tags">
+                        <span class="tag">MFCC</span>
+                        <span class="tag">Cepstrum</span>
+                        <span class="tag">Speech Recognition</span>
+                        <span class="tag">Delta Coefficients</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 동적 임베드 컨테이너 -->
+        <section id="embed-container" class="embed hidden" aria-label="음성 신호처리 슬라이드 임베드 보기">
+            <div class="embed-header">
+                <strong id="embed-title">슬라이드 바로 보기</strong>
+                <a id="embed-external" href="#" target="_blank" rel="noopener">새 창에서 보기 ↗</a>
+            </div>
+            <iframe id="embed-frame" src="" title="Signal Processing Slides"></iframe>
+        </section>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 음성 신호처리 Study</p>
+    </div>
+
+    <script>
+        // 카드 클릭 시 아래에 임베드 표시
+        document.addEventListener('DOMContentLoaded', () => {
+            const links = document.querySelectorAll('.study-card .study-link');
+            const embed = document.getElementById('embed-container');
+            const embedFrame = document.getElementById('embed-frame');
+            const embedTitle = document.getElementById('embed-title');
+            const embedExternal = document.getElementById('embed-external');
+
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const href = link.getAttribute('href');
+                    const titleEl = link.querySelector('.study-card-title');
+                    const titleText = titleEl ? titleEl.textContent.trim() : '슬라이드';
+
+                    embedFrame.src = href;
+                    embedTitle.textContent = `${titleText} · 슬라이드 바로 보기`;
+                    embedExternal.href = href;
+                    embed.classList.remove('hidden');
+                    embed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
