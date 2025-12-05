@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기초통계와 회귀분석</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Merriweather:wght@400;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+/* 1. THE SETUP */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #e2e8f0;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+  min-height: 100vh;
+  padding: 20px 0;
+  place-items: center;
+}
+
+.slide-container {
+  align-items: center;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  font-family: "DM Sans", sans-serif;
+  gap: 30px;
+  /* Increased dimensions per user request */
+  height: 900px; 
+  justify-content: center;
+  overflow: hidden;
+  padding: 50px; /* Increased padding slightly */
+  position: relative;
+  width: 1600px;
+  background-color: #fff;
+}
+
+.slide-container>* {
+  position: relative;
+  z-index: 1;
+}
+
+/* 2. TYPOGRAPHY & THEME */
+.slide-container h1 {
+  color: #005088;
+  font-family: "Merriweather", serif;
+  font-weight: 700;
+  font-size: 90px; /* Increased font size */
+  line-height: 1.1;
+  margin: 0;
+  text-align: center;
+}
+
+.slide-container h2, 
+.slide-container .slide-title {
+  color: #005088;
+  font-family: "Merriweather", serif;
+  font-weight: 700;
+  font-size: 56px; /* Increased font size */
+  margin: 80px 0 30px 0;
+  text-align: left;
+  width: 100%;
+}
+
+.slide-container h3 {
+  color: #005088;
+  font-family: "Merriweather", serif;
+  font-weight: 700;
+  font-size: 32px; /* Increased font size */
+  margin-bottom: 20px;
+}
+
+.slide-container p,
+.slide-container li {
+  color: #334155;
+  font-family: "DM Sans", sans-serif;
+  font-size: 24px; /* Increased font size for readability on larger slide */
+  line-height: 1.6;
+}
+
+.slide-container .subtitle {
+  color: #55657e;
+  font-size: 40px; /* Increased font size */
+  font-weight: 400;
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* CODE BLOCKS */
+.code-block {
+  background-color: #f1f5f9;
+  border-left: 6px solid #005088;
+  border-radius: 6px;
+  color: #334155;
+  font-family: 'Fira Code', monospace;
+  font-size: 20px; /* Increased font size */
+  margin: 20px 0;
+  padding: 20px;
+  white-space: pre-wrap;
+  width: 100%;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+  overflow-x: auto;
+}
+
+/* STATA OUTPUT STYLE */
+.stata-output {
+  background-color: #1e293b; 
+  color: #f8fafc; 
+  font-family: 'Fira Code', monospace;
+  font-size: 18px; /* Increased font size */
+  padding: 20px;
+  border-radius: 6px;
+  margin-top: 15px;
+  white-space: pre;
+  overflow-x: auto;
+  border-left: 6px solid #475569;
+  height: 100%;
+  max-height: 600px; /* Increased max-height significantly */
+}
+
+.comment {
+  color: #059669;
+  font-style: italic;
+}
+
+/* 3. LAYOUT DEFINITIONS */
+
+.content-area {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+  width: 100%;
+}
+
+.title-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+}
+
+.section-title-layout {
+  align-items: center;
+  background-color: #005088;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.section-title-layout h2 {
+  color: #f3f0df;
+  font-size: 80px; /* Increased font size */
+  margin-bottom: 30px;
+}
+
+.section-title-layout hr {
+  background-color: #f3f0df;
+  border: none;
+  height: 6px;
+  width: 200px;
+  margin: 40px auto;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px; /* Increased gap */
+  width: 100%;
+  align-items: start;
+}
+
+.two-column.tiled {
+  align-items: stretch;
+}
+
+.two-column.tiled > div {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 35px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tiled Content (Horizontal) */
+.tiled-content {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.tile {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tile h3 {
+    text-align: center;
+}
+
+.qa-layout {
+  text-align: center;
+}
+
+    </style>
+</head>
+<body>
+
+<!-- Slide 1: Title Slide -->
+<div class="slide-container" id="slide1">
+    <div class="title-layout">
+        <h1>기초통계와 회귀분석</h1>
+        <p class="subtitle">CHAPTER 4: 상관분석 &<br>CHAPTER 5: 신뢰도분석</p>
+    </div>
+</div>
+
+<!-- Slide 2: Section Title - Chapter 4 -->
+<div class="slide-container" id="slide2">
+    <div class="section-title-layout">
+        <hr>
+        <h2>Chapter 4<br>상관분석</h2>
+    </div>
+</div>
+
+<!-- Slide 3: Scatter Plot -->
+<div class="slide-container" id="slide3">
+    <h2 class="slide-title">1. 산포도 (Scatter Plot)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>두 변수간의 관계 파악</h3>
+                <p>데이터의 분포와 관계를 시각적으로 확인합니다. 읽기(read) 점수와 다른 변수들 간의 관계를 봅니다.</p>
+                <div class="code-block">
+<span class="comment">/// 예제 파일(R_data4_1.dta)</span>
+twoway (scatter write read) (scatter math read, msymbol(square_hollow))
+                </div>
+                <p><code>msymbol(square_hollow)</code> 옵션을 사용하여 수학 점수 산포도의 마커 모양을 빈 사각형으로 구분합니다.</p>
+            </div>
+            <div>
+                <h3>데이터 예시 (list 1/10)</h3>
+                <div class="stata-output">
+     +--------------------------------+
+     | id   read   write   math   sci |
+     |--------------------------------|
+  1. |  1     70      52     54    47 |
+  2. |  2     86      59     57    88 |
+  3. |  3     44      33     40    39 |
+  4. |  4     63      44     47    50 |
+  5. |  5     47      52     51    47 |
+     |--------------------------------|
+  6. |  6     55      52     51    55 |
+  7. |  7     68      59     53    59 |
+  8. |  8     57      54     54    53 |
+  9. |  9     63      59     51    60 |
+ 10. | 10     65      70     66    65 |
+     +--------------------------------+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 4: Correlation Basics -->
+<div class="slide-container" id="slide4">
+    <h2 class="slide-title">2. 상관관계 (Correlation)</h2>
+    <div class="content-area">
+        <div class="two-column tiled">
+            <div>
+                <h3>Pairwise Deletion (pwcorr)</h3>
+                <p>짝별 삭제: 각 쌍(pair)의 데이터가 존재하면 계산에 포함합니다.</p>
+                <div class="code-block">
+<span class="comment">// 예제 파일(R_data4_1.dta)</span>
+pwcorr read write 
+pwcorr read write math science
+                </div>
+                <p class="comment">• 앞서 그린 산포도와 동일한 결과 // 모두 양의 상관관계</p>
+                <div class="stata-output">
+             |     read    write
+-------------+------------------
+        read |   1.0000
+       write |   0.5968   1.0000
+                </div>
+            </div>
+            <div>
+                <h3>Listwise Deletion (corr)</h3>
+                <p>목록별 삭제: 지정된 변수 중 하나라도 결측치가 있으면 해당 케이스를 완전히 제외합니다.</p>
+                <div class="code-block">
+corr read write
+corr read write math science
+                </div>
+                <p class="comment">///// 두 명령어 사이 결과가 차이나는 이유: 결측치 처리 방식이 다름</p>
+                <div class="stata-output">
+(obs=200)
+
+             |     read    write
+-------------+------------------
+        read |   1.0000
+       write |   0.5968   1.0000
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 5: Hypothesis Testing -->
+<div class="slide-container" id="slide5">
+    <h2 class="slide-title">2-1. 가설검정</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>유의성 검정 (Significance Test)</h3>
+                <p>상관계수가 통계적으로 유의한지(0이 아닌지) 검정합니다.</p>
+                <div class="code-block">
+pwcorr read write math science, sig 
+<span class="comment">// p값이 0.0000 -> 귀무가설을 기각함. 즉, 상관계수가 0이 아님</span>
+
+pwcorr read write math science, sig listwise 
+<span class="comment">// corr에는 유의성 검정 옵션이 없음. 이렇게 바꿔서 검정</span>
+<span class="comment">//////////// listwise 결측치가 하나도 없는 것만으로 계산하라는 뜻</span>
+                </div>
+            </div>
+            <div class="stata-output">
+             |     read    write     math  science
+-------------+------------------------------------
+        read |   1.0000
+             |
+       write |   0.5968   1.0000
+             |   0.0000
+             |
+        math |   0.6623   0.6174   1.0000
+             |   0.0000   0.0000
+             |
+     science |   0.6302   0.5704   0.6307   1.0000
+             |   0.0000   0.0000   0.0000
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 6: Group Correlation -->
+<div class="slide-container" id="slide6">
+    <h2 class="slide-title">2-2. 그룹별 상관관계</h2>
+    <div class="content-area">
+        <div class="two-column tiled">
+            <div>
+                 <h3>그룹별 상관관계 분석</h3>
+                 <p><code>by</code> 명령어를 사용하여 성별(female) 그룹 간의 상관관계를 각각 확인합니다.</p>
+                <div class="code-block">
+by female, sort: corr read write math science 
+<span class="comment">// female, male 그룹별 상관관계</span>
+                </div>
+                <div class="stata-output">
+-> female = male
+(obs=91)
+             |     read    write
+-------------+------------------
+        read |   1.0000
+       write |   0.6483   1.0000
+
+-> female = female
+(obs=109)
+             |     read    write
+-------------+------------------
+        read |   1.0000
+       write |   0.6251   1.0000
+                </div>
+            </div>
+            <div>
+                 <h3>상관계수 차이 유의성 검정</h3>
+                 <p>두 그룹의 상관계수 차이가 통계적으로 유의한지 검증하기 위해 <code>cortesti</code>를 사용합니다.</p>
+                <div class="code-block">
+findit cortesti
+cortesti 0.648 91 0.625 106 
+<span class="comment">// read와 write 간 상관관계가 두 그룹 차이 유의미한지 검정</span>
+                </div>
+                <div class="stata-output">
+Test of equality of two correlations
+
+   r1 =  0.6480,  N1 =     91
+   r2 =  0.6250,  N2 =    106
+
+   z =  0.342
+   Prob > |z| = 0.7323
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 7: Partial Correlation -->
+<div class="slide-container" id="slide7">
+    <h2 class="slide-title">3. 편상관계수 (Partial Correlation)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>제 3의 변수 통제</h3>
+                <p>특정 변수들이 두 변수 간의 관계에 미치는 영향을 제거한 순수한 상관관계를 계산합니다.</p>
+                <div class="code-block">
+<span class="comment">/// 두 변수에 영향을 미칠 수 있는 변수들의 효과를 제거하고 계산한 상관계수</span>
+sysuse auto, clear
+corr mpg price weight foreign
+
+pcorr mpg price weight foreign 
+<span class="comment">// 편상관계수 계산 (weight와 foreign을 통제한 mpg와 price의 관계)</span>
+                </div>
+            </div>
+            <div class="stata-output">
+(obs=74)
+
+Partial and semipartial correlations of mpg with
+
+           |   Partial   Semipartial      Partial   Semipartial   Significance
+  Variable |    Corr.       Corr.          Corr.^2     Corr.^2       Value
+-----------+------------------------------------------------------------------
+     price |   0.0573      0.0264          0.0033      0.0007       0.6309
+    weight |  -0.5959     -0.3705          0.3551      0.1373       0.0000
+   foreign |  -0.0827     -0.0382          0.0068      0.0015       0.4875
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 8: Spearman's Rank Correlation -->
+<div class="slide-container" id="slide8">
+    <h2 class="slide-title">4. 스피어만의 순위 상관계수</h2>
+    <div class="content-area">
+        <div class="two-column tiled">
+            <div>
+                <h3>비모수적 방법</h3>
+                <p>데이터가 정규분포를 따르지 않거나 순위 척도일 때 사용합니다.</p>
+                <div class="code-block">
+<span class="comment">/// 예제 파일(R_data4_2.dta)</span>
+pwcorr age liberal, sig <span class="comment">// 피어슨 상관계수</span>
+spearman age liberal <span class="comment">// 스피어만의 상관계수</span>
+                </div>
+                <div class="stata-output">
+Number of obs =      20
+Spearman's rho =       0.8245
+
+Test of Ho: age and liberal are independent
+    Prob > |t| =       0.0000
+                </div>
+            </div>
+            <div>
+                <h3>직접 계산 검증</h3>
+                <p>실제로 순위 변수를 생성하여 피어슨 상관계수를 구하면 스피어만 상관계수와 같음을 확인합니다.</p>
+                <div class="code-block">
+<span class="comment">• 스피어만 상관계수 직접 계산해보기</span>
+egen rank_age = rank(age) <span class="comment">// 순서형 변수 생성</span>
+egen rank_lib = rank(liberal)
+pwcorr rank_age rank_lib, sig 
+                </div>
+                <div class="stata-output">
+             | rank_age rank_lib
+-------------+------------------
+    rank_age |   1.0000
+             |
+    rank_lib |   0.8245   1.0000
+             |   0.0000
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 9: Kendall's Tau -->
+<div class="slide-container" id="slide9">
+    <h2 class="slide-title">5. 켄달의 타우 (Kendall's Tau)</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>순위의 일치성 측정</h3>
+                <p>스피어만과 마찬가지로 순위형 데이터에 사용되며, 표본이 작거나 동점(ties)이 많을 때 유용합니다.</p>
+                <div class="code-block">
+<span class="comment">// 순위의 일치성 측정, 예제 파일(R_data4_3.dta)</span>
+ktau iq tv_hours
+                </div>
+            </div>
+            <div>
+                <h3>출력 결과 해석</h3>
+                <div class="stata-output">
+  Number of obs =      10
+Kendall's tau-a =       0.5556
+Kendall's tau-b =       0.5623
+Kendall's score =      25
+    SE of score =      10.607
+
+Test of Ho: iq and tv_hours are independent
+     Prob > |z| =       0.0214 (continuity corrected)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 10: Section Title - Chapter 5 -->
+<div class="slide-container" id="slide10">
+    <div class="section-title-layout">
+        <hr>
+        <h2>Chapter 5<br>신뢰도분석</h2>
+    </div>
+</div>
+
+<!-- Slide 11: Cronbach's Alpha -->
+<div class="slide-container" id="slide11">
+    <h2 class="slide-title">1. 크론바흐의 알파계수</h2>
+    <div class="content-area">
+        <div class="two-column">
+             <div>
+                <h3>내적 일관성 평가</h3>
+                <p>여러 항목들이 동일한 개념을 일관되게 측정하고 있는지 확인합니다.</p>
+                <div class="code-block">
+<span class="comment">// 변수들간의 신뢰성과 일관성을 측정 예제파일(R_data5_1.dta)</span>
+alpha psmoke97 pdrink97 pgang97, std 
+<span class="comment">// 알파계수 0.8이상이면 매우 강한 일관성</span>
+<span class="comment">/// 0.6이상이면 수용가능한 일관성</span>
+
+alpha psmoke97 pdrink97 pgang97, generate(gc) std 
+<span class="comment">// generate(gc) 옵션으로 척도 점수 변수 생성</span>
+                </div>
+            </div>
+            <div class="stata-output">
+Test scale = mean(standardized items)
+
+Average interitem correlation:  0.4532
+Number of items in the scale:        3
+Scale reliability coefficient:  0.7132
+
+-------------------------------------------------------
+             |  Item-test |  Item-rest |  Average
+        Item | Correlation| Correlation| interitem
+             |            |            | correlation
+-------------+------------+------------+---------------
+    psmoke97 |    0.8351  |     0.5421 |     0.4851
+    pdrink97 |    0.8012  |     0.4982 |     0.5211
+     pgang97 |    0.8123  |     0.5123 |     0.5015
+-------------------------------------------------------
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 12: Cohen's Kappa -->
+<div class="slide-container" id="slide12">
+    <h2 class="slide-title">2. 코헨의 카파계수</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <h3>평가자 간 일치도 (Inter-rater Reliability)</h3>
+                <p>두 평가자가 매긴 범주형 등급의 일치 정도를 측정합니다. 단순 일치율보다 우연에 의한 일치를 보정합니다.</p>
+                <div class="code-block">
+<span class="comment">///// 평가의 일치성 측정 // 예제파일(R_data5_2.dta)</span>
+tab rada radb, exp <span class="comment">// 교차표 출력</span>
+kap rada radb <span class="comment">// 카파계수 계산</span>
+                </div>
+            </div>
+            <div class="stata-output">
+             |   Agreement   Expected
+Agreement    |   75.00%      51.25%
+-------------+----------------------------------
+Kappa        |   0.4872
+Std. Err.    |   0.0985
+Z            |   4.95
+Prob > Z     |   0.0000
+
+----------------------------------------
+Rating:      |   Kappa (해석 기준)
+-------------+--------------------------
+0.6 - 0.8    |   일치성이 매우 높음
+0.4 - 0.6    |   대체로 일치성이 높음
+< 0.4        |   일치성이 낮음/없음
+----------------------------------------
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 13: Advanced Kappa -->
+<div class="slide-container" id="slide13">
+    <h2 class="slide-title">2. 코헨의 카파계수 (심화)</h2>
+    <div class="content-area">
+        <div class="two-column tiled">
+             <div>
+                <h3>가중 카파 (Weighted Kappa)</h3>
+                <p>데이터가 순서형인 경우(예: 상, 중, 하), 불일치의 정도에 가중치를 부여하여 계산합니다.</p>
+                <div class="code-block">
+<span class="comment">// 0.2~0.4: 일치성이 낮은 편 0.2이하면 일치성이 없음</span>
+
+kap rada radb, wgt(w) 
+<span class="comment">// 순서형 데이터로 간주한 경우의 카파계수</span>
+                </div>
+            </div>
+             <div>
+                <h3>범주형 변환 및 다중 범주</h3>
+                <p>연속형 데이터를 범주형으로 변환하거나 범주가 3개 이상인 경우의 분석입니다.</p>
+                <div class="code-block">
+<span class="comment">///// 예제파일(R_data5_3.dta)을 열어보자</span>
+gen neg=rates-pos
+kappa pos neg
+
+<span class="comment">///// 예제파일(R_data5_4.dta) // 범주가 3개인 경우</span>
+kappa cat1 cat2 cat3 
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
