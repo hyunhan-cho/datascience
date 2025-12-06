@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librosa 오디오 분석 가이드</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Highlight.js for Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-light.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8fafc; /* 밝은 배경 (Slate-50) */
+            color: #334155; /* 가독성 좋은 짙은 회색 */
+        }
+        
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .code-container {
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(255,255,255,0.8);
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #475569;
+        }
+        .copy-btn:hover {
+            background: #fff;
+            color: #2563eb;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        h1, h2, h3 {
+            color: #1e293b;
+        }
+        
+        /* Markdown style lists */
+        ul.list-disc {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+        }
+        
+        /* Math styling simulation */
+        .math {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Layout Container -->
+    <div class="flex flex-col lg:flex-row min-h-screen">
+
+        <!-- Sidebar Navigation (Sticky on Desktop) -->
+        <nav class="lg:w-64 bg-white border-r border-slate-200 lg:fixed lg:h-full z-10 shadow-sm lg:shadow-none">
+            <div class="p-6">
+                <h1 class="text-xl font-bold text-blue-600 mb-2">Audio Analysis</h1>
+                <p class="text-xs text-slate-500 mb-6">Librosa (v0.8.0) 가이드</p>
+                <ul class="space-y-3 text-sm font-medium text-slate-600">
+                    <li><a href="#section1" class="block hover:text-blue-600 transition-colors">1. 실습 환경 및 개요</a></li>
+                    <li><a href="#section2" class="block hover:text-blue-600 transition-colors">2. 오디오 로드 및 시각화</a></li>
+                    <li><a href="#section3" class="block hover:text-blue-600 transition-colors">3. 시간-주파수 분석 (STFT)</a></li>
+                    <li><a href="#section4" class="block hover:text-blue-600 transition-colors">4. 단위 변환</a></li>
+                    <li><a href="#section5" class="block hover:text-blue-600 transition-colors">5. 특징 추출 (MFCC 등)</a></li>
+                    <li><a href="#section6" class="block hover:text-blue-600 transition-colors">6. 특징 역변환 (Inversion)</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 lg:ml-64 p-6 lg:p-10 max-w-5xl mx-auto">
+            
+            <!-- Header -->
+            <header class="mb-12 border-b pb-8">
+                <h1 class="text-3xl lg:text-4xl font-bold mb-4 text-slate-800">Librosa 오디오 신호 처리</h1>
+                <p class="text-lg text-slate-600">
+                    Python 기반의 오디오 분석 패키지인 <strong>Librosa</strong>를 활용하여 
+                    음성 신호를 시각화하고, 분석하며, 특징을 추출하는 방법을 단계별로 알아봅니다.
+                </p>
+            </header>
+
+            <!-- Section 1: Environment -->
+            <section id="section1" class="mb-16 scroll-mt-20">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mr-3">Chapter 1</span>
+                    <h2 class="text-2xl font-bold">실습 환경 및 개요</h2>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <p class="mb-4 text-slate-700">
+                        본 문서는 Linux Ubuntu 18.04 및 Python 3.8 환경을 기준으로 작성되었습니다. 
+                        Librosa는 오디오 분석을 위한 Python 라이브러리로, 음악 정보 검색(MIR) 시스템을 구축하는 데 주로 사용됩니다.
+                    </p>
+                    <ul class="list-disc mb-6 space-y-2 text-slate-700">
+                        <li><strong>핵심 라이브러리:</strong> <code>librosa (0.8.0)</code>, <code>numpy</code>, <code>matplotlib</code></li>
+                        <li><strong>주요 기능:</strong> FFT, STFT, Mel-spectrogram, MFCC 추출 및 시각화</li>
+                    </ul>
+                    
+                    <div class="code-container">
+                        <pre><code class="language-python rounded-lg"># 필요 라이브러리 설치
+# pip install librosa==0.8.0 numpy matplotlib
+
+import librosa
+import librosa.display
+import numpy as np
+import matplotlib.pyplot as plt
+
+print(f"Librosa version: {librosa.__version__}")</code></pre>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2: Load & Display -->
+            <section id="section2" class="mb-16 scroll-mt-20">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mr-3">Chapter 2</span>
+                    <h2 class="text-2xl font-bold">오디오 로드 및 시각화 (Load & Display)</h2>
+                </div>
+                
+                <div class="space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-semibold mb-2 text-slate-800">1. 파일 불러오기 (librosa.load)</h3>
+                        <p class="text-slate-600 mb-4">
+                            오디오 파일을 시계열(Time series) 데이터로 불러옵니다.
+                            <br><code>sr</code>(Sampling Rate)을 지정하지 않으면 기본값인 <strong>22,050Hz</strong>로 리샘플링됩니다. 원본을 유지하려면 <code>sr=None</code>을 사용하세요.
+                        </p>
+                        <div class="code-container">
+                            <pre><code class="language-python rounded-lg"># 오디오 파일 로드
+filename = librosa.ex('trumpet') # 예제 파일
+y, sr = librosa.load(filename, sr=22050)
+
+print(f"Audio shape: {y.shape}") # (samples,)
+print(f"Sample rate: {sr}")      # 22050 Hz</code></pre>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-semibold mb-2 text-slate-800">2. 파형 및 스펙트로그램 시각화</h3>
+                        <ul class="list-disc mb-4 text-slate-700 pl-4">
+                            <li><strong>librosa.display.waveplot:</strong> 오디오의 진폭 엔벨로프(Waveform)를 그립니다. (v0.8.0 기준)</li>
+                            <li><strong>librosa.display.specshow:</strong> STFT 결과나 Spectrogram 같은 2D 행렬 데이터를 시각화합니다. x축과 y축 스케일(linear, log, mel, time 등)을 설정할 수 있습니다.</li>
+                        </ul>
+                        <div class="code-container">
+                            <pre><code class="language-python rounded-lg">plt.figure(figsize=(14, 5))
+
+# Waveplot (파형)
+plt.subplot(1, 2, 1)
+librosa.display.waveplot(y, sr=sr, alpha=0.6)
+plt.title('Waveform')
+
+# Spectrogram (단순 예시, 상세 내용은 섹션 3 참조)
+D = librosa.stft(y)  # STFT 수행
+S_db = librosa.amplitude_to_db(np.abs(D), ref=np.max)
+
+plt.subplot(1, 2, 2)
+librosa.display.specshow(S_db, sr=sr, x_axis='time', y_axis='log')
+plt.colorbar(format='%+2.0f dB')
+plt.title('Spectrogram (dB)')
+
+plt.tight_layout()
+plt.show()</code></pre>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3: Time-Frequency Analysis -->
+            <section id="section3" class="mb-16 scroll-mt-20">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mr-3">Chapter 3</span>
+                    <h2 class="text-2xl font-bold">시간-주파수 분석 (STFT & ISTFT)</h2>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <p class="mb-4 text-slate-700">
+                        신호를 시간 영역에서 주파수 영역으로 변환하는 핵심 과정입니다.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-slate-800 mb-2">STFT (Short-Time Fourier Transform)</h4>
+                            <p class="text-sm text-slate-600 mb-2">시간의 흐름에 따른 주파수 성분을 분석합니다. 결과는 복소수 행렬입니다.</p>
+                            <ul class="text-sm text-slate-500 list-disc pl-4">
+                                <li><code>n_fft</code>: 윈도우 길이 (보통 2048)</li>
+                                <li><code>hop_length</code>: 이동 간격 (보통 512)</li>
+                            </ul>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-slate-800 mb-2">ISTFT / Magphase</h4>
+                            <p class="text-sm text-slate-600 mb-2">
+                                <strong>Magphase:</strong> 복소수를 크기(Magnitude)와 위상(Phase)으로 분리.<br>
+                                <strong>ISTFT:</strong> 주파수 영역 데이터를 다시 시간 영역(Audio)으로 복원.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="code-container">
+                        <pre><code class="language-python rounded-lg"># 1. STFT 수행 (복소수 행렬 반환)
+D = librosa.stft(y, n_fft=2048, hop_length=512)
+
+# 2. Magnitude와 Phase 분리
+magnitude, phase = librosa.magphase(D)
+print(f"Magnitude shape: {magnitude.shape}")
+
+# 3. ISTFT (다시 오디오 신호로 복원)
+# 원본과 복원 신호의 오차를 줄이기 위해 phase 정보가 필요합니다.
+y_reconstructed = librosa.istft(D, hop_length=512)</code></pre>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4: Unit Conversion -->
+            <section id="section4" class="mb-16 scroll-mt-20">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mr-3">Chapter 4</span>
+                    <h2 class="text-2xl font-bold">단위 변환 (Unit Conversion)</h2>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <p class="mb-4 text-slate-700">
+                        분석 목적에 맞게 크기(Amplitude/Power)나 주파수(Hz/Mel) 단위를 변환합니다.
+                    </p>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left text-slate-600 mb-6">
+                            <thead class="bg-slate-50 text-slate-700 uppercase font-bold">
+                                <tr>
+                                    <th class="px-4 py-3">분류</th>
+                                    <th class="px-4 py-3">함수명</th>
+                                    <th class="px-4 py-3">설명</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 border-t border-slate-100">
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">크기 (Scale)</td>
+                                    <td class="px-4 py-3"><code>amplitude_to_db</code></td>
+                                    <td class="px-4 py-3">진폭을 데시벨(dB)로 변환 (시각화에 필수)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">주파수 (Freq)</td>
+                                    <td class="px-4 py-3"><code>hz_to_mel</code></td>
+                                    <td class="px-4 py-3">Hz를 인간 청각 인지에 맞춘 Mel 스케일로 변환</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">시간 (Time)</td>
+                                    <td class="px-4 py-3"><code>frames_to_samples</code></td>
+                                    <td class="px-4 py-3">프레임 인덱스를 샘플 인덱스로 변환</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="code-container">
+                        <pre><code class="language-python rounded-lg"># Power -> dB 변환 (S는 melspectrogram 결과 등)
+S = np.abs(librosa.stft(y))**2
+S_db = librosa.power_to_db(S, ref=np.max)
+
+# Hz <-> Mel 변환
+mels = librosa.hz_to_mel(440.0) # A4 note
+hz = librosa.mel_to_hz(mels)
+
+# Frame <-> Time 변환
+# 100번째 프레임이 실제 시간(초)으로 언제인가?
+time_sec = librosa.frames_to_time(100, sr=sr, hop_length=512)
+print(f"100th frame is at {time_sec:.2f} seconds")</code></pre>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 5: Feature Extraction -->
+            <section id="section5" class="mb-16 scroll-mt-20">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mr-3">Chapter 5</span>
+                    <h2 class="text-2xl font-bold">특징 추출 (Feature Extraction)</h2>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- Mel Spectrogram -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-semibold mb-2 text-slate-800">1. Mel Spectrogram</h3>
+                        <p class="text-slate-600 mb-4">
+                            사람의 청각 특성을 반영한 Mel Filter Bank를 적용하여 스펙트로그램을 변환합니다.
+                            <code>norm='slaney'</code>를 사용하면 Mel 밴드 너비에 따라 정규화됩니다.
+                        </p>
+                        <div class="code-container">
+                            <pre><code class="language-python rounded-lg"># Mel Spectrogram 계산
+# n_mels: Mel 필터의 개수 (보통 128)
+mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+
+# 시각화를 위해 dB로 변환
+mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+
+# 시각화
+plt.figure(figsize=(10, 4))
+librosa.display.specshow(mel_spec_db, x_axis='time', y_axis='mel', sr=sr, fmax=8000)
+plt.colorbar(format='%+2.0f dB')
+plt.title('Mel Spectrogram')
+plt.show()</code></pre>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                    </div>
+
+                    <!-- MFCC -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-semibold mb-2 text-slate-800">2. MFCC (Mel-Frequency Cepstral Coefficients)</h3>
+                        <p class="text-slate-600 mb-4">
+                            음성 인식에서 가장 널리 쓰이는 특징입니다. Log-power Mel spectrogram에 DCT를 적용하여 구합니다.
+                            보통 상위 13개 혹은 20개의 계수(Coefficients)를 사용합니다.
+                        </p>
+                        <div class="code-container">
+                            <pre><code class="language-python rounded-lg"># MFCC 추출 (n_mfcc: 추출할 계수의 개수)
+mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+
+print(f"MFCC shape: {mfccs.shape}") # (n_mfcc, frames)
+
+plt.figure(figsize=(10, 4))
+librosa.display.specshow(mfccs, x_axis='time')
+plt.colorbar()
+plt.title('MFCC')
+plt.show()</code></pre>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 6: Feature Inversion -->
+            <section id="section6" class="mb-20 scroll-mt-20">
+                <div class="flex items-center mb-4">
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mr-3">Chapter 6</span>
+                    <h2 class="text-2xl font-bold">특징 역변환 (Feature Inversion)</h2>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                    <p class="mb-4 text-slate-700">
+                        추출된 특징(MFCC, Mel Spectrogram)으로부터 다시 오디오 신호를 복원합니다.
+                        위상(Phase) 정보가 손실되었기 때문에 <strong>Griffin-Lim 알고리즘</strong> 등을 사용하여 위상을 추정합니다.
+                    </p>
+
+                    <div class="grid grid-cols-1 gap-4 mb-6">
+                         <div class="bg-orange-50 border-l-4 border-orange-400 p-4">
+                            <p class="text-orange-700 font-medium">주의사항</p>
+                            <p class="text-sm text-orange-600">
+                                Mel Spectrogram이나 MFCC 변환 과정은 손실 압축과 유사하므로, 
+                                복원된 오디오는 원본보다 품질이 떨어질 수 있습니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="code-container">
+                        <pre><code class="language-python rounded-lg"># 1. MFCC -> Mel Spectrogram (Inverse DCT)
+mel_approx = librosa.feature.inverse.mfcc_to_mel(mfccs, n_mels=128)
+
+# 2. Mel Spectrogram -> Audio (Griffin-Lim 알고리즘 자동 적용)
+y_inv = librosa.feature.inverse.mel_to_audio(mel_approx, sr=sr)
+
+# 3. MFCC -> Audio (바로 복원)
+y_inv_direct = librosa.feature.inverse.mfcc_to_audio(mfccs, sr=sr)
+
+# 결과 저장 (확인용)
+# import soundfile as sf
+# sf.write('reconstructed.wav', y_inv, sr)</code></pre>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" 
+            class="fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50"
+            title="맨 위로 이동">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
+    <script>
+        // Copy functionality
+        function copyCode(btn) {
+            const codeBlock = btn.previousElementSibling.querySelector('code');
+            const textArea = document.createElement('textarea');
+            textArea.value = codeBlock.innerText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            const originalText = btn.innerText;
+            btn.innerText = 'Copied!';
+            btn.classList.add('text-green-600', 'font-bold');
+            
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove('text-green-600', 'font-bold');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
