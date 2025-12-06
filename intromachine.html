@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduction to Machine Learning - Lecture Notes</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- KaTeX for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f8fafc; /* Slate 50 */
+        }
+        .math-display {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Math Component to render LaTeX
+        const Latex = ({ children, block = false }) => {
+            const spanRef = useRef(null);
+
+            useEffect(() => {
+                if (window.katex && spanRef.current) {
+                    window.katex.render(children, spanRef.current, {
+                        throwOnError: false,
+                        displayMode: block,
+                        output: 'html', // Use HTML output for better accessibility/performance
+                    });
+                }
+            }, [children, block]);
+
+            return <span ref={spanRef} className={block ? "math-display block text-center my-2" : "px-1"} />;
+        };
+
+        // Slide/Card Component
+        const Slide = ({ title, sectionNumber, children, icon }) => {
+            return (
+                <div className="bg-white rounded-2xl shadow-xl border border-slate-200 mb-12 overflow-hidden transform transition-all hover:shadow-2xl">
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 flex items-center justify-between text-white">
+                        <div className="flex items-center space-x-4">
+                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                <i data-lucide={icon} className="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <span className="text-blue-100 text-sm font-semibold tracking-wider uppercase">Section {sectionNumber}</span>
+                                <h2 className="text-2xl font-bold">{title}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-8 md:p-10 text-slate-700 leading-relaxed">
+                        {children}
+                    </div>
+                </div>
+            );
+        };
+
+        // Sub-section Component
+        const SubSection = ({ title, children }) => (
+            <div className="mb-8 last:mb-0 border-b border-slate-100 pb-6 last:border-0 last:pb-0">
+                <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                    <span className="w-2 h-8 bg-blue-500 rounded-full mr-3"></span>
+                    {title}
+                </h3>
+                <div className="space-y-4 pl-5">
+                    {children}
+                </div>
+            </div>
+        );
+
+        // Box for Examples/Notes
+        const InfoBox = ({ title, children, type = "example" }) => {
+            const styles = type === "example" 
+                ? "bg-emerald-50 border-emerald-200 text-emerald-800" 
+                : "bg-amber-50 border-amber-200 text-amber-800";
+            
+            const icon = type === "example" ? "lightbulb" : "info";
+
+            return (
+                <div className={`p-4 rounded-lg border ${styles} my-4 flex items-start gap-3`}>
+                    <i data-lucide={icon} className="w-5 h-5 mt-1 shrink-0"></i>
+                    <div className="flex-1">
+                        <span className="font-bold block mb-1">{title}</span>
+                        <div className="text-sm opacity-90">{children}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, []);
+
+            return (
+                <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-4xl mx-auto">
+                        
+                        {/* Header */}
+                        <header className="text-center mb-16 space-y-4">
+                            <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
+                                Introduction to <span className="text-blue-600">Machine Learning</span>
+                            </h1>
+                            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                                곡선 피팅, 확률론, 가우시안 분포, 베이지안 관점, 결정 이론 및 정보 이론 핵심 정리
+                            </p>
+                            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white shadow-sm border border-slate-200 text-sm font-medium text-slate-500">
+                                <span>스크롤하여 학습하기</span>
+                                <i data-lucide="arrow-down" className="w-4 h-4 ml-2 animate-bounce"></i>
+                            </div>
+                        </header>
+
+                        {/* 1. Polynomial Curve Fitting */}
+                        <Slide title="다항식 곡선 피팅 (Polynomial Curve Fitting)" sectionNumber="01" icon="trending-up">
+                            <p className="mb-6 text-lg">데이터를 가장 잘 표현하는 모델을 찾는 과정을 설명합니다.</p>
+                            
+                            <SubSection title="1.1 기본 모델">
+                                <p>주어진 입력값 <Latex>x</Latex>에 대해 목표값 <Latex>t</Latex>를 예측하기 위해 다항식 함수를 사용합니다.</p>
+                                <Latex block>{`y(x, \\mathbf{w}) = w_0 + w_1x + w_2x^2 + ... + w_Mx^M = \\sum_{j=0}^{M} w_j x^j`}</Latex>
+                                <ul className="list-disc list-inside text-slate-600 mt-2 space-y-1">
+                                    <li><Latex>M</Latex>: 다항식의 차수 (Order)</li>
+                                    <li><Latex>{'w_j'}</Latex>: 데이터로부터 학습해야 할 계수 (Weights)</li>
+                                </ul>
+                                <InfoBox title="예제">
+                                    집 크기(<Latex>x</Latex>)에 따른 집값(<Latex>t</Latex>)을 예측할 때, <Latex>M=1</Latex>이면 직선, <Latex>M=2</Latex>면 곡선으로 관계를 모델링하는 것입니다.
+                                </InfoBox>
+                            </SubSection>
+
+                            <SubSection title="1.2 오차 함수 (Error Function)">
+                                <p>모델이 데이터와 얼마나 잘 맞는지를 측정하기 위해 <strong>오차 제곱합(Sum-of-Squares Error)</strong>을 사용합니다. 이 값을 최소화하는 <Latex>w</Latex>를 찾는 것이 목표입니다.</p>
+                                <Latex block>{`E(\\mathbf{w}) = \\frac{1}{2} \\sum_{n=1}^{N} \\{ y(x_n, \\mathbf{w}) - t_n \\}^2`}</Latex>
+                                <p className="text-sm text-slate-500 mt-2">
+                                    설명: 예측값 <Latex>y</Latex>와 실제값 <Latex>t</Latex> 차이의 제곱을 모두 더합니다. <Latex>1/2</Latex>은 미분 계산 편의를 위해 붙습니다.
+                                </p>
+                            </SubSection>
+
+                            <SubSection title="1.3 과적합(Over-fitting)과 정규화(Regularization)">
+                                <p className="font-semibold text-slate-800">RMS 에러:</p>
+                                <p className="mb-2">데이터 개수 <Latex>N</Latex>에 따른 오차 크기를 비교하기 위해 사용합니다.</p>
+                                <Latex block>{`E_{RMS} = \\sqrt{2E(\\mathbf{w}^*)/N}`}</Latex>
+                                
+                                <div className="my-4">
+                                    <span className="font-semibold text-red-600">과적합 문제:</span> 다항식 차수 <Latex>M</Latex>이 너무 크면 학습 데이터에는 완벽하게 맞지만(<Latex>{'E \\approx 0'}</Latex>), 새로운 데이터는 엉뚱하게 예측하는 현상이 발생합니다. 이때 계수 <Latex>w</Latex>의 값이 비정상적으로 커집니다.
+                                </div>
+
+                                <p className="font-semibold text-blue-700 mt-4">정규화 (Regularization):</p>
+                                <p>과적합을 막기 위해 오차 함수에 페널티 항(계수의 크기)을 추가합니다. (Ridge Regression)</p>
+                                <Latex block>{`\\tilde{E}(\\mathbf{w}) = \\frac{1}{2} \\sum_{n=1}^{N} \\{ y(x_n, \\mathbf{w}) - t_n \\}^2 + \\frac{\\lambda}{2} \\| \\mathbf{w} \\|^2`}</Latex>
+                                <div className="text-center text-sm text-slate-500 mb-2">
+                                    여기서, <Latex>{`\\| \\mathbf{w} \\|^2 = \\mathbf{w}^T\\mathbf{w} = w_0^2 + ... + w_M^2`}</Latex>
+                                </div>
+                                <InfoBox title="설명" type="note">
+                                    <Latex>{'\\lambda'}</Latex>(람다)가 클수록 계수(<Latex>w</Latex>)가 커지는 것을 강하게 억제하여 모델을 단순하게 만듭니다.
+                                </InfoBox>
+                            </SubSection>
+                        </Slide>
+
+                        {/* 2. Probability Theory */}
+                        <Slide title="확률론 (Probability Theory)" sectionNumber="02" icon="percent">
+                            <p className="mb-6 text-lg">불확실성을 다루기 위한 수학적 기초입니다.</p>
+
+                            <SubSection title="2.1 확률의 기본 법칙">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="bg-slate-50 p-4 rounded-lg">
+                                        <h4 className="font-bold text-slate-700 mb-2">합의 법칙 (Sum Rule)</h4>
+                                        <p className="text-sm mb-2">결합 확률을 한 변수에 대해 다 더하면 주변 확률이 됩니다.</p>
+                                        <Latex block>{`p(X) = \\sum_{Y} p(X, Y)`}</Latex>
+                                    </div>
+                                    <div className="bg-slate-50 p-4 rounded-lg">
+                                        <h4 className="font-bold text-slate-700 mb-2">곱의 법칙 (Product Rule)</h4>
+                                        <p className="text-sm mb-2">결합 확률은 조건부 확률과 주변 확률의 곱입니다.</p>
+                                        <Latex block>{`p(X, Y) = p(Y|X)p(X)`}</Latex>
+                                    </div>
+                                </div>
+                            </SubSection>
+
+                            <SubSection title="2.2 베이즈 정리 (Bayes' Theorem)">
+                                <p>결과(<Latex>Y</Latex>)를 보고 원인(<Latex>X</Latex>)을 추론할 때 사용되는 핵심 정리입니다.</p>
+                                <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl my-4 text-center">
+                                    <Latex block>{`p(Y|X) = \\frac{p(X|Y)p(Y)}{p(X)}`}</Latex>
+                                    <div className="my-2"></div>
+                                    <Latex block>{`p(X) = \\sum_{Y} p(X|Y)p(Y)`}</Latex>
+                                </div>
+                                <p className="text-center font-medium text-slate-700 mb-4">
+                                    구조: <span className="text-blue-600">사후확률(Posterior)</span> ∝ <span className="text-emerald-600">가능도(Likelihood)</span> × <span className="text-purple-600">사전확률(Prior)</span>
+                                </p>
+                                <InfoBox title="예제">
+                                    질병 검사 결과가 양성(<Latex>Y</Latex>)일 때, 실제로 병에 걸렸을 확률(<Latex>X</Latex>)을 구할 때 사용합니다. 단순히 양성이라고 100% 병은 아닙니다(오진율 고려).
+                                </InfoBox>
+                            </SubSection>
+
+                            <SubSection title="2.3 기댓값과 분산">
+                                <h4 className="font-bold text-slate-800 mt-2">기댓값 (Expectation)</h4>
+                                <p>평균적으로 기대되는 값입니다.</p>
+                                <div className="flex flex-col sm:flex-row justify-around my-2">
+                                    <Latex block>{`\\mathbb{E}[f] = \\sum_{x} p(x)f(x) \\quad \\text{(이산형)}`}</Latex>
+                                    <Latex block>{`\\mathbb{E}[f] = \\int p(x)f(x) dx \\quad \\text{(연속형)}`}</Latex>
+                                </div>
+
+                                <h4 className="font-bold text-slate-800 mt-6">분산 (Variance)</h4>
+                                <p>데이터가 평균으로부터 얼마나 퍼져 있는지를 나타냅니다.</p>
+                                <Latex block>{`var[f] = \\mathbb{E}[(f(x) - \\mathbb{E}[f(x)])^2] = \\mathbb{E}[f(x)^2] - \\mathbb{E}[f(x)]^2`}</Latex>
+
+                                <h4 className="font-bold text-slate-800 mt-6">공분산 (Covariance)</h4>
+                                <p>두 변수 <Latex>x, y</Latex>가 함께 변하는 정도입니다.</p>
+                                <Latex block>{`cov[x, y] = \\mathbb{E}_{x,y}[xy] - \\mathbb{E}[x]\\mathbb{E}[y]`}</Latex>
+                            </SubSection>
+                        </Slide>
+
+                        {/* 3. Gaussian Distribution */}
+                        <Slide title="가우시안 분포 (Gaussian Distribution)" sectionNumber="03" icon="activity">
+                            <p className="mb-6 text-lg">자연계의 많은 현상을 설명하는 정규 분포입니다.</p>
+
+                            <SubSection title="3.1 확률 밀도 함수">
+                                <Latex block>{`\\mathcal{N}(x|\\mu, \\sigma^2) = \\frac{1}{(2\\pi\\sigma^2)^{1/2}} \\exp \\left\\{ -\\frac{1}{2\\sigma^2}(x-\\mu)^2 \\right\\}`}</Latex>
+                                <p className="text-center mt-2 text-slate-600">
+                                    <Latex>{'\\mu'}</Latex>: 평균, <Latex>{'\\sigma^2'}</Latex>: 분산
+                                </p>
+                            </SubSection>
+
+                            <SubSection title="3.2 다변량 가우시안 (Multivariate Gaussian)">
+                                <p>변수가 여러 개(<Latex>D</Latex>차원)일 때의 분포입니다.</p>
+                                <Latex block>{`\\mathcal{N}(\\mathbf{x}|\\boldsymbol{\\mu}, \\boldsymbol{\\Sigma}) = \\frac{1}{(2\\pi)^{D/2}} \\frac{1}{|\\boldsymbol{\\Sigma}|^{1/2}} \\exp \\left\\{ -\\frac{1}{2}(\\mathbf{x}-\\boldsymbol{\\mu})^T \\boldsymbol{\\Sigma}^{-1} (\\mathbf{x}-\\boldsymbol{\\mu}) \\right\\}`}</Latex>
+                                <p className="text-center mt-2 text-slate-600">
+                                    <Latex>{'\\boldsymbol{\\Sigma}'}</Latex>: 공분산 행렬
+                                </p>
+                            </SubSection>
+
+                            <SubSection title="3.3 최대 가능도 추정 (MLE)">
+                                <p className="mb-2">데이터 <Latex>X</Latex>가 주어졌을 때, 이 데이터를 가장 잘 설명하는 매개변수 <Latex>{'\\mu, \\sigma^2'}</Latex>를 찾습니다. 로그 가능도(Log Likelihood)를 미분하여 0이 되는 지점을 찾습니다.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                                    <div className="bg-blue-50 p-4 rounded text-center">
+                                        <span className="block font-bold mb-2">평균의 MLE</span>
+                                        <Latex>{`\\mu_{ML} = \\frac{1}{N} \\sum_{n=1}^{N} x_n`}</Latex>
+                                    </div>
+                                    <div className="bg-blue-50 p-4 rounded text-center">
+                                        <span className="block font-bold mb-2">분산의 MLE</span>
+                                        <Latex>{`\\sigma_{ML}^2 = \\frac{1}{N} \\sum_{n=1}^{N} (x_n - \\mu_{ML})^2`}</Latex>
+                                    </div>
+                                </div>
+                                <InfoBox title="편향(Bias) 문제" type="note">
+                                    MLE로 구한 분산은 실제 분산보다 작게 추정되는 경향이 있습니다. 이를 보정하기 위해 <Latex>N</Latex> 대신 <Latex>N-1</Latex>로 나눕니다.
+                                    <div className="mt-2 text-center">
+                                        <Latex>{`\\tilde{\\sigma}^2 = \\frac{N}{N-1} \\sigma_{ML}^2`}</Latex>
+                                    </div>
+                                </InfoBox>
+                            </SubSection>
+                        </Slide>
+
+                        {/* 4. Bayesian Curve Fitting */}
+                        <Slide title="베이지안 곡선 피팅 (Bayesian Curve Fitting)" sectionNumber="04" icon="git-merge">
+                            <p className="mb-6 text-lg">단순히 하나의 <Latex>w</Latex>값을 찾는 것이 아니라, <Latex>w</Latex>의 확률 분포를 다룹니다.</p>
+
+                            <SubSection title="4.1 베이지안 접근법">
+                                <p className="mb-2"><strong>사후 분포:</strong></p>
+                                <Latex block>{`p(\\mathbf{w}|\\mathbf{x}, \\mathbf{t}, \\alpha, \\beta) \\propto p(\\mathbf{t}|\\mathbf{x}, \\mathbf{w}, \\beta)p(\\mathbf{w}|\\alpha)`}</Latex>
+                                <p className="mt-4">오차 함수 최소화 대신 사후 확률을 최대화(MAP)하는 방식을 사용할 수 있으며, 이는 정규화된 오차 함수를 최소화하는 것과 같습니다.</p>
+                                <Latex block>{`\\beta \\tilde{E}(\\mathbf{w}) = \\frac{\\beta}{2} \\sum \\{ y(x_n, \\mathbf{w}) - t_n \\}^2 + \\frac{\\alpha}{2} \\mathbf{w}^T\\mathbf{w}`}</Latex>
+                                
+                                <InfoBox title="설명" type="note">
+                                    <p>MLE 방식은 단 하나의 최적 파라미터 <Latex>w</Latex>를 찾지만, 베이지안 방식은 파라미터의 <strong>분포(확률)</strong> 전체를 고려합니다.</p>
+                                    <p className="mt-2">데이터가 적을 때 MLE는 과적합되기 쉽지만, 베이지안 접근법은 사전 확률(Prior)을 통해 이를 제어하고 모델의 복잡도를 자동으로 조절하는 효과가 있습니다.</p>
+                                </InfoBox>
+                            </SubSection>
+
+                            <SubSection title="4.2 예측 분포 (Predictive Distribution)">
+                                <p>새로운 입력 <Latex>x</Latex>에 대한 예측값 <Latex>t</Latex>의 분포를 구합니다. 예측값뿐만 아니라 <strong>예측의 불확실성(분산)</strong>까지 알 수 있습니다.</p>
+                                <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-xl my-4 text-center">
+                                    <Latex block>{`p(t|x, \\mathbf{x}, \\mathbf{t}) = \\mathcal{N}(t|m(x), s^2(x))`}</Latex>
+                                </div>
+                                <ul className="list-disc list-inside space-y-2 text-slate-700">
+                                    <li><Latex>m(x)</Latex>: 예측의 평균값</li>
+                                    <li><Latex>s^2(x)</Latex>: 예측의 불확실성 (데이터가 적은 영역에서는 불확실성이 커짐)</li>
+                                </ul>
+                                <InfoBox title="상세 풀이 예제: 데이터 수에 따른 불확실성" type="example">
+                                    <p className="font-bold mb-2">상황: 직선(1차 함수) 모델을 학습 중일 때</p>
+                                    <ul className="list-decimal list-inside space-y-3 text-sm">
+                                        <li className="p-2 bg-white/50 rounded">
+                                            <strong>데이터가 1개일 때:</strong> 점 하나만으로는 직선을 확정할 수 없습니다. 이 점을 지나는 무수히 많은 직선이 가능하므로, <strong>이 점과 먼 곳(<Latex>x</Latex>)일수록 분산 <Latex>s^2(x)</Latex>가 매우 커집니다.</strong> (예측을 확신할 수 없음)
+                                        </li>
+                                        <li className="p-2 bg-white/50 rounded">
+                                            <strong>데이터가 100개일 때:</strong> 점들이 직선 형태를 이루면, 모델이 직선을 거의 확신하게 됩니다. 이때는 <Latex>s^2(x)</Latex>가 작아져 <strong>예측 결과가 좁은 범위로 수렴</strong>합니다.
+                                        </li>
+                                    </ul>
+                                    <p className="mt-2 text-xs text-slate-500">* 위 수식의 <Latex>{`s^2(x) = \\beta^{-1} + \\phi(x)^T S \\phi(x)`}</Latex> 에서 뒤쪽 항이 '데이터와의 거리'에 따른 불확실성을 수학적으로 표현한 것입니다.</p>
+                                </InfoBox>
+                            </SubSection>
+                        </Slide>
+
+                        {/* 5. Decision Theory */}
+                        <Slide title="결정 이론 (Decision Theory)" sectionNumber="05" icon="check-square">
+                            <p className="mb-6 text-lg">확률적 추론을 바탕으로 최적의 결정을 내리는 방법입니다.</p>
+
+                            <SubSection title="5.1 오분류 최소화 (Minimizing Misclassification)">
+                                <p>분류 문제에서 에러를 최소화하려면 사후 확률 <Latex>{'p(\\mathcal{C}_k|x)'}</Latex>가 가장 높은 클래스로 분류해야 합니다.</p>
+                                <Latex block>{`p(\\text{mistake}) = \\int_{\\mathcal{R}_1} p(x, \\mathcal{C}_2) dx + \\int_{\\mathcal{R}_2} p(x, \\mathcal{C}_1) dx`}</Latex>
+                            </SubSection>
+
+                            <SubSection title="5.2 기대 손실 최소화 (Minimizing Expected Loss)">
+                                <p className="mb-2">모든 실수가 같은 비중을 갖지 않습니다. 단순한 에러 최소화가 아니라, <strong>실수의 대가(비용)</strong>를 최소화하는 것이 목표입니다.</p>
+                                <p>이를 위해 손실 행렬 <Latex>{'L_{kj}'}</Latex>를 도입합니다.</p>
+                                <Latex block>{`\\mathbb{E}[L] = \\sum_k \\sum_j \\int_{\\mathcal{R}_j} L_{kj} p(x, \\mathcal{C}_k) dx`}</Latex>
+                                <InfoBox title="실전 예제 풀이: 암 진단 비용 계산" type="example">
+                                    <div className="space-y-3 text-sm">
+                                        <div className="p-3 bg-white/60 rounded border border-slate-200">
+                                            <p className="font-bold text-slate-800 mb-1">1. 가정 상황</p>
+                                            <ul className="list-disc list-inside">
+                                                <li>환자 X가 암일 확률 <Latex>{'P(\\text{Cancer}|x) = 0.01'}</Latex> (1%)</li>
+                                                <li>환자 X가 정상일 확률 <Latex>{'P(\\text{Normal}|x) = 0.99'}</Latex> (99%)</li>
+                                            </ul>
+                                        </div>
+                                        <div className="p-3 bg-white/60 rounded border border-slate-200">
+                                            <p className="font-bold text-slate-800 mb-1">2. 손실 행렬 (비용)</p>
+                                            <ul className="list-disc list-inside">
+                                                <li>정상인데 암 판정 (재검사비): <strong>비용 1</strong></li>
+                                                <li>암인데 정상 판정 (치료 놓침): <strong>비용 1000</strong> (매우 치명적)</li>
+                                            </ul>
+                                        </div>
+                                        <div className="p-3 bg-blue-50/50 rounded border border-blue-100">
+                                            <p className="font-bold text-blue-800 mb-1">3. 기대 손실 계산 (어느 쪽을 선택할까?)</p>
+                                            <p className="mb-1"><strong>A. '정상'이라고 판정할 때의 기대 비용:</strong></p>
+                                            <p className="pl-4 text-slate-600"><Latex>{'0.99 \\times 0 + 0.01 \\times 1000 = 10'}</Latex></p>
+                                            <p className="mb-1 mt-2"><strong>B. '암(재검사)'이라고 판정할 때의 기대 비용:</strong></p>
+                                            <p className="pl-4 text-slate-600"><Latex>{'0.99 \\times 1 + 0.01 \\times 0 = 0.99'}</Latex></p>
+                                        </div>
+                                        <p className="font-bold text-emerald-700">
+                                            결론: 암일 확률은 1%밖에 안 되지만, 기대 비용은 B(0.99)가 A(10)보다 훨씬 적으므로 '암(재검사)'으로 판정하는 것이 합리적입니다.
+                                        </p>
+                                    </div>
+                                </InfoBox>
+                                <InfoBox title="요약" type="note">
+                                    최적의 결정은 단순히 확률이 높은 쪽이 아니라, <strong>확률 × 비용(기대 손실)</strong>이 가장 적은 쪽을 선택하는 것입니다.
+                                </InfoBox>
+                            </SubSection>
+
+                            <SubSection title="5.3 생성 모델 vs 판별 모델">
+                                <ul className="space-y-3">
+                                    <li className="flex items-start">
+                                        <span className="bg-purple-100 text-purple-800 text-xs font-bold px-2 py-1 rounded mr-2 mt-1 shrink-0">생성 모델</span>
+                                        <span><Latex>p(x|t)</Latex>와 <Latex>p(t)</Latex>를 모델링한 후 베이즈 정리로 <Latex>p(t|x)</Latex>를 구함. (데이터 생성 과정을 모델링)</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="bg-orange-100 text-orange-800 text-xs font-bold px-2 py-1 rounded mr-2 mt-1 shrink-0">판별 모델</span>
+                                        <span><Latex>p(t|x)</Latex>를 직접 모델링. (예: 로지스틱 회귀)</span>
+                                    </li>
+                                </ul>
+                            </SubSection>
+                        </Slide>
+
+                        {/* 6. Information Theory */}
+                        <Slide title="정보 이론 (Information Theory)" sectionNumber="06" icon="info">
+                            <p className="mb-6 text-lg">정보의 양과 불확실성을 수치화합니다.</p>
+
+                            <SubSection title="6.1 엔트로피 (Entropy)">
+                                <p>확률 변수 <Latex>x</Latex>의 불확실성을 나타냅니다. 확률이 낮을수록(놀라운 사건일수록) 정보량은 많습니다.</p>
+                                <Latex block>{`H[x] = -\\sum_{x} p(x) \\log_2 p(x)`}</Latex>
+                                <InfoBox title="실전 풀이: 동전 던지기 엔트로피 계산" type="example">
+                                    <div className="space-y-3 text-sm">
+                                        <div className="p-2 border-l-4 border-slate-300 pl-3">
+                                            <p className="font-bold">상황 1: 공정한 동전 (앞 0.5, 뒤 0.5)</p>
+                                            <p className="mt-1">결과를 전혀 예측할 수 없는 최대 불확실성 상태입니다.</p>
+                                            <div className="mt-2 bg-slate-100 p-2 rounded">
+                                                <Latex>{`H = -0.5 \\log_2 0.5 - 0.5 \\log_2 0.5 = 1`}</Latex>
+                                                <p className="text-xs text-slate-500 mt-1">(정보량: 1 bit)</p>
+                                            </div>
+                                        </div>
+                                        <div className="p-2 border-l-4 border-blue-300 pl-3">
+                                            <p className="font-bold">상황 2: 조작된 동전 (앞 0.9, 뒤 0.1)</p>
+                                            <p className="mt-1">대부분 앞면이 나올 것이라 예측 가능하므로 불확실성이 낮습니다.</p>
+                                            <div className="mt-2 bg-blue-50 p-2 rounded">
+                                                <Latex>{`H = -0.9 \\log_2 0.9 - 0.1 \\log_2 0.1 \\approx 0.469`}</Latex>
+                                                <p className="text-xs text-slate-500 mt-1">(정보량: 약 0.47 bit로 감소)</p>
+                                            </div>
+                                        </div>
+                                        <p className="font-bold text-slate-700 pt-2">→ 확률 분포가 한쪽으로 쏠릴수록(예측하기 쉬울수록) 엔트로피는 낮아집니다.</p>
+                                    </div>
+                                </InfoBox>
+                            </SubSection>
+
+                            <SubSection title="6.2 쿨백-라이블러 발산 (KL Divergence)">
+                                <p>두 확률 분포 <Latex>p(x)</Latex>와 <Latex>q(x)</Latex>가 얼마나 다른지를 측정합니다. (분포 간의 거리 개념)</p>
+                                <Latex block>{`KL(p\\|q) = -\\int p(x) \\ln \\left\\{ \\frac{q(x)}{p(x)} \\right\\} dx`}</Latex>
+                                <p className="text-sm text-slate-500 mt-2">
+                                    항상 0 이상이며, <Latex>p=q</Latex>일 때만 0이 됩니다. 대칭적이지 않습니다 (<Latex>{'KL(p\\|q) \\neq KL(q\\|p)'}</Latex>).
+                                </p>
+                                <InfoBox title="활용 예시" type="note">
+                                    머신러닝에서는 '실제 데이터 분포 <Latex>p</Latex>'와 '모델이 예측한 분포 <Latex>q</Latex>' 사이의 차이를 줄이는 목적으로 사용됩니다. (예: Cross-Entropy Loss 최소화)
+                                </InfoBox>
+                            </SubSection>
+
+                            <SubSection title="6.3 상호 정보량 (Mutual Information)">
+                                <p>두 변수 <Latex>x, y</Latex>가 서로 얼마나 의존적인지를 나타냅니다.</p>
+                                <Latex block>{`I[x, y] = KL(p(x, y) \\| p(x)p(y)) = H[x] - H[x|y]`}</Latex>
+                                <p className="mt-2 text-slate-700">
+                                    <Latex>x</Latex>를 알게 됨으로써 줄어드는 <Latex>y</Latex>의 불확실성의 양으로 해석할 수 있습니다.
+                                </p>
+                                <InfoBox title="직관적 예제" type="example">
+                                    <p className="mb-1"><strong>Q. "내일 날씨(<Latex>x</Latex>)"를 알면 "우산 판매량(<Latex>y</Latex>)" 예측이 쉬워질까?</strong></p>
+                                    <ul className="list-disc list-inside mt-1 text-sm text-slate-600 space-y-1">
+                                        <li><strong>YES:</strong> 비가 오면 우산이 많이 팔립니다. 서로 관련이 깊으므로 <Latex>I[x, y]</Latex>는 <strong>큽니다</strong>.</li>
+                                        <li><strong>NO:</strong> "주사위 눈금(<Latex>x</Latex>)"을 안다고 우산 판매량(<Latex>y</Latex>)을 알 수는 없습니다. 서로 독립이므로 <Latex>I[x, y] \\approx 0</Latex>입니다.</li>
+                                    </ul>
+                                </InfoBox>
+                            </SubSection>
+                        </Slide>
+
+                        {/* Footer */}
+                        <footer className="text-center text-slate-400 py-8 border-t border-slate-200 mt-12">
+                            <p>© 2024 Machine Learning Lecture Notes Summary</p>
+                        </footer>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>회귀분석교재 8장 요약</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/theme/league.min.css" id="theme">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/monokai.min.css">
+
+    <style>
+        .reveal h1, .reveal h2, .reveal h3, .reveal h4 { text-transform: none; }
+        .reveal p, .reveal li { font-size: 0.85em; line-height: 1.6; text-align: left; }
+        .reveal pre { width: 100%; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .reveal pre code { max-height: 400px; font-size: 1.2em; line-height: 1.3; }
+        .code-annotation { color: #ffd700; font-size: 0.7em; margin-top: -10px; display: block; text-align: left; }
+        .slide-footer { position: absolute; bottom: 10px; right: 10px; font-size: 0.5em; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+<div class="reveal">
+    <div class="slides">
+
+        <section>
+            <h1>회귀분석교재 8장</h1>
+            <h3>단순선형회귀부터 결과표 작성까지</h3>
+            <p style="text-align: center; margin-top: 50px;">Stata 실습 노트 정리</p>
+        </section>
+
+        <section>
+            <h3>8.1 단순선형회귀모형의 추정 (개념)</h3>
+            <ul>
+                <li>종속변수($y$)와 독립변수($x$)가 각각 하나씩 있는 모형</li>
+                <li>회귀분석은 $x$와 $y$의 선형관계를 결정하는 모수를 추정하는 것이 목표</li>
+                <li><strong>최소제곱(OLS):</strong> 가장 일반적인 추정방법
+                    <ul>
+                        <li>잔차의 제곱합을 최소화시키는 추정화된 모수를 선택하는 방법</li>
+                    </ul>
+                </li>
+            </ul>
+            
+        </section>
+
+        <section>
+            <h3>OLS의 기본 가정 (BLUE 조건)</h3>
+            <ol>
+                <li>실제 모형이 추정모형과 같이 선형이다.</li>
+                <li>오차항의 조건부 기댓값이 0이다.</li>
+                <li>오차항의 조건부 분산은 모든 분산이 동일하다(동분산성).</li>
+                <li>두 개의 서로 다른 오차항이 독립이다.</li>
+            </ol>
+            <div style="background-color: #333; color: #fff; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                → 위 조건 만족 시: <strong>BLUE</strong> (Best Linear Unbiased Estimator, 최우수선형불편추정량)
+            </div>
+            <p>5) 오차항($e_i$)는 정규분포를 따른다. <br> 즉, $e_i/x_i \sim N(0, \sigma^2)$ 이다 [p.131]</p>
+            
+
+[Image of homoscedasticity vs heteroscedasticity]
+
+        </section>
+
+        <section>
+            <h3>8.1 데이터 로드 및 회귀분석</h3>
+            <pre><code class="stata">
+* R_data8_1.dta 사용
+** food_exp(식비지출)= y, income(소득)= x 
+
+use "/STATA기초통계와분석 20150620/STATA기초통계_20150620_14버전/R_data8_1.dta"
+
+reg food_exp income  // y변수 x변수 순서로
+            </code></pre>
+            <ul>
+                <li>→ 소득이 100달러 늘어날 때 식비지출이 평균 10.2달러 증가하는 결과가 나타남</li>
+                <li>→ 소득이 0인 가구는 평균 83.4달러를 식비지출에 사용함</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>8.1 그래프 및 R-squared 계산</h3>
+            <pre><code class="stata">
+graph matrix income food_exp , half
+
+// R-squared(모형의 적합도) = SSR/SST = 1-(SSE/SST)  
+// SST(sum of squared total): 총변동, SSR(sum of squred regression): 설명변동  
+// SSE(sum of squared error) : 설명되지 않은 변동
+
+di 1-(e(rss)/(e(rss)+e(mss))) 
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.1 수정된 R-squared (Adjusted $R^2$)</h3>
+            <ul>
+                <li>설명변수의 개수가 많아지면 R-squared가 높아지는데, 설명변수가 $y$와 전혀 무관한 경우에도 그러함</li>
+                <li>→ 이때, <strong>adjusted R-squared</strong>를 적합도로 이용함</li>
+            </ul>
+            <pre><code class="stata">
+di 1-(1-e(r2))*((e(N)-1)/(e(N)-2)) // return list를 이용 
+
+// R-squared는 y,x 두 변수의 표본상관계수(r^2) 
+corr food_exp income
+return list
+di r(rho)^2
+
+reg food_exp income, nocons //상수항 없이 회귀모형 추정
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.2 다중선형회귀모형의 추정</h3>
+            <p>→ 설명변수가 2개 이상인 경우</p>
+            <pre><code class="stata">
+* R_data8_2.dta 사용
+** SAT시험성적(csat)= y, 고등학교 졸업생 SAT 응시율(percent)= x1, 
+** 가계소득 중앙값(income)= x2
+
+use "/STATA기초통계와분석 20150620/STATA기초통계_20150620_14버전/R_data8_2.dta"
+
+reg csat percent income
+reg csat percent income, beta //표준화된 추정계수 
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.2 표준화된 추정계수 (Beta)</h3>
+            <ul>
+                <li>→ 추정에 사용하는 모든 변수들을 표준화 시킨 다음 선형회귀모형으로 추정한 계수</li>
+                <li>→ 이렇게 구한 베타값은 서로 비교가 가능</li>
+                <li>→ percent의 베타값이 income 베타값보다 5배 정도 크기 때문에, percent가 SAT성적에 미치는 영향이 더 크다고 말할 수 있음</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>8.2 변수 표준화 직접 구현</h3>
+            <pre><code class="stata">
+qui reg csat percent income, beta 
+
+// e(sample)은 결측치 제외하고 분석하기 위한 것, e(sample)=0이면 결측치
+qui su csat if e(sample)==1 
+gen csat_s=(csat-r(mean))/r(sd)
+
+qui su percent if e(sample)==1
+gen percent_s=(percent-r(mean))/r(sd) 
+
+qui su income if e(sample)==1
+gen income_s=(income-r(mean))/r(sd)
+
+reg csat_s percent_s income_s, nocons
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.2 결측치 처리 및 상관계수</h3>
+            <ul>
+                <li>회귀모형 추정에서는 결측치가 존재할 경우 사례별 삭제가 진행됨(income 결측치만 분석에서 제외)</li>
+                <li>→ 따라서 추정에 사용된 변수들의 상관계수를 구할 때도 짝별 삭제 방식의 <code>pwcorr</code>이 아닌 <code>corr</code> 사용</li>
+            </ul>
+            <pre><code class="stata">
+pwcorr csat percent income
+corr csat percent income
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.2 로그 변환 모형</h3>
+            <pre><code class="stata">
+gen ln_csat = log(csat)    //종속변수에 ln을 취한 회귀모형 추정 
+reg ln_csat percent income //x가 1단위 증가할 때 y가(100x베타1)%만큼 변한다고 해석함
+            </code></pre>
+            <ul>
+                <li>→ SAT 응시율이 1% 증가할 때 SAT 시험성적이 0.27% 하락하는 것으로 나타남</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>8.3 적합값과 잔차 (1)</h3>
+            <ul>
+                <li>적합값은 확률변수의 선형결합이기 때문에 확률변수가 됨</li>
+                <li>잔차는 오차의 추정량으로 오차는 관측 불가하지만, 잔차는 관찰 가능하기 때문에 선형회귀분석 사후분석에 많이 사용됨</li>
+            </ul>
+            <pre><code class="stata">
+reg csat percent income
+predict yhat
+predict ehat, resid
+
+list csat yhat ehat in 1/10
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.3 적합값과 잔차 (2) - 직접 계산</h3>
+            <pre><code class="stata">
+// 스케일러 데이터 계산
+gen yhat1 = _b[_cons]+_b[percent]*percent+_b[income]*income 
+gen ehat1=csat-yhat1
+list yhat yhat1 ehat ehat1 in 1/5
+
+di _se[percent]  //추정계수의 표준오차 
+di _se[income] 
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.4 추정계수의 유의성 검정 (1)</h3>
+            <p>5) 오차항은 정규분포를 따른다 //5개의 가정하에 모수 베타의 유의성에 대한 검정통계랑 구축이 가능함</p>
+            <pre><code class="stata">
+* R_data8_3.dta 사용(506개의 주택 관련 여러 변수들이 들어있는 데이터)
+** 이중 로그 주택가격(lprice)= y, 4개 변수(lnox, ldist, lproptax, crime) = x 
+ 
+reg lprice lnox ldist lproptax crime 
+di -0.9380/0.1459  //t값
+            </code></pre>
+            <ul>
+                <li>→ 각 변수가 주택가격(lprice)에 통계적으로 유의한 영향을 미친다고 할 수 있음</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>8.4 추정계수의 유의성 검정 (2) - test</h3>
+            <pre><code class="stata">
+qui reg lprice lnox ldist lproptax crime 
+test lnox
+test lnox =1 
+test lnox+ldist=1 
+test (lnox+ldist=1)(lproptax=0) 
+
+// 상수항 제외한 모든 추정계수 값이 0이라는 가설을 검정
+test lnox ldist lproptax crime 
+
+testparm lnox //변수 이름만 입력 가능 
+testparm lnox ldist, equal
+test lnox ldist lproptax
+testparm l*
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.5 그래프를 이용한 분석 (기본)</h3>
+            <pre><code class="stata">
+* R_data8_1.dta 사용
+// 단순회귀(적합선&산포도)
+twoway (lfit food_exp income)(scatter food_exp income) 
+// + 95% 신뢰구간
+twoway (lfitci food_exp income)(scatter food_exp income) 
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.5 그래프를 이용한 분석 (Margins)</h3>
+            <pre><code class="stata">
+* R_data8_4.dta 사용
+reg wage age ttl_exp tenure if union==1 
+// 노동조합에 가입한 근로자의 임금(wage), 근무연한(tenure) 
+// 근무연한별로 임금이 어떤 패턴을 보이는지 
+
+// 근무연한 변수가 0에서 25까지 변할 때 추정치를 이용하여 
+// 각 근무연한에서 wage 변수 예측값을 계산함  
+margins, at(tenure=(0(1)25)) atmeans noatlegend 
+            </code></pre>
+            <ul>
+                <li>→ 임금예측값은 tenure 값이 증가할수록 커짐</li>
+            </ul>
+            <pre><code class="stata">
+// addplot은 산포도를 동시에 한 평면에 그리고자 할 때 이용 
+marginsplot, noci recast(line) addplot((scatter wage tenure if union==1)) legend(off)
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.5 그래프를 이용한 분석 (심화)</h3>
+            <pre><code class="stata">
+// 노동조합에 가입한 표본과 가입하지 않은 표본으로 각각 회귀모형을 추정 
+qui reg wage age ttl_exp tenure if union==0 
+
+// 코드 오류가 나타남 -> 확인 필요
+qui su age                                     
+local age_mean=r(mean)
+qui su ttl_exp
+local exp_mean=r(mean)
+
+qui margins, at(tenure=(0(1)25) age=`age_mean' ttl_exp=`exp_mean') noatlegend
+marginsplot, nocl recast(line)
+
+qui reg wage age ttl_exp tenure if union==1
+margins, at(tenure=(0(1)25) age=`age_mean' ttl_exp=`exp_mean') noatlegend
+marginsplot, nocl recast(line)
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.6 추정결과 표로 만들기 (estimates table)</h3>
+            <pre><code class="stata">
+* R_data8_5.dta 사용
+reg lwg age wc hc inc if lwg>0    //하나의 모형 추정
+estimates table
+
+// 추정계수 소수점 3자리, 표준오차 함께 표기, R^2값 표기, 
+// stats로 불러드린 추정치 포맷 지정
+estimates table, b(%9.3f) se(%9.3f) stats(r2) stfmt(%9.2f)
+
+// star 은 유의수준 표시, se( )와 함께 사용 불가 
+estimates table, b(%9.3f) stats(r2) stfmt(%9.2f) star(0.01 0.05 0.1)
+            </code></pre>
+        </section>
+
+        <section>
+            <h3>8.6 추정결과 표로 만들기 (estout)</h3>
+            <pre><code class="stata">
+qui reg lwg age wc hc inc if lwg>0  //2가지 이상의 모형 추정 
+estimates store model1
+qui reg lwg age wc hc if lwg>0
+estimates store model2
+estimates table model1 model2, stats(r2) b(%9.3f) style(column)
+
+// estout은 표를 만들 때 스타일을 자유롭게 정할 수 있는 명령어 
+qui reg lwg age wc hc inc if lwg>0 
+estout, cells(b(star fmt(%9.3f)) se(par fmt(%9.3f))) starlevels(* 0.1 ** 0.05 *** 0.01) legend  
+            </code></pre>
+        </section>
+
+        <section>
+            <h2>감사합니다</h2>
+            <p>회귀분석 8장 요약 끝</p>
+        </section>
+
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/reveal.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/highlight/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.5.0/plugin/math/math.min.js"></script>
+
+<script>
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        center: true,
+        hash: true,
+        // MathJax 설정
+        math: {
+            mathjax: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+            config: 'TeX-AMS_HTML-full',
+            tex2jax: {
+                inlineMath: [['\\(','\\)']],
+                displayMath: [['\\[','\\]']],
+                balanceBraces: true,
+                processEscapes: false,
+                processRefs: true,
+                processEnvironments: true,
+                preview: 'TeX',
+                skipTags: ['script','noscript','style','textarea','pre','code'],
+                ignoreClass: 'tex2jax_ignore',
+                processClass: 'tex2jax_process'
+            },
+        },
+        plugins: [ RevealHighlight, RevealMath.KaTeX ]
+    });
+</script>
+
+</body>
+</html>
