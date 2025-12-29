@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성능관리와 조기 종료 (Dropout, Regularization)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .code-line {
+            display: flex;
+            align-items: baseline;
+        }
+
+        .line-num {
+            color: #6b7280;
+            width: 2rem;
+            flex-shrink: 0;
+            text-align: right;
+            margin-right: 1rem;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navigation -->
+    <nav class="max-w-5xl mx-auto px-6 py-4 absolute top-0 left-0 w-full z-10">
+        <a href="deeplearing.html"
+            class="text-white hover:text-indigo-200 font-bold flex items-center gap-2 bg-black/20 inline-block px-4 py-2 rounded-full backdrop-blur-sm transition-colors">
+            <span>←</span> Deep Learning Study
+        </a>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white py-12 shadow-lg">
+        <div class="max-w-5xl mx-auto px-6 text-center">
+            <h1 class="text-4xl font-bold mb-4">성능관리와 조기 종료 (Dropout, Regularization)</h1>
+            <p class="text-xl text-indigo-100 font-light">코드 한 줄 한 줄, 생략 없는 상세 분석 리포트</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-4 py-12 space-y-16">
+
+        <!-- Section 1 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">1</span>
+                <h2 class="text-2xl font-bold text-slate-800">환경 준비 및 라이브러리 로딩</h2>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm">import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import *
+from sklearn.preprocessing import MinMaxScaler
+
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, Input
+from keras.backend import clear_session
+from keras.optimizers import Adam
+from keras.datasets import mnist</code></pre>
+                </div>
+                <div class="p-8 bg-slate-50">
+                    <h3 class="font-bold text-lg mb-4 text-indigo-600">코드 상세 설명</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                        <li><strong class="text-slate-900">import pandas as pd</strong>: 데이터 처리를 위한 판다스 라이브러리를 불러오며, 별칭
+                            <code>pd</code>를 사용합니다.</li>
+                        <li><strong class="text-slate-900">import numpy as np</strong>: 수치 계산 및 배열 처리를 위한 넘파이를 불러오며, 별칭
+                            <code>np</code>를 사용합니다.</li>
+                        <li><strong class="text-slate-900">import matplotlib.pyplot as plt</strong>: 데이터 시각화(그래프)를 위한
+                            라이브러리입니다.</li>
+                        <li><strong class="text-slate-900">import seaborn as sns</strong>: 맷플롯립 기반의 더 예쁜 시각화 라이브러리입니다.
+                        </li>
+                        <li class="border-t border-slate-200 my-2 pt-2"></li>
+                        <li><strong class="text-slate-900">from sklearn.model_selection import
+                                train_test_split</strong>: 데이터를 학습용과 검증용으로 나누기 위한 함수입니다.</li>
+                        <li><strong class="text-slate-900">from sklearn.metrics import *</strong>: 모델 성능 평가를 위한 모든
+                            지표(정확도, 오차 행렬 등)를 불러옵니다.</li>
+                        <li><strong class="text-slate-900">from sklearn.preprocessing import MinMaxScaler</strong>: 데이터를
+                            0과 1 사이로 정규화(Scaling)하기 위한 도구입니다.</li>
+                        <li class="border-t border-slate-200 my-2 pt-2"></li>
+                        <li><strong class="text-slate-900">from keras.models import Sequential</strong>: 레이어를 순차적으로 쌓는
+                            딥러닝 모델의 뼈대 클래스입니다.</li>
+                        <li><strong class="text-slate-900">from keras.layers import ...</strong>: Dense(완전연결층),
+                            Flatten(평탄화), Input(입력층) 등 레이어들을 불러옵니다.</li>
+                        <li><strong class="text-slate-900">from keras.backend import clear_session</strong>: 이전에 메모리에 남은
+                            모델 구조를 지워주는 함수입니다. (메모리 관리용)</li>
+                        <li><strong class="text-slate-900">from keras.optimizers import Adam</strong>: 경사하강법 최적화 알고리즘 중
+                            가장 널리 쓰이는 Adam을 불러옵니다.</li>
+                        <li><strong class="text-slate-900">from keras.datasets import mnist</strong>: 예제용 손글씨 데이터셋을
+                            불러옵니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">2</span>
+                <h2 class="text-2xl font-bold text-slate-800">학습 곡선 시각화 함수 정의</h2>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm"># 학습곡선 함수
+def dl_history_plot(history):
+    plt.plot(history['loss'], label='train_err', marker = '.')
+    plt.plot(history['val_loss'], label='val_err', marker = '.')
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.grid()
+    plt.show()</code></pre>
+                </div>
+                <div class="p-8 bg-slate-50">
+                    <h3 class="font-bold text-lg mb-4 text-indigo-600">코드 상세 설명</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                        <li><strong class="text-slate-900">def dl_history_plot(history):</strong>: 학습 결과(history 객체의
+                            내용)를 받아 그래프를 그리는 함수를 정의합니다.</li>
+                        <li><strong class="text-slate-900">plt.plot(history['loss']...)</strong>: 학습 데이터의 오차(Loss)를 그래프로
+                            그립니다. 점(marker='.')을 찍어 표시합니다.</li>
+                        <li><strong class="text-slate-900">plt.plot(history['val_loss']...)</strong>: 검증
+                            데이터(Validation)의 오차를 그래프로 그립니다. 과적합 여부를 판단하는 핵심 선입니다.</li>
+                        <li><strong class="text-slate-900">plt.ylabel('Loss'), plt.xlabel('Epoch')</strong>: Y축 이름을
+                            'Loss', X축 이름을 'Epoch'(학습 횟수)로 설정합니다.</li>
+                        <li><strong class="text-slate-900">plt.legend()</strong>: 범례(label에 적은 이름들)를 표시합니다.</li>
+                        <li><strong class="text-slate-900">plt.grid()</strong>: 그래프에 격자무늬를 추가하여 보기 편하게 만듭니다.</li>
+                        <li><strong class="text-slate-900">plt.show()</strong>: 완성된 그래프를 화면에 출력합니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">3</span>
+                <h2 class="text-2xl font-bold text-slate-800">데이터 로딩 및 준비</h2>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200 mb-6">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm">path = "https://raw.githubusercontent.com/DA4BAM/dataset/master/overfit_sample.csv"
+data = pd.read_csv(path)
+data.head()
+data.shape</code></pre>
+                </div>
+                <div class="p-6 bg-slate-50 border-t border-slate-200">
+                    <p class="text-sm text-slate-600 mb-2"><strong class="text-slate-900">path = "..."</strong>: 실습용
+                        데이터셋(과적합 예제)의 URL 주소를 변수에 저장합니다.</p>
+                    <p class="text-sm text-slate-600 mb-2"><strong class="text-slate-900">data =
+                            pd.read_csv(path)</strong>: CSV 파일을 읽어와 판다스 데이터프레임 <code>data</code>로 저장합니다.</p>
+                    <p class="text-sm text-slate-600 mb-2"><strong class="text-slate-900">data.head()</strong>: 데이터의 상위
+                        5개 행을 출력하여 내용을 확인합니다.</p>
+                    <p class="text-sm text-slate-600"><strong class="text-slate-900">data.shape</strong>: 데이터의 크기(행 개수,
+                        열 개수)를 확인합니다.</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm"># 데이터분할 : x, y
+target = 'target'
+x = data.drop(target, axis = 1)
+y = data.loc[:, target]
+
+# 데이터분할 : train, validation
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=.2, random_state = 20)
+
+# 스케일링
+scaler = MinMaxScaler()
+x_train = scaler.fit_transform(x_train)
+x_val = scaler.transform(x_val)</code></pre>
+                </div>
+                <div class="p-8 bg-slate-50">
+                    <h3 class="font-bold text-lg mb-4 text-indigo-600">전처리 단계 분석</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                        <li><strong class="text-slate-900">target = 'target'</strong>: 예측할 목표 변수(정답 컬럼)의 이름을 설정합니다.</li>
+                        <li><strong class="text-slate-900">x = data.drop(target, axis = 1)</strong>: 전체 데이터에서 정답 컬럼을
+                            제외하여 입력 데이터(Feature) <code>x</code>를 만듭니다.</li>
+                        <li><strong class="text-slate-900">y = data.loc[:, target]</strong>: 전체 데이터에서 정답 컬럼만 뽑아
+                            <code>y</code>를 만듭니다.</li>
+                        <li class="border-t border-slate-200 my-2 pt-2"></li>
+                        <li><strong class="text-slate-900">train_test_split(...)</strong>: <code>x</code>와
+                            <code>y</code>를 학습용(train)과 검증용(val)으로 나눕니다.
+                            <ul class="list-disc pl-5 mt-1 text-xs text-slate-500">
+                                <li><code>test_size=.2</code>: 전체의 20%를 검증용으로 사용합니다.</li>
+                                <li><code>random_state=20</code>: 매번 똑같이 나누어지도록 난수 시드를 고정합니다.</li>
+                            </ul>
+                        </li>
+                        <li class="border-t border-slate-200 my-2 pt-2"></li>
+                        <li><strong class="text-slate-900">scaler = MinMaxScaler()</strong>: 최솟값 0, 최댓값 1로 변환하는 스케일러를
+                            생성합니다.</li>
+                        <li><strong class="text-slate-900">scaler.fit_transform(x_train)</strong>: 학습 데이터(x_train)의
+                            최솟값/최댓값을 찾고(fit), 바로 변환(transform)까지 수행합니다.</li>
+                        <li><strong class="text-slate-900">scaler.transform(x_val)</strong>: 학습 데이터의 기준(최솟값/최댓값)을 그대로
+                            사용하여 검증 데이터를 변환합니다. (절대 fit을 다시 하면 안 됨!)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">4</span>
+                <h2 class="text-2xl font-bold text-slate-800">Dropout (과적합 방지 기법 1)</h2>
+            </div>
+
+            <!-- Card: Dropout Import -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                <code class="text-blue-900 font-bold">from keras.layers import Dropout</code>
+                <p class="text-sm text-blue-800 mt-1">학습 시 랜덤하게 일부 뉴런을 꺼버려서(0으로 만듦) 특정 뉴런에 과도하게 의존하는 것을 막는 '드롭아웃' 레이어를
+                    불러옵니다.</p>
+            </div>
+
+            <!-- Card: Model with Dropout -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm"># 메모리 정리
+clear_session()
+
+# Sequential 타입
+model_dropout = Sequential( [Input(shape = (nfeatures,)),
+                      Dense(128, activation= 'relu'),
+                      Dropout(0.4),
+                      Dense(64, activation= 'relu'),
+                      Dropout(0.4),
+                      Dense(32, activation= 'relu'),
+                      Dropout(0.4),
+                      Dense(1, activation= 'sigmoid')] )
+
+# 컴파일
+model_dropout.compile(optimizer= Adam(learning_rate = 0.001), loss='binary_crossentropy')
+
+# 학습
+hist = model_dropout.fit(x_train, y_train, epochs = 50, validation_split=0.2, verbose = 0).history
+
+# 학습결과 그래프
+dl_history_plot(hist)</code></pre>
+                </div>
+                <div class="p-8 bg-slate-50">
+                    <h3 class="font-bold text-lg mb-4 text-indigo-600">드롭아웃 모델 상세 분석</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                        <li><strong class="text-slate-900">clear_session()</strong>: 기존 모델들이 메모리에 쌓여 느려지거나 꼬이는 것을 방지하기
+                            위해 케라스 세션을 초기화합니다.</li>
+                        <li><strong class="text-slate-900">model_dropout = Sequential([...])</strong>: 레이어를 순서대로 쌓아 모델을
+                            만듭니다.</li>
+                        <li><strong class="text-slate-900">Input(shape=(nfeatures,))</strong>: 입력 데이터의 형태를 정의합니다. (특성
+                            개수만큼)</li>
+                        <li><strong class="text-slate-900">Dense(128, activation='relu')</strong>: 128개의 뉴런을 가진 은닉층입니다.
+                            활성화 함수로 ReLU를 사용합니다.</li>
+                        <li><strong class="text-rose-600">Dropout(0.4)</strong>: 바로 앞 레이어의 뉴런 중 40%를 랜덤하게 끕니다(학습 시에만).
+                            이는 과적합을 강력하게 억제합니다.</li>
+                        <li><strong class="text-slate-900">Dense(1, activation='sigmoid')</strong>: 마지막 출력층입니다. 이진 분류(0
+                            또는 1)이므로 뉴런은 1개, 활성화 함수는 시그모이드(sigmoid)를 사용합니다.</li>
+                        <li class="border-t border-slate-200 my-2 pt-2"></li>
+                        <li><strong class="text-slate-900">model_dropout.compile(...)</strong>: 모델을 학습할 준비를 합니다. 최적화 도구로
+                            Adam, 손실 함수로 이진 교차 엔트로피(binary_crossentropy)를 설정합니다.</li>
+                        <li><strong class="text-slate-900">model_dropout.fit(...)</strong>: 학습을 시작합니다.
+                            <ul class="list-disc pl-5 mt-1 text-xs text-slate-500">
+                                <li><code>epochs=50</code>: 데이터를 50번 반복해서 학습합니다.</li>
+                                <li><code>validation_split=0.2</code>: 학습 데이터 중 20%를 떼어내어 검증용으로 쓰며 성능을 체크합니다.</li>
+                                <li><code>verbose=0</code>: 학습 과정을 텍스트로 출력하지 않습니다 (깔끔하게).</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">5</span>
+                <h2 class="text-2xl font-bold text-slate-800">가중치 규제 (Regularization)</h2>
+            </div>
+
+            <p class="mb-4 text-slate-600">가중치 규제는 가중치(Weight) 값이 너무 커지지 않도록 손실 함수(Loss)에 페널티를 주는 방식입니다.</p>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm"># 규제를 위해 필요한 함수 불러오기
+from keras.regularizers import l1, l2
+
+# L2 규제 모델 예시 (L1 모델도 구조는 동일)
+clear_session()
+
+model_l2 = Sequential( [Input(shape = (nfeatures,)),
+                      Dense(128, activation= 'relu',
+                            kernel_regularizer = l2(0.05)),
+                      Dense(64, activation= 'relu',
+                            kernel_regularizer = l2(0.05)),
+                      Dense(32, activation= 'relu',
+                            kernel_regularizer = l2(0.05)),
+                      Dense(1, activation= 'sigmoid')] )
+
+model_l2.compile(optimizer= Adam(learning_rate = 0.001), loss='binary_crossentropy')
+hist = model_l2.fit(x_train, y_train, epochs = 100, validation_split=0.2, verbose = 0).history
+dl_history_plot(hist)</code></pre>
+                </div>
+                <div class="p-8 bg-slate-50">
+                    <h3 class="font-bold text-lg mb-4 text-indigo-600">L2 규제 코드 상세 분석</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                        <li><strong class="text-slate-900">from keras.regularizers import l1, l2</strong>: L1(Lasso) 규제와
+                            L2(Ridge) 규제 함수를 불러옵니다.</li>
+                        <li><strong class="text-rose-600">kernel_regularizer = l2(0.05)</strong>:
+                            <br>Dense 레이어 안에 옵션으로 들어갑니다.
+                            <br>가중치 값들의 제곱 합에 0.05를 곱한 값을 손실(Loss)에 더합니다.
+                            <br>이로 인해 모델은 가중치를 작게 유지하려고 노력하며, 결과적으로 복잡한 패턴(과적합)을 피하게 됩니다.
+                        </li>
+                        <li><strong class="text-slate-900">l1(0.01)</strong>: 코드 상단의 L1 예제에서는 가중치의 절대값 합을 페널티로 줍니다. 불필요한
+                            가중치를 0으로 만드는 효과가 있습니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">6</span>
+                <h2 class="text-2xl font-bold text-slate-800">모델 저장 및 불러오기</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Save -->
+                <div class="bg-white rounded-lg shadow p-6 border border-slate-200">
+                    <h3 class="font-bold text-lg text-indigo-600 mb-2">저장하기</h3>
+                    <pre><code class="language-python text-xs mb-3">model_l2.save('hanky.keras')</code></pre>
+                    <p class="text-sm text-slate-600">현재 학습된 모델의 구조와 가중치를 'hanky.keras'라는 파일로 저장합니다. Keras 최신 버전에서는
+                        <code>.keras</code> 확장자를 권장합니다.</p>
+                </div>
+
+                <!-- Load -->
+                <div class="bg-white rounded-lg shadow p-6 border border-slate-200">
+                    <h3 class="font-bold text-lg text-indigo-600 mb-2">불러오기</h3>
+                    <pre><code class="language-python text-xs mb-3">from keras.models import load_model
+model2 = load_model('hanky.keras')</code></pre>
+                    <p class="text-sm text-slate-600">저장된 파일을 읽어와 <code>model2</code>라는 변수에 복원합니다. 바로 예측(predict)에 사용할 수
+                        있습니다.</p>
+                </div>
+            </div>
+
+            <!-- Prediction Code -->
+            <div class="mt-6 bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm">pred2 = model2.predict(x_val)
+pred2_1 = np.where(pred2 > .5, 1, 0)
+
+print(accuracy_score(y_val, pred2_1))
+print(confusion_matrix(y_val, pred2_1))
+print(classification_report(y_val, pred2_1))</code></pre>
+                </div>
+                <div class="p-6 bg-slate-50">
+                    <p class="text-sm text-slate-600 mb-2"><strong
+                            class="text-slate-900">model2.predict(x_val)</strong>: 불러온 모델로 검증 데이터에 대한 예측 확률값을 구합니다.</p>
+                    <p class="text-sm text-slate-600 mb-2"><strong class="text-slate-900">np.where(pred2 > .5, 1,
+                            0)</strong>: 확률이 0.5보다 크면 1, 아니면 0으로 변환하여 최종 클래스를 결정합니다.</p>
+                    <p class="text-sm text-slate-600"><strong class="text-slate-900">accuracy_score 등</strong>: 정확도,
+                        오차행렬, 분류 리포트를 출력하여 성능을 평가합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 7 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">7</span>
+                <h2 class="text-2xl font-bold text-slate-800">Early Stopping (조기 종료)</h2>
+            </div>
+
+            <p class="mb-4 text-slate-600">학습이 더 이상 개선되지 않으면 자동으로 중단하여 과적합을 막고 시간을 절약하는 기법입니다.</p>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm">from keras.callbacks import EarlyStopping
+
+# ... (모델 정의 생략) ...
+
+# Early Stopping 설정
+# monitor: 감시할 지표 (val_loss 감소가 목표)
+# patience: 성능 개선이 없어도 기다려줄 Epoch 수
+es = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, restore_best_weights=True)
+
+# 학습 (callbacks에 추가)
+# epochs를 크게(예: 1000) 설정해도 조기 종료가 작동하므로 안심할 수 있습니다.
+hist = model.fit(x_train, y_train, epochs=1000, validation_split=0.2, callbacks=[es]).history</code></pre>
+                </div>
+                <div class="p-8 bg-slate-50">
+                    <h3 class="font-bold text-lg mb-4 text-indigo-600">코드 상세 분석</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                        <li><strong class="text-slate-900">monitor='val_loss'</strong>: 검증 오차를 기준으로 판단합니다.</li>
+                        <li><strong class="text-slate-900">patience=5</strong>: 성능이 개선되지 않더라도 5번의 Epoch까지는 기다려줍니다. 그
+                            이후에도 개선이 없으면 학습을 멈춥니다.</li>
+                        <li><strong class="text-slate-900">restore_best_weights=True</strong>: 학습이 멈췄을 때, 가장 성능이 좋았던 시점의
+                            가중치로 모델을 되돌립니다.</li>
+                        <li><strong class="text-slate-900">epochs=1000</strong>: 조기 종료를 믿고 Epoch를 충분히 크게 설정합니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 8 -->
+        <section>
+            <div class="flex items-center mb-6">
+                <span
+                    class="bg-indigo-600 text-white font-bold rounded-full w-10 h-10 flex items-center justify-center mr-4">8</span>
+                <h2 class="text-2xl font-bold text-slate-800">Model Checkpoint (가장 좋은 모델 자동 저장)</h2>
+            </div>
+
+            <p class="mb-4 text-slate-600">학습 도중 성능이 가장 좋았던 순간을 자동으로 포착하여 저장하는 기법입니다.</p>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 p-4 overflow-x-auto">
+                    <pre><code class="language-python text-sm"># 체크포인트 함수 불러오기
+from keras.callbacks import ModelCheckpoint
+
+# ... (모델 정의 부분 생략: 위와 동일) ...
+model1.compile(optimizer= Adam(learning_rate = 0.0001), loss='binary_crossentropy')
+
+# 체크포인트 설정
+cp_path = '/content/{epoch:03d}.keras'
+mcp = ModelCheckpoint(cp_path, monitor='val_loss', verbose = 1, save_best_only=True)
+
+# 학습 (callbacks 옵션 추가)
+hist = model1.fit(x_train, y_train, epochs = 50, validation_split=.2, callbacks=[mcp]).history</code></pre>
+                </div>
+                <div class="p-8 bg-slate-50">
+                    <h3 class="font-bold text-lg mb-4 text-indigo-600">체크포인트 코드 상세 분석</h3>
+                    <ul class="space-y-3 text-sm text-slate-600 leading-relaxed">
+                        <li><strong class="text-slate-900">from keras.callbacks import ModelCheckpoint</strong>: 학습 중간에
+                            개입하여 작업을 수행하는 '콜백' 중 모델 저장을 담당하는 클래스를 불러옵니다.</li>
+                        <li><strong class="text-slate-900">cp_path = '/content/{epoch:03d}.keras'</strong>: 파일 저장 경로 형식을
+                            지정합니다. <code>{epoch:03d}</code>는 001, 002 처럼 에포크 번호가 파일명에 들어가게 합니다.</li>
+                        <li class="bg-yellow-50 p-2 rounded border border-yellow-200"><strong class="text-slate-900">mcp
+                                = ModelCheckpoint(...)</strong>:
+                            <ul class="list-disc pl-5 mt-1 text-xs text-slate-700">
+                                <li><code>monitor='val_loss'</code>: <strong>검증 오차(val_loss)</strong>를 감시합니다. (이 값이 낮을수록
+                                    좋은 모델)</li>
+                                <li><code>verbose=1</code>: 저장될 때마다 "저장했습니다"라고 메시지를 띄웁니다.</li>
+                                <li><code>save_best_only=True</code>: <strong>이전보다 성능이 좋아졌을 때만</strong> 저장합니다. (가장 중요한
+                                    옵션!)</li>
+                            </ul>
+                        </li>
+                        <li><strong class="text-slate-900">callbacks=[mcp]</strong>: fit 함수에 이 옵션을 주어야 학습 중에 체크포인트 기능이
+                            작동합니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 py-8 text-center text-sm">
+        <p>생성된 문서는 딥러닝 성능 관리(Overfitting 방지) 실습 코드에 대한 상세 가이드입니다.</p>
+    </footer>
+
+    <!-- Prism JS for Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+
+</html>

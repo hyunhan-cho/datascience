@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,72 +16,202 @@
             overflow-x: hidden;
             overflow-y: auto;
         }
+
         .header {
             text-align: center;
             padding: 60px 20px;
             color: white;
         }
+
         .header h1 {
             font-size: 3.2em;
             margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
+
         .header p {
             font-size: 1.1em;
             margin-top: 10px;
             opacity: 0.9;
         }
+
         .back-button {
             display: inline-block;
             margin-bottom: 20px;
             padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
             text-decoration: none;
             border-radius: 25px;
             transition: all 0.3s ease;
         }
+
         .back-button:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
         }
-        .main-content { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
-        .study-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; padding: 20px 0; max-width: 100%; }
-        .study-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease; }
-        .study-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
-        .study-link { display: block; text-decoration: none; color: inherit; }
-        .study-card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; position: relative; }
-        .study-number { font-size: 3em; font-weight: bold; opacity: 0.25; position: absolute; right: 20px; top: 10px; }
-        .study-card-title { font-size: 1.7em; font-weight: 800; margin-bottom: 6px; }
-        .study-card-subtitle { opacity: 0.92; font-size: 1.05em; }
-        .study-card-body { padding: 22px 25px; }
-        .study-card-description { color: #5b6470; margin-bottom: 14px; }
-        .study-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .tag { background: #f8f9fa; color: #667eea; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; font-weight: 600; }
-        .footer { text-align: center; padding: 40px 20px; color: white; opacity: 0.85; }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        .study-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+            max-width: 100%;
+        }
+
+        .study-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .study-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .study-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .study-card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            position: relative;
+        }
+
+        .study-number {
+            font-size: 3em;
+            font-weight: bold;
+            opacity: 0.25;
+            position: absolute;
+            right: 20px;
+            top: 10px;
+        }
+
+        .study-card-title {
+            font-size: 1.7em;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .study-card-subtitle {
+            opacity: 0.92;
+            font-size: 1.05em;
+        }
+
+        .study-card-body {
+            padding: 22px 25px;
+        }
+
+        .study-card-description {
+            color: #5b6470;
+            margin-bottom: 14px;
+        }
+
+        .study-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #f8f9fa;
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.85;
+        }
+
         @media (max-width: 768px) {
-            .header h1 { font-size: 2.4em; }
-            .study-grid { grid-template-columns: 1fr; }
-            .main-content { padding: 0 15px 40px; }
+            .header h1 {
+                font-size: 2.4em;
+            }
+
+            .study-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                padding: 0 15px 40px;
+            }
         }
+
         @media (max-width: 1024px) and (min-width: 769px) {
-            .study-grid { grid-template-columns: repeat(2, 1fr); }
+            .study-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
+
         @media (min-width: 1025px) {
-            .study-grid { grid-template-columns: repeat(3, 1fr); max-width: 1200px; margin: 0 auto; }
+            .study-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 1200px;
+                margin: 0 auto;
+            }
         }
+
         /* Embed section */
-        .embed { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); overflow: hidden; }
-        .embed-header { background: #111827; color: #e5e7eb; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
-        .embed-header a { color: #93c5fd; text-decoration: none; font-weight: 700; }
-        .embed iframe { width: 100%; height: 680px; border: 0; display: block; }
-        .hidden { display: none; }
+        .embed {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .embed-header {
+            background: #111827;
+            color: #e5e7eb;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .embed-header a {
+            color: #93c5fd;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .embed iframe {
+            width: 100%;
+            height: 680px;
+            border: 0;
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <meta name="description" content="머신러닝 핵심 주제와 실전 분석 사례를 한 페이지에서 학습합니다." />
 </head>
+
 <body>
     <div class="header">
         <a href="studies.html" class="back-button">← 학습 자료로 돌아가기</a>
@@ -100,7 +231,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            타이타닉 데이터셋을 활용한 이진 분류 딥러닝 모델을 단계별로 학습합니다. Feature Engineering부터 Hidden Layer 설계, 하이퍼파라미터 튜닝까지 전체 과정을 다룹니다.
+                            타이타닉 데이터셋을 활용한 이진 분류 딥러닝 모델을 단계별로 학습합니다. Feature Engineering부터 Hidden Layer 설계, 하이퍼파라미터 튜닝까지
+                            전체 과정을 다룹니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Binary Classification</span>
@@ -122,7 +254,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            Iris 데이터셋을 활용한 다중 분류 딥러닝 모델을 학습합니다. Softmax 활성화 함수, Sparse Categorical Crossentropy, One-Hot Encoding 방식을 비교하며 다중 분류의 핵심 개념을 익힙니다.
+                            Iris 데이터셋을 활용한 다중 분류 딥러닝 모델을 학습합니다. Softmax 활성화 함수, Sparse Categorical Crossentropy, One-Hot
+                            Encoding 방식을 비교하며 다중 분류의 핵심 개념을 익힙니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Multi-class Classification</span>
@@ -144,7 +277,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            28x28 픽셀 손글씨 숫자(0-9) 이미지를 분류하는 딥러닝 모델을 구축합니다. 이미지 전처리(Flatten, Scaling), 은닉층 설계, 모델 성능 향상 기법을 초보자 친화적으로 설명합니다.
+                            28x28 픽셀 손글씨 숫자(0-9) 이미지를 분류하는 딥러닝 모델을 구축합니다. 이미지 전처리(Flatten, Scaling), 은닉층 설계, 모델 성능 향상
+                            기법을 초보자 친화적으로 설명합니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">MNIST</span>
@@ -166,7 +300,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            퍼셉트론부터 심층 신경망, RNN의 한계, 트랜스포머 아키텍처까지 현대 딥러닝의 핵심 개념을 학습합니다. Self-Attention 메커니즘과 BERT, GPT 등 대규모 언어 모델의 기반 이론을 다룹니다.
+                            퍼셉트론부터 심층 신경망, RNN의 한계, 트랜스포머 아키텍처까지 현대 딥러닝의 핵심 개념을 학습합니다. Self-Attention 메커니즘과 BERT, GPT 등
+                            대규모 언어 모델의 기반 이론을 다룹니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Transformer</span>
@@ -188,7 +323,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            화이트 와인의 화학적 성분 데이터를 분석하여 품질 등급(0-4)을 예측합니다. 3가지 모델 구조를 비교하며 은닉층 설계, 과적합 문제, 모델 복잡도와 성능의 관계를 학습합니다.
+                            화이트 와인의 화학적 성분 데이터를 분석하여 품질 등급(0-4)을 예측합니다. 3가지 모델 구조를 비교하며 은닉층 설계, 과적합 문제, 모델 복잡도와 성능의 관계를
+                            학습합니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Wine Quality</span>
@@ -210,7 +346,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            과적합을 방지하기 위한 Early Stopping과 최적 모델을 저장하는 Model Checkpoint 기법을 학습합니다. 검증 데이터 활용, 콜백 함수 설정, 학습 곡선 분석을 통해 실전 모델 관리 방법을 익힙니다.
+                            과적합을 방지하기 위한 Early Stopping과 최적 모델을 저장하는 Model Checkpoint 기법을 학습합니다. 검증 데이터 활용, 콜백 함수 설정, 학습
+                            곡선 분석을 통해 실전 모델 관리 방법을 익힙니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Early Stopping</span>
@@ -232,7 +369,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            파이썬 기반 딥러닝 프레임워크 PyTorch의 핵심 개념을 학습합니다. 텐서 조작, Autograd 자동 미분, GPU 가속, NumPy 호환성 등 실전에 필요한 기초부터 심화 내용까지 단계별로 다룹니다.
+                            파이썬 기반 딥러닝 프레임워크 PyTorch의 핵심 개념을 학습합니다. 텐서 조작, Autograd 자동 미분, GPU 가속, NumPy 호환성 등 실전에 필요한
+                            기초부터 심화 내용까지 단계별로 다룹니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">PyTorch</span>
@@ -254,7 +392,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            PyTorch로 다중 분류 모델을 구현합니다. Softmax 함수와 Cross Entropy Loss의 수학적 원리를 이해하고, nn.CrossEntropyLoss의 내부 동작(LogSoftmax + NLLLoss)을 학습합니다. 실제 학습 루프와 정확도 계산까지 전체 워크플로우를 다룹니다.
+                            PyTorch로 다중 분류 모델을 구현합니다. Softmax 함수와 Cross Entropy Loss의 수학적 원리를 이해하고, nn.CrossEntropyLoss의
+                            내부 동작(LogSoftmax + NLLLoss)을 학습합니다. 실제 학습 루프와 정확도 계산까지 전체 워크플로우를 다룹니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">PyTorch</span>
@@ -276,7 +415,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            이미지 분류의 핵심 아키텍처인 CNN을 시각적으로 학습합니다. Convolution Layer의 필터 연산, Max Pooling의 다운샘플링, FC Layer의 최종 분류까지 전체 구조를 인터랙티브한 시각화와 함께 단계별로 이해합니다.
+                            이미지 분류의 핵심 아키텍처인 CNN을 시각적으로 학습합니다. Convolution Layer의 필터 연산, Max Pooling의 다운샘플링, FC Layer의
+                            최종 분류까지 전체 구조를 인터랙티브한 시각화와 함께 단계별로 이해합니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">CNN</span>
@@ -286,7 +426,31 @@
                         </div>
                     </div>
                 </a>
+                <!-- 10 Dropout -->
+                <div class="study-card">
+                    <a href="dropout.html" class="study-link">
+                        <div class="study-card-header">
+                            <div class="study-number">10</div>
+                            <div class="study-card-title">Dropout & Regularization</div>
+                            <div class="study-card-subtitle">과적합 방지 심화</div>
+                        </div>
+                        <div class="study-card-body">
+                            <div class="study-card-description">
+                                신경망의 과적합을 막기 위한 Dropout 기법과 가중치 규제, 그리고 Early Stopping을 상세히 학습합니다. 코드 단위 분석을 통해 성능 최적화
+                                원리를 이해합니다.
+                            </div>
+                            <div class="study-tags">
+                                <span class="tag">Dropout</span>
+                                <span class="tag">Regularization</span>
+                                <span class="tag">Performance</span>
+                                <span class="tag">Early Stopping</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
             </div>
+
+
         </div>
 
         <!-- 동적 임베드 컨테이너 -->
@@ -329,5 +493,5 @@
         });
     </script>
 </body>
-</html>
 
+</html>
