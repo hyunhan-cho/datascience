@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초보자를 위한 SVM (Support Vector Machine) 완전 정복</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script>hljs.highlightAll();</script>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .code-explanation { border-left: 4px solid #3b82f6; background-color: #eff6ff; }
+        .concept-box { border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #fff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-8 shadow-lg">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-4xl font-bold mb-2">SVM (Support Vector Machine) 완전 정복</h1>
+            <p class="text-blue-100 text-lg">코드 한 줄도 놓치지 않는 초보자용 상세 가이드</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto p-4 md:p-8 space-y-12">
+
+        <!-- Intro -->
+        <section class="concept-box p-6">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4"><i class="fas fa-lightbulb mr-2"></i>SVM이 뭔가요?</h2>
+            <p class="leading-relaxed mb-4">
+                SVM은 데이터를 분류하는 <strong>'가장 넓은 도로(Margin)'</strong>를 찾는 알고리즘입니다.
+                두 그룹(예: 강아지와 고양이)을 나누는 선을 긋되, 어느 그룹에도 치우치지 않고 가장 여유 있게 떨어져 있는 선을 찾는 것이 목표입니다.
+            </p>
+            <ul class="list-disc list-inside space-y-2 text-gray-600">
+                <li><strong>Decision Boundary (결정 경계):</strong> 데이터를 나누는 선(또는 면).</li>
+                <li><strong>Support Vector:</strong> 경계를 결정하는 데 가장 중요한(경계선에 가장 가까운) 데이터 포인트들.</li>
+                <li><strong>Margin:</strong> 경계선과 서포트 벡터 사이의 거리. 이게 넓을수록 좋은 모델입니다.</li>
+            </ul>
+        </section>
+
+        <!-- Chapter 1: Import -->
+        <section>
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">1</div>
+                <h2 class="text-2xl font-bold">라이브러리 불러오기</h2>
+            </div>
+            
+            <div class="concept-box overflow-hidden">
+                <div class="bg-gray-800 text-gray-300 px-4 py-2 text-sm flex justify-between items-center">
+                    <span>Python Code</span>
+                </div>
+                <pre><code class="python"># 라이브러리들을 불러오자.
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_moons, make_classification
+
+from sklearn.svm import SVC
+
+import warnings    # 경고메시지 제외
+warnings.filterwarnings(action='ignore')</code></pre>
+                
+                <div class="code-explanation p-6">
+                    <h3 class="font-bold text-blue-700 mb-3">한 줄씩 해석하기</h3>
+                    <ul class="space-y-3 text-sm">
+                        <li><code class="bg-gray-200 px-1 rounded">import numpy as np</code>: 수치 계산을 위한 도구상자입니다. 수학 계산, 행렬 연산 등을 담당합니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">import pandas as pd</code>: 엑셀처럼 표(데이터프레임) 데이터를 다루는 도구입니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">import matplotlib.pyplot as plt</code>: 그래프를 그리는 가장 기초적인 라이브러리입니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">import seaborn as sns</code>: matplotlib을 좀 더 예쁘고 쉽게 쓰게 해주는 시각화 도구입니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">from sklearn.model_selection import train_test_split</code>: 데이터를 '학습용'과 '시험용'으로 나누는 함수입니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">from sklearn.datasets import make_moons, make_classification</code>: 공부할 때 쓸 가짜 데이터(초승달 모양, 분류용 데이터)를 만들어주는 함수들입니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">from sklearn.svm import SVC</code>: <strong>오늘의 주인공!</strong> SVM 분류 모델(Support Vector Classification)입니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">warnings.filterwarnings...</code>: 빨간색 경고 메시지가 출력되어 화면이 지저분해지는 것을 막아줍니다. (에러가 아니라 단순 경고만 무시)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 2: Visualization Function -->
+        <section>
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">2</div>
+                <h2 class="text-2xl font-bold">시각화 함수 만들기 (심화)</h2>
+            </div>
+            <p class="mb-4 text-gray-600">이 코드는 조금 어려울 수 있습니다. SVM이 그은 선(경계)을 눈으로 보기 위해, <strong>"화면 전체의 모든 점에 대해 색칠을 해보는 과정"</strong>이라고 생각하면 됩니다.</p>
+
+            <div class="concept-box overflow-hidden">
+                <pre><code class="python">def svm_visualize(x, y, model, title = "") :
+
+    # 1. 화면의 가로(xx), 세로(yy) 좌표 만들기
+    xx, yy = np.meshgrid(np.linspace(x[:,0].min(), x[:,0].max(), 50),
+                         np.linspace(x[:,1].min(), x[:,1].max(), 50))
+
+    # 2. 메쉬 그리드값에 대해 모델 부터 거리 값 만들기.
+    Z = model.decision_function(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+
+    # 3. 그래프 그리기
+    plt.figure(figsize=(4, 4))
+    # 데이터 산점도
+    sns.scatterplot(x=x[:,0], y=x[:,1], hue=y)
+    # levels= 0 모델 ,  -1, 1 은 마진 경계
+    plt.contour(xx, yy, Z, levels=[-1, 0, 1], colors = 'gray', linestyles = ['--','-','--'])
+    plt.title(title)
+    plt.axis("tight")
+    plt.show()</code></pre>
+                
+                <div class="code-explanation p-6">
+                    <h3 class="font-bold text-blue-700 mb-3">상세 분석</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="font-semibold text-gray-800">1. 격자 만들기 (meshgrid)</p>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <code class="text-pink-600">np.linspace(..., 50)</code>은 데이터의 최소값부터 최대값 사이를 50조각으로 촘촘하게 나눕니다.<br>
+                                <code class="text-pink-600">np.meshgrid</code>는 가로축 점들과 세로축 점들을 엮어서 바둑판(격자) 좌표를 만듭니다. 그래프 배경 전체를 덮는 2500개(50x50)의 점을 만드는 것입니다.
+                            </p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">2. 모델의 판단 구하기 (decision_function)</p>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <code class="text-pink-600">xx.ravel()</code>은 바둑판 데이터를 한 줄로 쫙 폅니다.<br>
+                                <code class="text-pink-600">model.decision_function(...)</code>은 이 모든 배경 점들이 <strong>경계선으로부터 얼마나 떨어져 있는지</strong> 계산합니다. 0이면 경계선 위, 양수면 A그룹 쪽, 음수면 B그룹 쪽입니다.
+                            </p>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">3. 등고선 그리기 (contour)</p>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <code class="text-pink-600">plt.contour(..., levels=[-1, 0, 1])</code>: 지도에서 등고선을 그리듯 선을 긋습니다.<br>
+                                - <strong>0</strong>: 결정 경계선 (중앙선)<br>
+                                - <strong>-1, 1</strong>: 마진의 경계 (도로의 폭)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 3: Sample Data & Basic SVM -->
+        <section>
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">3</div>
+                <h2 class="text-2xl font-bold">기본 SVM 모델링</h2>
+            </div>
+            
+            <!-- Data Generation -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">3-1. 샘플 데이터 만들기</h3>
+                <div class="concept-box overflow-hidden">
+                    <pre><code class="python">seed = 8
+x, y = make_classification(n_samples=100,
+                        n_features=2,
+                        n_redundant=0,
+                        weights = [0.5, 0.5],
+                        n_clusters_per_class=1,
+                        random_state=seed)
+sns.scatterplot(x=x[:,0],y=x[:,1], hue = y)
+plt.show()</code></pre>
+                    <div class="code-explanation p-4 text-sm">
+                        <ul class="space-y-2">
+                            <li><code class="bg-gray-200 px-1 rounded">make_classification</code>: 분류 실험용 가상 데이터를 만듭니다.</li>
+                            <li><code class="bg-gray-200 px-1 rounded">n_features=2</code>: 변수(x축, y축)가 2개인 2차원 데이터입니다.</li>
+                            <li><code class="bg-gray-200 px-1 rounded">weights=[0.5, 0.5]</code>: 두 그룹(0과 1)의 비율을 반반으로 맞춥니다.</li>
+                            <li><code class="bg-gray-200 px-1 rounded">random_state=seed</code>: 매번 실행할 때마다 똑같은 랜덤 데이터가 나오도록 고정합니다.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Basic Modeling -->
+            <div>
+                <h3 class="text-xl font-semibold mb-2">3-2. 모델 학습시키기</h3>
+                <div class="concept-box overflow-hidden">
+                    <pre><code class="python">model = SVC(kernel = 'linear', C = 10)
+model.fit(x,y)
+svm_visualize(x, y, model)</code></pre>
+                    <div class="code-explanation p-4 text-sm">
+                        <ul class="space-y-2">
+                            <li><code class="bg-gray-200 px-1 rounded">SVC(kernel='linear', C=10)</code>:
+                                <ul class="list-disc list-inside ml-4 mt-1 text-gray-600">
+                                    <li><strong>kernel='linear'</strong>: "직선"으로 데이터를 나누겠다는 뜻입니다.</li>
+                                    <li><strong>C=10</strong>: 학습 시 오류를 얼마나 허용할지 정하는 값입니다. (뒤에서 자세히 설명)</li>
+                                </ul>
+                            </li>
+                            <li><code class="bg-gray-200 px-1 rounded">model.fit(x, y)</code>: 데이터를 주고 학습을 시킵니다. "이 데이터들을 제일 잘 나누는 선을 찾아봐!"</li>
+                            <li><code class="bg-gray-200 px-1 rounded">svm_visualize(...)</code>: 위에서 만든 함수로 결과를 그림으로 확인합니다.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 4: Hyperparameter C -->
+        <section>
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">4</div>
+                <h2 class="text-2xl font-bold">중요 개념: Cost (C)</h2>
+            </div>
+            
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                <h4 class="font-bold text-yellow-800">C 값은 '선생님의 깐깐함'입니다.</h4>
+                <p class="text-sm mt-2 text-yellow-700">
+                    <strong>C가 클수록 (예: 100)</strong>: 매우 깐깐합니다. "단 하나의 데이터도 틀리면 안 돼!" -> 훈련 데이터는 완벽하게 나누지만, 마진(도로 폭)이 좁아집니다.<br>
+                    <strong>C가 작을수록 (예: 0.1)</strong>: 너그럽습니다. "몇 개 좀 틀려도 되니까, 도로를 넓게 닦자." -> 이상치에 덜 민감하고 일반화가 잘 될 수 있습니다.
+                </p>
+            </div>
+
+            <div class="concept-box overflow-hidden">
+                <pre><code class="python"># 데이터 새로 생성
+seed = 34
+x, y = make_classification(n_features=2, n_redundant=0, weights = [0.5, 0.5],
+                        n_clusters_per_class=1, random_state=seed)
+
+# Cost 값 변경 실험
+cost = 40
+model = SVC(kernel = 'linear', C = cost)
+model.fit(x,y)
+svm_visualize(x, y, model, cost)</code></pre>
+                <div class="code-explanation p-4 text-sm">
+                    <p>코드를 실행해 보며 <code class="text-pink-600">cost = 40</code>을 0.1, 1, 100 등으로 바꿔보세요.
+                    C가 작아지면 점선(마진) 사이가 넓어지고, C가 커지면 점선 사이가 좁아지며 칼같이 데이터를 분류하려 드는 것을 볼 수 있습니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 5: Kernel Trick -->
+        <section>
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">5</div>
+                <h2 class="text-2xl font-bold">커널 트릭 (Kernel Trick)</h2>
+            </div>
+            <p class="mb-4 text-gray-600">직선만으로는 도저히 나눌 수 없는 데이터(예: 태극 문양)는 어떻게 할까요?</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Bad case -->
+                <div>
+                    <h4 class="font-bold text-red-600 mb-2">실패: 선형 분리</h4>
+                    <pre><code class="python"># 초승달 데이터 생성
+x, y = make_moons(n_samples = 200, 
+                 noise = .13, 
+                 random_state = 10)
+
+# 직선(Linear)으로 시도
+model = SVC(kernel = 'linear')
+model.fit(x,y)
+svm_visualize(x, y, model)</code></pre>
+                    <p class="text-sm text-gray-500 mt-2">곡선으로 휘어진 데이터를 직선으로 자르려니 잘 안 됩니다.</p>
+                </div>
+                <!-- Good case -->
+                <div>
+                    <h4 class="font-bold text-green-600 mb-2">성공: RBF 커널</h4>
+                    <pre><code class="python"># 커널 트릭 사용 : rbf
+model = SVC(kernel = 'rbf', C = 1)
+model.fit(x,y)
+svm_visualize(x, y, model)</code></pre>
+                    <div class="code-explanation p-2 mt-2">
+                        <p class="text-sm">
+                            <code class="text-pink-600">kernel='rbf'</code>: "방사형 기저 함수"라는 어려운 이름이지만, <strong>"고무판처럼 공간을 휘어서 곡선 경계를 만든다"</strong>고 이해하면 됩니다. 이제 곡선으로 예쁘게 분류됩니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 6: Gamma Hyperparameter -->
+        <section>
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">6</div>
+                <h2 class="text-2xl font-bold">중요 개념: Gamma</h2>
+            </div>
+
+            <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+                <h4 class="font-bold text-green-800">Gamma는 '영향력의 범위'입니다.</h4>
+                <p class="text-sm mt-2 text-green-700">
+                    <strong>Gamma가 크면</strong>: 데이터 하나하나가 좁은 범위에만 영향을 미칩니다. 경계선이 데이터 하나하나를 감싸려고 꼬불꼬불해집니다. (과대적합 위험)<br>
+                    <strong>Gamma가 작으면</strong>: 영향력이 멀리 퍼집니다. 경계선이 두루뭉술하고 부드러워집니다.
+                </p>
+            </div>
+
+            <div class="concept-box overflow-hidden">
+                <pre><code class="python"># Gamma 값 변화 실험
+for g in [.5, 1, 5, 10] :
+    model = SVC(kernel = 'rbf', C = 2, gamma = g)
+    model.fit(x,y)
+    svm_visualize(x, y, model, g)</code></pre>
+                <div class="code-explanation p-4 text-sm">
+                    <ul class="space-y-2">
+                        <li><code class="bg-gray-200 px-1 rounded">for g in [...]</code>: 감마 값을 0.5부터 10까지 바꿔가며 반복합니다.</li>
+                        <li><code class="bg-gray-200 px-1 rounded">gamma = g</code>: 모델 생성 시 감마 값을 설정합니다.</li>
+                        <li>결과 그래프를 보면 g=10일 때 경계선이 데이터들에 아주 바짝 붙어 복잡한 모양(섬 같은 모양)을 만드는 것을 확인할 수 있습니다.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Chapter 7: Real Data Project -->
+        <section>
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-3">7</div>
+                <h2 class="text-2xl font-bold">실전 프로젝트: 고객 이탈 예측</h2>
+            </div>
+            <p class="mb-4 text-gray-600">이제 그림 그리기 놀이는 끝! 실제 통신사 데이터로 <strong>"이 고객이 떠날까(Churn)?"</strong>를 맞춰봅시다.</p>
+
+            <!-- 7-1 Data Load -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">7-1. 데이터 준비 및 정리</h3>
+                <div class="concept-box overflow-hidden mb-4">
+                    <pre><code class="python"># 데이터 불러오기
+path = 'https://raw.githubusercontent.com/DA4BAM/dataset/master/mobile_cust_churn.csv'
+data = pd.read_csv(path)
+data = data.sample(5000, random_state = 2022) # 5000개만 샘플링
+
+# 불필요한 컬럼 삭제
+drop_cols = ['id']
+data.drop(drop_cols, axis = 1, inplace = True)</code></pre>
+                </div>
+                <div class="concept-box overflow-hidden mb-4">
+                    <pre><code class="python"># x(원인), y(결과) 나누기
+target = 'CHURN'
+x = data.drop(target, axis = 1)
+y = data.loc[:, target]</code></pre>
+                    <div class="code-explanation p-2 text-sm">
+                        <p><code class="text-pink-600">target = 'CHURN'</code>: 우리가 맞추고 싶은 정답(이탈 여부)입니다. x에는 정답을 뺀 나머지 데이터만 담습니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7-2 Preprocessing -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">7-2. 가변수화 (One-Hot Encoding)</h3>
+                <p class="text-sm text-gray-600 mb-2">컴퓨터는 '매우 만족', '불만족' 같은 글자를 이해 못 합니다. 숫자로 바꿔줘야 하는데, 이를 가변수화라고 합니다.</p>
+                <div class="concept-box overflow-hidden">
+                    <pre><code class="python">dumm_cols = ['REPORTED_SATISFACTION','REPORTED_USAGE_LEVEL','CONSIDERING_CHANGE_OF_PLAN']
+x = pd.get_dummies(x, columns = dumm_cols, drop_first = True)</code></pre>
+                    <div class="code-explanation p-2 text-sm">
+                        <p><code class="text-pink-600">pd.get_dummies</code>: 범주형 문자 데이터를 0과 1로 된 여러 컬럼으로 쪼갭니다. (예: 만족_High -> 1, 만족_Low -> 0)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7-3 Split & Scaling -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">7-3. 분할 및 스케일링 (중요!)</h3>
+                <p class="text-sm text-gray-600 mb-2">SVM은 <strong>거리 기반</strong> 알고리즘이라 숫자의 크기에 민감합니다. (연봉은 5000만, 나이는 30이면 연봉만 중요하게 생각함). 그래서 모든 변수를 0~1 사이로 맞춰주는 <strong>스케일링</strong>이 필수입니다.</p>
+                <div class="concept-box overflow-hidden">
+                    <pre><code class="python"># 1. 학습용/검증용 분리
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size = .3, random_state = 2022)
+
+# 2. 스케일링 (MinMaxScaler)
+from sklearn.preprocessing import MinMaxScaler
+
+scaler = MinMaxScaler()
+x_train = scaler.fit_transform(x_train) # train 데이터로 기준을 잡고 변환
+x_val = scaler.transform(x_val)         # 그 기준으로 val 데이터도 변환</code></pre>
+                </div>
+            </div>
+
+            <!-- 7-4 Modeling -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-2">7-4. 모델링 및 평가</h3>
+                <div class="concept-box overflow-hidden">
+                    <pre><code class="python"># 필요한 함수 불러오기
+from sklearn.svm import SVC
+from sklearn.metrics import *
+
+# 모델 선언 및 학습
+model = SVC()  # 기본값 사용 (kernel='rbf')
+model.fit(x_train, y_train)
+
+# 예측
+pred = model.predict(x_val)</code></pre>
+                </div>
+                
+                <div class="mt-4 concept-box overflow-hidden">
+                    <pre><code class="python"># 평가: Confusion Matrix
+confusion_matrix(y_val, pred)
+
+# 평가: 상세 리포트
+print(classification_report(y_val, pred))</code></pre>
+                    <div class="code-explanation p-4 text-sm">
+                        <h5 class="font-bold text-gray-700">결과 해석 팁</h5>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li><strong>precision (정밀도)</strong>: 모델이 "이탈할 거야"라고 찍은 사람 중 실제 이탈한 비율.</li>
+                            <li><strong>recall (재현율)</strong>: 실제 이탈한 사람 중에서 모델이 찾아낸 비율.</li>
+                            <li><strong>f1-score</strong>: 정밀도와 재현율의 조화 평균. 이 점수가 높을수록 좋은 모델입니다.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Conclusion -->
+        <section class="bg-gray-800 text-white p-8 rounded-lg text-center">
+            <h2 class="text-2xl font-bold mb-4">축하합니다! 🎉</h2>
+            <p class="mb-4">이제 여러분은 SVM의 기본 개념부터 데이터 전처리, 모델 튜닝, 시각화까지 모든 과정을 훑어보았습니다.</p>
+            <p class="text-gray-400">마지막 복습 문제(C와 Gamma 조절해보기)는 직접 코드를 바꿔가며 f1-score가 어떻게 변하는지 확인해보세요!</p>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-8 text-gray-500 text-sm">
+        <p>Generated based on provided Jupyter Notebook Tutorial</p>
+    </footer>
+
+</body>
+</html>
