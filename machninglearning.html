@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,72 +16,202 @@
             overflow-x: hidden;
             overflow-y: auto;
         }
+
         .header {
             text-align: center;
             padding: 60px 20px;
             color: white;
         }
+
         .header h1 {
             font-size: 3.2em;
             margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
+
         .header p {
             font-size: 1.1em;
             margin-top: 10px;
             opacity: 0.9;
         }
+
         .back-button {
             display: inline-block;
             margin-bottom: 20px;
             padding: 10px 20px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
             text-decoration: none;
             border-radius: 25px;
             transition: all 0.3s ease;
         }
+
         .back-button:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
             transform: translateY(-2px);
         }
-        .main-content { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
-        .study-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; padding: 20px 0; max-width: 100%; }
-        .study-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease; }
-        .study-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
-        .study-link { display: block; text-decoration: none; color: inherit; }
-        .study-card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; position: relative; }
-        .study-number { font-size: 3em; font-weight: bold; opacity: 0.25; position: absolute; right: 20px; top: 10px; }
-        .study-card-title { font-size: 1.7em; font-weight: 800; margin-bottom: 6px; }
-        .study-card-subtitle { opacity: 0.92; font-size: 1.05em; }
-        .study-card-body { padding: 22px 25px; }
-        .study-card-description { color: #5b6470; margin-bottom: 14px; }
-        .study-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-        .tag { background: #f8f9fa; color: #667eea; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; font-weight: 600; }
-        .footer { text-align: center; padding: 40px 20px; color: white; opacity: 0.85; }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        .study-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+            max-width: 100%;
+        }
+
+        .study-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .study-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .study-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .study-card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            position: relative;
+        }
+
+        .study-number {
+            font-size: 3em;
+            font-weight: bold;
+            opacity: 0.25;
+            position: absolute;
+            right: 20px;
+            top: 10px;
+        }
+
+        .study-card-title {
+            font-size: 1.7em;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .study-card-subtitle {
+            opacity: 0.92;
+            font-size: 1.05em;
+        }
+
+        .study-card-body {
+            padding: 22px 25px;
+        }
+
+        .study-card-description {
+            color: #5b6470;
+            margin-bottom: 14px;
+        }
+
+        .study-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #f8f9fa;
+            color: #667eea;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.85;
+        }
+
         @media (max-width: 768px) {
-            .header h1 { font-size: 2.4em; }
-            .study-grid { grid-template-columns: 1fr; }
-            .main-content { padding: 0 15px 40px; }
+            .header h1 {
+                font-size: 2.4em;
+            }
+
+            .study-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                padding: 0 15px 40px;
+            }
         }
+
         @media (max-width: 1024px) and (min-width: 769px) {
-            .study-grid { grid-template-columns: repeat(2, 1fr); }
+            .study-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
+
         @media (min-width: 1025px) {
-            .study-grid { grid-template-columns: repeat(3, 1fr); max-width: 1200px; margin: 0 auto; }
+            .study-grid {
+                grid-template-columns: repeat(3, 1fr);
+                max-width: 1200px;
+                margin: 0 auto;
+            }
         }
+
         /* Embed section */
-        .embed { background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); overflow: hidden; }
-        .embed-header { background: #111827; color: #e5e7eb; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; }
-        .embed-header a { color: #93c5fd; text-decoration: none; font-weight: 700; }
-        .embed iframe { width: 100%; height: 680px; border: 0; display: block; }
-        .hidden { display: none; }
+        .embed {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .embed-header {
+            background: #111827;
+            color: #e5e7eb;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .embed-header a {
+            color: #93c5fd;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .embed iframe {
+            width: 100%;
+            height: 680px;
+            border: 0;
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet">
     <meta name="description" content="머신러닝 핵심 주제와 실전 분석 사례를 한 페이지에서 학습합니다." />
 </head>
+
 <body>
     <div class="header">
         <a href="studies.html" class="back-button">← 학습 자료로 돌아가기</a>
@@ -166,7 +297,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            항공 여행 데이터로 고객 만족도를 예측합니다. 로지스틱 회귀, Decision Tree, KNN 3가지 모델을 구현하고 교차 검증으로 성능을 비교하며 실무 적용 능력을 키웁니다.
+                            항공 여행 데이터로 고객 만족도를 예측합니다. 로지스틱 회귀, Decision Tree, KNN 3가지 모델을 구현하고 교차 검증으로 성능을 비교하며 실무 적용
+                            능력을 키웁니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Logistic Regression</span>
@@ -188,7 +320,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            머신러닝의 핵심 수학적 기초를 학습합니다. 다항식 곡선 피팅, 확률론, 가우시안 분포, 베이지안 관점, 결정 이론, 정보 이론까지 6개 섹션으로 구성된 이론 강의입니다.
+                            머신러닝의 핵심 수학적 기초를 학습합니다. 다항식 곡선 피팅, 확률론, 가우시안 분포, 베이지안 관점, 결정 이론, 정보 이론까지 6개 섹션으로 구성된 이론
+                            강의입니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Polynomial Fitting</span>
@@ -210,7 +343,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            모델 성능을 극대화하는 하이퍼파라미터 최적화 기법을 학습합니다. Grid Search와 Random Search의 원리, 장단점, 실전 코드 구현을 다루며, sklearn의 GridSearchCV와 RandomizedSearchCV 활용법을 익힙니다.
+                            모델 성능을 극대화하는 하이퍼파라미터 최적화 기법을 학습합니다. Grid Search와 Random Search의 원리, 장단점, 실전 코드 구현을 다루며,
+                            sklearn의 GridSearchCV와 RandomizedSearchCV 활용법을 익힙니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Hyperparameter Tuning</span>
@@ -232,7 +366,8 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            실제 데이터로 하이퍼파라미터 튜닝을 실습합니다. 데이터 전처리부터 Random Search, Grid Search 적용, 시각화까지 전체 워크플로우를 단계별로 따라하며 실전 능력을 키웁니다.
+                            실제 데이터로 하이퍼파라미터 튜닝을 실습합니다. 데이터 전처리부터 Random Search, Grid Search 적용, 시각화까지 전체 워크플로우를 단계별로
+                            따라하며 실전 능력을 키웁니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">Hands-on Practice</span>
@@ -254,13 +389,37 @@
                     </div>
                     <div class="study-card-body">
                         <div class="study-card-description">
-                            서포트 벡터 머신의 핵심 개념을 학습합니다. 선형/비선형 분류, Cost와 Gamma 하이퍼파라미터, 커널 트릭(RBF)의 원리를 이해하고, 실제 통신사 고객 이탈 데이터로 실습합니다.
+                            서포트 벡터 머신의 핵심 개념을 학습합니다. 선형/비선형 분류, Cost와 Gamma 하이퍼파라미터, 커널 트릭(RBF)의 원리를 이해하고, 실제 통신사 고객 이탈
+                            데이터로 실습합니다.
                         </div>
                         <div class="study-tags">
                             <span class="tag">SVM</span>
                             <span class="tag">Kernel Trick</span>
                             <span class="tag">RBF Kernel</span>
                             <span class="tag">Customer Churn</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- 09 Bagging -->
+            <div class="study-card">
+                <a href="baggin.html" class="study-link">
+                    <div class="study-card-header">
+                        <div class="study-number">09</div>
+                        <div class="study-card-title">앙상블 - Bagging</div>
+                        <div class="study-card-subtitle">Random Forest와 튜닝</div>
+                    </div>
+                    <div class="study-card-body">
+                        <div class="study-card-description">
+                            Random Forest 모델의 원리와 실습, 그리고 튜닝까지 완벽하게 정복합니다. Bagging의 개념과 Grid Search를 활용한 하이퍼파라미터 최적화를
+                            다룹니다.
+                        </div>
+                        <div class="study-tags">
+                            <span class="tag">Ensemble</span>
+                            <span class="tag">Bagging</span>
+                            <span class="tag">Random Forest</span>
+                            <span class="tag">Grid Search</span>
                         </div>
                     </div>
                 </a>
@@ -307,5 +466,5 @@
         });
     </script>
 </body>
-</html>
 
+</html>

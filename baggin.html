@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11. 앙상블 - Bagging 상세 학습 교재</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        
+        pre {
+            font-family: 'Fira Code', monospace;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .code-comment { color: #6a9955; }
+        .code-keyword { color: #569cd6; }
+        .code-string { color: #ce9178; }
+        .code-function { color: #dcdcaa; }
+        .code-number { color: #b5cea8; }
+        
+        .chapter-title {
+            border-left: 5px solid #3b82f6;
+            padding-left: 1rem;
+        }
+
+        .explanation {
+            background-color: #ffffff;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .output-box {
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #475569;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 max-w-5xl mx-auto">
+
+    <!-- Header -->
+    <header class="mb-12 text-center">
+        <div class="inline-block p-2 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold mb-2">머신러닝 심화 과정</div>
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">11. 앙상블 - Bagging (배깅)</h1>
+        <p class="text-lg text-gray-600">Random Forest 모델의 원리와 실습, 그리고 튜닝까지 완벽하게 정복합니다.</p>
+    </header>
+
+    <!-- Section 1: Data Preparation -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6 chapter-title text-blue-700">1. 데이터 준비 (Data Preparation)</h2>
+        
+        <div class="explanation">
+            <h3 class="font-bold text-lg mb-2">01. 라이브러리 불러오기</h3>
+            <p>데이터 분석과 모델링에 필요한 핵심 라이브러리들을 임포트합니다.</p>
+            <ul class="list-disc list-inside mt-2 text-sm text-gray-600">
+                <li><strong>pandas, numpy</strong>: 데이터 처리 및 수치 연산</li>
+                <li><strong>matplotlib, seaborn</strong>: 데이터 시각화</li>
+                <li><strong>train_test_split</strong>: 학습용/검증용 데이터 분리</li>
+            </ul>
+        </div>
+
+        <pre><code><span class="code-keyword">import</span> pandas <span class="code-keyword">as</span> pd
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+<span class="code-keyword">import</span> matplotlib.pyplot <span class="code-keyword">as</span> plt
+<span class="code-keyword">import</span> seaborn <span class="code-keyword">as</span> sns
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> train_test_split</code></pre>
+
+        <div class="explanation mt-8">
+            <h3 class="font-bold text-lg mb-2">02. 데이터 업로드 및 전처리</h3>
+            <p>실습에 사용할 <code>mobile_cust_churn.csv</code> 데이터를 불러옵니다. 불필요한 컬럼을 제거하고, 직관적인 분석을 위해 컬럼명을 변경합니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># mobile data 로딩</span>
+path = <span class="code-string">"https://raw.githubusercontent.com/DA4BAM/dataset/master/mobile_cust_churn.csv"</span>
+data = pd.read_csv(path)
+
+<span class="code-comment"># 불필요한 변수 제거 (id 등 분석에 의미 없는 고유 식별자 제거)</span>
+data.drop([<span class="code-string">'id'</span>, <span class="code-string">'REPORTED_USAGE_LEVEL'</span>, <span class="code-string">'OVER_15MINS_CALLS_PER_MONTH'</span>], axis=<span class="code-number">1</span>, inplace=<span class="code-keyword">True</span>)
+
+<span class="code-comment"># 컬럼명 변경 (가독성을 높이기 위해 단순화)</span>
+data.rename(columns={
+    <span class="code-string">'HANDSET_PRICE'</span>: <span class="code-string">'H_PRICE'</span>,
+    <span class="code-string">'AVERAGE_CALL_DURATION'</span>: <span class="code-string">'DURATION'</span>,
+    <span class="code-string">'REPORTED_SATISFACTION'</span>: <span class="code-string">'SATISFACTION'</span>,
+    <span class="code-string">'CONSIDERING_CHANGE_OF_PLAN'</span>: <span class="code-string">'CHANGE'</span>
+}, inplace=<span class="code-keyword">True</span>)
+
+<span class="code-comment"># 상위 5개 행 확인</span>
+data.head()</code></pre>
+
+        <div class="explanation mt-4">
+            <h4 class="font-bold text-sm text-gray-700 mb-2">데이터 사전 (Data Dictionary)</h4>
+            <div class="overflow-x-auto">
+                <table class="text-sm">
+                    <thead>
+                        <tr>
+                            <th>변수 명</th>
+                            <th>내용</th>
+                            <th>구분</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>COLLEGE</td><td>대학졸업 여부(1,0) - 범주</td><td>Feature</td></tr>
+                        <tr><td>INCOME</td><td>연 수입액(달러)</td><td>Feature</td></tr>
+                        <tr><td>OVERAGE</td><td>월 초과사용 시간(분)</td><td>Feature</td></tr>
+                        <tr><td>LEFTOVER</td><td>월 사용 잔여시간비율(%)</td><td>Feature</td></tr>
+                        <tr><td>HOUSE</td><td>집 가격(달러)</td><td>Feature</td></tr>
+                        <tr><td>H_PRICE</td><td>핸드폰 가격(달러)</td><td>Feature</td></tr>
+                        <tr><td>DURATION</td><td>평균 통화시간(분)</td><td>Feature</td></tr>
+                        <tr><td>SATISFACTION</td><td>만족도 설문 (범주형)</td><td>Feature</td></tr>
+                        <tr><td>CHANGE</td><td>변경 계획 설문 (범주형)</td><td>Feature</td></tr>
+                        <tr class="bg-red-50 text-red-900 font-bold"><td>CHURN</td><td>이탈여부(1 : 이탈, 0 : 잔류)</td><td>Target</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="explanation mt-8">
+            <h3 class="font-bold text-lg mb-2">03. 데이터 분할 및 가변수화</h3>
+            <p>머신러닝 모델이 학습할 수 있도록 데이터를 준비하는 단계입니다.</p>
+            <ol class="list-decimal list-inside text-sm text-gray-700 space-y-1">
+                <li><strong>x, y 분리</strong>: 예측 대상(Target)인 'CHURN'을 분리합니다.</li>
+                <li><strong>가변수화(One-Hot Encoding)</strong>: 범주형 변수(문자열 등)를 숫자형(0, 1)으로 변환합니다. <code>drop_first=True</code>를 사용하여 다중공선성을 방지합니다.</li>
+                <li><strong>데이터 분할</strong>: 학습용(train)과 검증용(val) 데이터를 5:5 비율로 나눕니다.</li>
+            </ol>
+        </div>
+
+        <pre><code><span class="code-comment"># 데이터 분할 1: Target과 Feature 분리</span>
+target = <span class="code-string">'CHURN'</span>
+x = data.drop(target, axis=<span class="code-number">1</span>)
+y = data.loc[:, target]
+
+<span class="code-comment"># 가변수화 (범주형 변수 처리)</span>
+dumm_cols = [<span class="code-string">'SATISFACTION'</span>, <span class="code-string">'CHANGE'</span>]
+x = pd.get_dummies(x, columns=dumm_cols, drop_first=<span class="code-keyword">True</span>)
+
+<span class="code-comment"># 데이터 분할 2: 학습셋과 검증셋 분리</span>
+x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=<span class="code-number">.5</span>)</code></pre>
+    </section>
+
+    <!-- Section 2: Modeling -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6 chapter-title text-blue-700">2. 모델링 (Modeling)</h2>
+        
+        <div class="explanation">
+            <p>Random Forest 모델을 불러와 학습시키고 평가합니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 1) 함수 불러오기</span>
+<span class="code-keyword">from</span> sklearn.tree <span class="code-keyword">import</span> plot_tree
+<span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> RandomForestClassifier
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> *</code></pre>
+
+        <div class="explanation mt-4">
+            <h3 class="font-bold text-lg mb-2">모델 선언 및 학습</h3>
+            <p><code>RandomForestClassifier</code>를 사용합니다.</p>
+            <ul class="list-disc list-inside text-sm text-gray-700 mb-2">
+                <li><code>n_estimators=5</code>: 사용할 의사결정나무(Tree)의 개수를 5개로 설정합니다. (실제로는 더 많이 쓰지만, 학습용으로 적게 설정)</li>
+                <li><code>max_depth=3</code>: 각 나무의 최대 깊이를 3으로 제한합니다.</li>
+            </ul>
+        </div>
+
+        <pre><code><span class="code-comment"># 2) 모델 선언</span>
+model = RandomForestClassifier(n_estimators=<span class="code-number">5</span>, max_depth=<span class="code-number">3</span>)
+
+<span class="code-comment"># 3) 학습 (Training)</span>
+model.fit(x_train, y_train)</code></pre>
+
+        <div class="explanation mt-4">
+            <h3 class="font-bold text-lg mb-2">예측 및 평가</h3>
+            <p>검증 데이터(x_val)로 예측을 수행하고, <code>classification_report</code>를 통해 정밀도, 재현율, f1-score 등을 확인합니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 4) 예측</span>
+pred = model.predict(x_val)
+
+<span class="code-comment"># 5) 평가</span>
+<span class="code-function">print</span>(classification_report(y_val, pred))</code></pre>
+    </section>
+
+    <!-- Section 3: Random Forest Deep Dive -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6 chapter-title text-blue-700">3. Random Forest 내부 들여다보기</h2>
+        
+        <div class="explanation">
+            <h3 class="font-bold text-lg mb-2">(1) 모델의 구성 요소 확인</h3>
+            <p>랜덤 포레스트는 여러 개의 Decision Tree가 모인 숲입니다. <code>model.estimators_</code>를 통해 숲을 구성하는 개별 나무들을 확인할 수 있습니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 생성된 5개의 Decision Tree 객체 확인</span>
+model.estimators_</code></pre>
+
+        <div class="explanation mt-4">
+            <p>개별 트리를 시각화하여, 랜덤 포레스트 내부에서 어떤 판단이 일어나는지 엿볼 수 있습니다. 아래 코드는 첫 번째 트리(index 0)를 그립니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 첫 번째 트리 시각화</span>
+plt.figure(figsize=(<span class="code-number">15</span>, <span class="code-number">6</span>))
+plot_tree(model.estimators_[<span class="code-number">0</span>],
+               feature_names=x_train.columns,
+               class_names=[<span class="code-string">'LEAVE'</span>, <span class="code-string">'STAY'</span>],
+               filled=<span class="code-keyword">True</span>, fontsize=<span class="code-number">8</span>);</code></pre>
+
+        <div class="explanation mt-8">
+            <h3 class="font-bold text-lg mb-2">(2) 변수 중요도 (Feature Importance)</h3>
+            <p>랜덤 포레스트의 강력한 기능 중 하나는 <strong>어떤 변수가 예측에 중요한지</strong> 알려준다는 점입니다. 이는 개별 트리들의 변수 중요도 평균값입니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 변수 이름과 중요도 수치 출력</span>
+<span class="code-function">print</span>(x_train.columns)
+<span class="code-function">print</span>(model.feature_importances_)</code></pre>
+
+        <div class="explanation mt-4">
+            <p>숫자만 보면 파악하기 어려우므로, 이를 그래프로 그려주는 함수를 정의하고 실행해봅니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 변수 중요도 시각화 함수 정의</span>
+<span class="code-keyword">def</span> <span class="code-function">plot_feature_importance</span>(importance, names):
+    feature_importance = np.array(importance)
+    feature_names = np.array(names)
+
+    <span class="code-comment"># 데이터프레임으로 변환</span>
+    data = {<span class="code-string">'feature_names'</span>: feature_names, <span class="code-string">'feature_importance'</span>: feature_importance}
+    fi_df = pd.DataFrame(data)
+
+    <span class="code-comment"># 중요도 순으로 정렬</span>
+    fi_df.sort_values(by=[<span class="code-string">'feature_importance'</span>], ascending=<span class="code-keyword">False</span>, inplace=<span class="code-keyword">True</span>)
+    fi_df.reset_index(drop=<span class="code-keyword">True</span>, inplace=<span class="code-keyword">True</span>)
+
+    <span class="code-comment"># 그래프 그리기</span>
+    plt.figure(figsize=(<span class="code-number">10</span>, <span class="code-number">8</span>))
+    sns.barplot(x=<span class="code-string">'feature_importance'</span>, y=<span class="code-string">'feature_names'</span>, data=fi_df)
+
+    plt.xlabel(<span class="code-string">'FEATURE IMPORTANCE'</span>)
+    plt.ylabel(<span class="code-string">'FEATURE NAMES'</span>)
+    plt.grid()
+
+<span class="code-comment"># 함수 호출</span>
+plot_feature_importance(model.feature_importances_, x_train.columns)</code></pre>
+    </section>
+
+    <!-- Section 4: Tuning -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6 chapter-title text-blue-700">4. Random Forest 튜닝 (Grid Search)</h2>
+        
+        <div class="explanation">
+            <p>최적의 모델 성능을 위해 하이퍼파라미터를 튜닝합니다. <code>GridSearchCV</code>를 사용해 여러 조합을 시도합니다.</p>
+            <ul class="list-disc list-inside mt-2 text-sm text-gray-600">
+                <li><strong>n_estimators</strong>: 5부터 100까지 5단위로 증가</li>
+                <li><strong>max_depth</strong>: [3, 5, 7, 9] 중 하나</li>
+                <li><strong>cv (Cross Validation)</strong>: 5-Fold 교차 검증</li>
+            </ul>
+        </div>
+
+        <pre><code><span class="code-comment"># 1. 튜닝 파라미터 범위 설정</span>
+params = {<span class="code-string">'n_estimators'</span>: <span class="code-function">range</span>(<span class="code-number">5</span>, <span class="code-number">101</span>, <span class="code-number">5</span>), <span class="code-string">'max_depth'</span>: [<span class="code-number">3</span>, <span class="code-number">5</span>, <span class="code-number">7</span>, <span class="code-number">9</span>]}
+
+<span class="code-comment"># 2. 함수 불러오기</span>
+<span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> GridSearchCV
+
+<span class="code-comment"># 3. 모델 선언 및 Grid Search 학습</span>
+<span class="code-comment"># 기본 RandomForestClassifier에 params 설정을 적용하고, 5겹 교차검증 수행</span>
+model_gs = GridSearchCV(RandomForestClassifier(), params, cv=<span class="code-number">5</span>)
+model_gs.fit(x_train, y_train)</code></pre>
+
+        <div class="explanation mt-4">
+            <h3 class="font-bold text-lg mb-2">결과 확인</h3>
+            <p>가장 좋은 성능을 낸 파라미터 조합(<code>best_params_</code>)과 그때의 점수(<code>best_score_</code>)를 확인합니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 최적 파라미터와 점수 확인</span>
+model_gs.best_params_, model_gs.best_score_</code></pre>
+
+        <div class="explanation mt-4">
+            <p>튜닝된 최적의 모델로 검증 데이터(val)를 예측하고 평가합니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 튜닝된 모델로 예측 및 평가</span>
+pred = model_gs.predict(x_val)
+<span class="code-function">print</span>(classification_report(y_val, pred))</code></pre>
+
+        <div class="explanation mt-8">
+            <h3 class="font-bold text-lg mb-2">튜닝 결과 시각화</h3>
+            <p>Grid Search 결과를 데이터프레임으로 변환하여, 파라미터 변화에 따른 성능 변화를 그래프로 확인합니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 결과 데이터프레임 생성</span>
+result = pd.DataFrame(model_gs.cv_results_)
+result = result[[<span class="code-string">'param_max_depth'</span>, <span class="code-string">'param_n_estimators'</span>, <span class="code-string">'mean_test_score'</span>]]
+
+<span class="code-comment"># 라인 차트로 시각화 (Hue: max_depth)</span>
+plt.figure(figsize=(<span class="code-number">10</span>, <span class="code-number">6</span>))
+sns.lineplot(x=<span class="code-string">'param_n_estimators'</span>, y=<span class="code-string">'mean_test_score'</span>, data=result, hue=<span class="code-string">'param_max_depth'</span>)
+plt.grid()
+plt.show()</code></pre>
+
+        <div class="explanation mt-4">
+            <p>마지막으로, 튜닝된 최적 모델(<code>best_estimator_</code>)의 변수 중요도를 확인합니다.</p>
+        </div>
+
+        <pre><code><span class="code-comment"># 최적 모델의 변수 중요도 수치</span>
+model_gs.best_estimator_.feature_importances_
+
+<span class="code-comment"># 시각화 함수 호출</span>
+plot_feature_importance(model_gs.best_estimator_.feature_importances_, x_train.columns)</code></pre>
+    </section>
+
+    <!-- Section 5: Practice Problem -->
+    <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6 chapter-title text-red-600">5. 복습문제: Carseats 판매량 예측</h2>
+        
+        <div class="explanation">
+            <p class="mb-4"><strong>목표:</strong> <code>Carseats</code> 데이터를 이용하여 판매량(Sales)을 예측하는 회귀 모델을 만드시오.</p>
+            <ul class="list-disc list-inside text-sm text-gray-700">
+                <li>데이터: 카시트 판매량 데이터 (회귀 문제)</li>
+                <li>알고리즘: <strong>RandomForestRegressor</strong></li>
+                <li>튜닝: Grid Search (n_estimators, max_depth)</li>
+            </ul>
+        </div>
+
+        <div class="explanation mt-4">
+            <h3 class="font-bold text-lg mb-2">(1) 라이브러리 및 데이터 로딩</h3>
+            <p>회귀 모델링을 위해 <code>RandomForestRegressor</code>를 불러옵니다.</p>
+        </div>
+
+        <pre><code><span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> RandomForestRegressor
+
+<span class="code-comment"># 데이터 로딩</span>
+path = <span class="code-string">'https://raw.githubusercontent.com/DA4BAM/dataset/master/Carseats.csv'</span>
+data = pd.read_csv(path)
+data.head()</code></pre>
+
+        <div class="explanation mt-4">
+            <h3 class="font-bold text-lg mb-2">(2) 데이터 분할 (x, y)</h3>
+            <p>Target은 <code>Sales</code>입니다.</p>
+        </div>
+
+        <pre><code>target = <span class="code-string">'Sales'</span>
+x = data.drop(target, axis=<span class="code-number">1</span>)
+y = data.loc[:, target]</code></pre>
+
+        <div class="explanation mt-4">
+            <h3 class="font-bold text-lg mb-2">(3) 가변수화 (Preprocessing)</h3>
+            <p>범주형 변수인 <code>ShelveLoc</code>, <code>US</code>, <code>Urban</code>을 가변수화합니다.</p>
+        </div>
+
+        <pre><code>cat_cols = [<span class="code-string">'ShelveLoc'</span>, <span class="code-string">'US'</span>, <span class="code-string">'Urban'</span>]
+
+<span class="code-comment"># 가변수화 수행 (첫 번째 범주 제거)</span>
+x = pd.get_dummies(x, columns=cat_cols, drop_first=<span class="code-keyword">True</span>)
+x.head()</code></pre>
+
+        <div class="explanation mt-4">
+            <h3 class="font-bold text-lg mb-2">(4) 학습용/검증용 데이터 분할</h3>
+        </div>
+
+        <pre><code>x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=<span class="code-number">.3</span>, random_state=<span class="code-number">20</span>)</code></pre>
+
+        <div class="explanation mt-8 bg-blue-50 border-blue-200">
+            <h3 class="font-bold text-lg mb-2 text-blue-800"><i class="fas fa-pen"></i> (5) 실습 풀이: 랜덤포레스트 모델링 및 튜닝</h3>
+            <p>문제에서 요구한 튜닝 조건을 반영하여 모델링을 수행하는 코드입니다.</p>
+            <ul class="list-disc list-inside mt-2 text-sm text-blue-800">
+                <li>n_estimators: 10 ~ 200</li>
+                <li>max_depth: 2 ~ 10</li>
+            </ul>
+        </div>
+
+        <pre><code><span class="code-comment"># 1. 튜닝 파라미터 정의</span>
+<span class="code-comment"># range(start, stop, step): 10부터 200까지 10단위, 2부터 10까지 1단위</span>
+params = {
+    <span class="code-string">'n_estimators'</span>: <span class="code-function">range</span>(<span class="code-number">10</span>, <span class="code-number">201</span>, <span class="code-number">10</span>),
+    <span class="code-string">'max_depth'</span>: <span class="code-function">range</span>(<span class="code-number">2</span>, <span class="code-number">11</span>)
+}
+
+<span class="code-comment"># 2. 모델 선언 (Regressor 사용 주의)</span>
+model_rf = RandomForestRegressor()
+
+<span class="code-comment"># 3. Grid Search 선언 및 학습</span>
+<span class="code-comment"># cv=5: 5번의 교차 검증 수행</span>
+model_gs = GridSearchCV(model_rf, params, cv=<span class="code-number">5</span>)
+model_gs.fit(x_train, y_train)
+
+<span class="code-comment"># 4. 최적 결과 확인</span>
+<span class="code-function">print</span>(<span class="code-string">"최적 파라미터:"</span>, model_gs.best_params_)
+<span class="code-function">print</span>(<span class="code-string">"최고 점수 (R2):"</span>, model_gs.best_score_)
+
+<span class="code-comment"># 5. 검증 데이터 예측 및 평가 (RMSE, R2)</span>
+pred = model_gs.predict(x_val)
+<span class="code-keyword">from</span> sklearn.metrics <span class="code-keyword">import</span> mean_squared_error, r2_score
+
+<span class="code-function">print</span>(<span class="code-string">"RMSE:"</span>, mean_squared_error(y_val, pred, squared=<span class="code-keyword">False</span>))
+<span class="code-function">print</span>(<span class="code-string">"R2 Score:"</span>, r2_score(y_val, pred))</code></pre>
+
+    </section>
+
+    <footer class="text-center text-gray-500 text-sm mt-12 mb-8">
+        <p>End of Document</p>
+    </footer>
+
+</body>
+</html>
