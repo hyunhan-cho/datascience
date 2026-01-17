@@ -1,0 +1,406 @@
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Code, Terminal, Play, CheckCircle, Database, Brain, Settings, Activity, ArrowRight, Menu, X } from 'lucide-react';
+
+const CodeBlock = ({ code, language = 'python' }) => (
+  <div className="bg-gray-900 rounded-lg overflow-hidden my-4 shadow-lg border border-gray-800">
+    <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+      <div className="flex space-x-2">
+        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+      </div>
+      <span className="text-xs text-gray-400 font-mono">{language}</span>
+    </div>
+    <div className="p-4 overflow-x-auto">
+      <pre className="font-mono text-sm leading-relaxed text-gray-300">
+        <code>{code}</code>
+      </pre>
+    </div>
+  </div>
+);
+
+const Section = ({ title, icon: Icon, children, id }) => (
+  <section id={id} className="mb-16 scroll-mt-24">
+    <div className="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+      <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+        <Icon size={24} />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+    </div>
+    <div className="space-y-6">
+      {children}
+    </div>
+  </section>
+);
+
+const Explanation = ({ title, children }) => (
+  <div className="bg-white border-l-4 border-indigo-500 pl-4 py-2 my-4">
+    {title && <h4 className="font-bold text-gray-800 mb-2">{title}</h4>}
+    <div className="text-gray-600 text-sm leading-relaxed space-y-2">
+      {children}
+    </div>
+  </div>
+);
+
+const OutputBlock = ({ children }) => (
+  <div className="bg-gray-100 rounded-md p-4 my-4 font-mono text-xs text-gray-700 border border-gray-200 shadow-inner">
+    <div className="flex items-center space-x-2 mb-2 text-gray-500 border-b border-gray-300 pb-2">
+      <Terminal size={14} />
+      <span>Output Console</span>
+    </div>
+    <div className="whitespace-pre-wrap">{children}</div>
+  </div>
+);
+
+export default function App() {
+  const [activeSection, setActiveSection] = useState('intro');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const sections = [
+    { id: 'intro', title: '실습 소개', icon: BookOpen },
+    { id: 'setup', title: '라이브러리 설치', icon: Settings },
+    { id: 'data', title: '데이터 로드', icon: Database },
+    { id: 'model', title: '모델 및 토크나이저', icon: Brain },
+    { id: 'train-setup', title: '훈련 설정', icon: Activity },
+    { id: 'train-run', title: '파인튜닝 실행', icon: Play },
+    { id: 'predict', title: '실제 예측', icon: CheckCircle },
+  ];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 150;
+      
+      for (const section of sections) {
+        const element = document.getElementById(section.id);
+        if (element) {
+          const { offsetTop, offsetHeight } = element;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      window.scrollTo({
+        top: element.offsetTop - 100,
+        behavior: 'smooth'
+      });
+      setActiveSection(id);
+      setIsMobileMenuOpen(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-800">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Brain className="h-8 w-8 text-indigo-600 mr-3" />
+              <span className="font-bold text-xl tracking-tight text-gray-900">BERT Fine-Tuning Lab</span>
+            </div>
+            
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center space-x-1">
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeSection === section.id
+                      ? 'bg-indigo-50 text-indigo-700'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  {section.title}
+                </button>
+              ))}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="flex items-center md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none"
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Nav */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-b border-gray-200 px-2 pt-2 pb-3 space-y-1 sm:px-3 shadow-lg">
+            {sections.map((section) => (
+              <button
+                key={section.id}
+                onClick={() => scrollToSection(section.id)}
+                className={`block w-full text-left px-3 py-4 rounded-md text-base font-medium ${
+                  activeSection === section.id
+                    ? 'bg-indigo-50 text-indigo-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <div className="flex items-center">
+                  <section.icon size={18} className="mr-3" />
+                  {section.title}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
+        
+        {/* Intro Section */}
+        <Section id="intro" title="실습 소개: BERT 파인튜닝" icon={BookOpen}>
+          <div className="prose prose-indigo max-w-none">
+            <p className="text-lg text-gray-600 mb-6">
+              이 튜토리얼은 <strong>IMDB 영화 리뷰 데이터셋</strong>을 사용하여 긍정/부정을 분류하는 모델을 만드는 과정을 담고 있습니다.
+              사전 학습된 <code>distilbert-base-uncased</code> 모델을 가져와 우리의 목적에 맞게 <strong>파인튜닝(Fine-tuning)</strong> 합니다.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <h3 className="font-bold text-gray-900 mb-3 flex items-center">
+                  <span className="bg-indigo-100 text-indigo-600 p-1.5 rounded mr-2 text-sm">STEP 1</span>
+                  문제 정의
+                </h3>
+                <p className="text-sm text-gray-600">영화 리뷰 텍스트를 입력받아 긍정(1) 또는 부정(0)으로 분류하는 이진 분류 모델을 구축합니다.</p>
+              </div>
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <h3 className="font-bold text-gray-900 mb-3 flex items-center">
+                  <span className="bg-purple-100 text-purple-600 p-1.5 rounded mr-2 text-sm">STEP 2</span>
+                  모델 정보
+                </h3>
+                <p className="text-sm text-gray-600">DistilBERT(경량화된 BERT)를 사용하여 빠르고 효율적인 학습을 진행합니다. (파라미터: 약 66M)</p>
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        {/* Library Installation */}
+        <Section id="setup" title="라이브러리 설치" icon={Settings}>
+          <Explanation title="필수 패키지 설치">
+            <p>Hugging Face의 생태계를 활용하기 위해 두 가지 핵심 라이브러리를 설치합니다.</p>
+            <ul className="list-disc list-inside mt-2 ml-1">
+              <li><code>transformers</code>: 사전 학습된 모델(BERT 등)을 쉽게 불러오고 학습시키는 도구입니다.</li>
+              <li><code>datasets</code>: IMDB 같은 벤치마크 데이터를 한 줄의 코드로 다운로드할 수 있게 해줍니다.</li>
+              <li><code>fsspec</code>: 파일 시스템 처리를 위한 의존성 패키지 버전을 조정합니다.</li>
+            </ul>
+          </Explanation>
+
+          <CodeBlock code={`# 세션 다시 시작 필요 (코랩 환경일 경우)
+!pip install -q transformers datasets
+!pip install -U "datasets<=2.18.0" "fsspec<=2023.6.0"`} />
+        </Section>
+
+        {/* Data Load */}
+        <Section id="data" title="데이터 로드 및 분할" icon={Database}>
+          <Explanation title="IMDB 데이터셋 불러오기">
+            <p><code>load_dataset</code> 함수를 사용해 데이터를 불러옵니다. 이 실습에서는 빠른 실행을 위해 <strong>50개의 샘플</strong>만 사용합니다.</p>
+            <p className="mt-2 text-indigo-700 font-medium">코드 상세 분석:</p>
+            <ul className="list-disc list-inside mt-1 ml-1 text-xs sm:text-sm">
+              <li><code>split="train[:50]"</code>: 전체 학습 데이터 중 앞에서 50개만 슬라이싱하여 가져옵니다.</li>
+              <li><code>.train_test_split(test_size=0.2)</code>: 가져온 50개를 다시 8:2 비율로 나누어 <strong>학습용(40개)</strong>과 <strong>검증용(10개)</strong>으로 분리합니다.</li>
+            </ul>
+          </Explanation>
+
+          <CodeBlock code={`from datasets import load_dataset
+
+# 1. 데이터 로드
+# IMDB 영화 리뷰 데이터셋 중 50개 샘플만 가져와서 학습용/평가용으로 8:2 비율로 나눕니다
+dataset = load_dataset("imdb", split="train[:50]").train_test_split(test_size=0.2)`} />
+
+          <Explanation title="데이터 확인하기">
+             데이터가 잘 로드되었는지 확인하기 위해 8번째 샘플(인덱스 7)을 출력해 봅니다.
+          </Explanation>
+
+          <CodeBlock code={`sample = dataset["train"][7]
+print(f"📝 리뷰 내용:\\n{sample['text']}\\n")
+print(f"🏷️ 라벨 (0=부정, 1=긍정): {sample['label']}")`} />
+
+          <OutputBlock>
+{`📝 리뷰 내용:
+I received this movie as a gift, I knew from the DVD cover... (중략) ... Even if you like B HORROR movies, don't watch this movie
+
+🏷️ 라벨 (0=부정, 1=긍정): 0`}
+          </OutputBlock>
+          <p className="text-sm text-gray-500 mt-2 italic">* 라벨 0은 부정적인 리뷰를 의미합니다. 리뷰 내용 마지막의 "don't watch this movie"에서 부정적인 감정을 알 수 있습니다.</p>
+        </Section>
+
+        {/* Model & Tokenizer */}
+        <Section id="model" title="모델 및 토크나이저 준비" icon={Brain}>
+          <Explanation title="사전학습 모델 불러오기">
+            <p>우리는 처음부터 영어를 가르치는 것이 아니라, 이미 영어를 잘하는 <strong>DistilBERT</strong> 모델을 데려와서 "리뷰 분류" 업무를 가르칠 것입니다.</p>
+            <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="bg-indigo-50 p-3 rounded border border-indigo-100">
+                <span className="font-bold text-indigo-800 block mb-1">Tokenizer</span>
+                <span className="text-xs text-indigo-600">사람의 언어(글자)를 모델이 이해하는 언어(숫자)로 번역해주는 도구입니다.</span>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded border border-indigo-100">
+                <span className="font-bold text-indigo-800 block mb-1">Model</span>
+                <span className="text-xs text-indigo-600">숫자로 된 언어를 입력받아 분류 결과를 예측하는 두뇌입니다. <code>SequenceClassification</code>용으로 불러옵니다.</span>
+              </div>
+            </div>
+          </Explanation>
+
+          <CodeBlock code={`from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+# 2. 모델 및 토크나이저 준비
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+# uncased: 대소문자 구분 없이 모두 소문자로 처리한다는 의미
+
+model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased")
+# SequenceClassification: 문장 분류를 위한 헤드(Head)가 달린 모델을 불러옴`} />
+
+          <Explanation title="데이터 전처리 (토큰화)">
+            <p>로드한 데이터셋의 모든 문장을 숫자로 바꿔야 합니다. <code>map</code> 함수를 사용해 전체 데이터에 적용합니다.</p>
+            <p className="mt-2 text-indigo-700 font-medium">옵션 설명:</p>
+            <ul className="list-disc list-inside mt-1 ml-1 text-xs sm:text-sm">
+              <li><code>truncation=True</code>: 문장이 너무 길면 모델의 최대 길이(512)에 맞춰 자릅니다.</li>
+              <li><code>padding=True</code>: 문장이 짧으면 빈 공간을 0으로 채워 길이를 맞춥니다.</li>
+              <li><code>batched=True</code>: 한 번에 여러 개씩 처리하여 속도를 높입니다.</li>
+            </ul>
+          </Explanation>
+
+          <CodeBlock code={`# 3. 데이터 전처리 (텍스트를 숫자 토큰으로 변환)
+def tokenize(batch):
+    return tokenizer(batch["text"], truncation=True, padding=True)
+
+dataset = dataset.map(tokenize, batched=True)`} />
+        </Section>
+
+        {/* Training Setup */}
+        <Section id="train-setup" title="훈련 설정" icon={Activity}>
+          <Explanation title="Trainer 설정 및 메트릭 함수">
+            <p>Hugging Face의 <code>Trainer</code> 클래스를 사용하면 복잡한 학습 루프(for문)를 직접 짤 필요가 없습니다. 학습에 필요한 설정값(Hyperparameters)과 평가 방법만 정해주면 됩니다.</p>
+          </Explanation>
+
+          <CodeBlock code={`from transformers import TrainingArguments, Trainer
+from sklearn.metrics import accuracy_score
+
+# 정확도 계산 함수: 모델의 예측값과 실제 정답을 비교하여 정확도를 계산
+def compute_metrics(eval_pred):
+    logits, labels = eval_pred
+    predictions = logits.argmax(axis=-1) # 확률이 가장 높은 클래스 선택
+    acc = accuracy_score(labels, predictions)
+    return {"accuracy": acc}
+
+# 훈련 파라미터 설정
+args = TrainingArguments(
+    output_dir="test",              # 모델 체크포인트 저장 경로
+    per_device_train_batch_size=8,  # 배치 크기 (한 번에 학습할 데이터 수)
+    num_train_epochs=15,            # 학습 반복 횟수 (전체 데이터를 15번 봄)
+    report_to="none",               # 외부 로깅 비활성화
+    logging_steps=1                 # 매 스텝마다 로그 출력
+)
+
+# Trainer 객체 생성
+trainer = Trainer(
+    model=model,                    # 학습시킬 모델
+    args=args,                      # 위에서 정의한 설정값
+    train_dataset=dataset["train"], # 학습 데이터 (40개)
+    eval_dataset=dataset["test"],   # 평가 데이터 (10개)
+    compute_metrics=compute_metrics # 평가 방식 (정확도)
+)`} />
+        </Section>
+
+        {/* Training Run */}
+        <Section id="train-run" title="파인튜닝 실행" icon={Play}>
+          <Explanation title="학습 시작">
+             이제 모든 준비가 끝났습니다. <code>trainer.train()</code> 한 줄이면 학습이 시작됩니다.
+             모델은 우리가 제공한 40개의 데이터를 15번 반복해서 보며(Epochs), 긍정과 부정을 구분하는 법을 스스로 깨우칩니다.
+          </Explanation>
+
+          <CodeBlock code={`# 5. 파인튜닝 실행 (모델 학습)
+trainer.train()`} />
+
+          <OutputBlock>
+{`[75/75 00:34, Epoch 15/15]
+Step	Training Loss
+1	0.774700
+...
+75	0.001400
+
+TrainOutput(global_step=75, training_loss=0.0416, ...)`}
+          </OutputBlock>
+          <div className="text-sm text-gray-500 mt-2 mb-6">
+            <p className="flex items-center"><ArrowRight size={14} className="mr-1"/> <strong>Training Loss</strong>가 0.77에서 시작해 0.0014까지 떨어진 것을 볼 수 있습니다. 이는 모델이 학습 데이터에 대해 거의 완벽하게 적응했음을 의미합니다.</p>
+          </div>
+
+          <Explanation title="모델 평가">
+            <p>학습에 사용하지 않은 <strong>테스트 데이터(10개)</strong>를 사용해 모델의 실제 실력을 검증합니다.</p>
+          </Explanation>
+
+          <CodeBlock code={`results = trainer.evaluate()
+print(results)`} />
+
+          <OutputBlock>
+{`{'eval_loss': 0.00109, 'eval_accuracy': 1.0, ...}`}
+          </OutputBlock>
+           <div className="text-sm text-green-600 mt-2 font-semibold">
+            <CheckCircle size={14} className="inline mr-1"/> 정확도(accuracy)가 1.0(100%)이 나왔습니다! (샘플 데이터가 적어서 나온 결과입니다)
+          </div>
+        </Section>
+
+        {/* Prediction */}
+        <Section id="predict" title="실제 예측 수행" icon={CheckCircle}>
+          <Explanation title="새로운 문장 테스트">
+            <p>이제 학습된 모델을 사용해, 본 적 없는 새로운 리뷰 문장을 판별해 봅니다. 이 과정을 <strong>인퍼런스(Inference)</strong>라고 합니다.</p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800 my-2">
+              <strong>Tip:</strong> 모델은 GPU(cuda)에 있으므로, 입력 데이터도 <code>.to("cuda")</code>를 통해 GPU로 옮겨줘야 에러가 나지 않습니다.
+            </div>
+          </Explanation>
+
+          <CodeBlock code={`# 6. 학습된 모델로 실제 예측 수행
+text = "I would put this at the top of my list of films in the category of unwatchable trash!"
+# "이 영화를 내 '시청 불가 쓰레기' 카테고리 영화 리스트의 맨 위에 올리겠다!" (혹평)
+
+# 1. 토큰화 및 GPU로 이동
+inputs = tokenizer(text, return_tensors="pt").to("cuda")
+
+# 2. 모델 예측
+output = model(**inputs)
+
+# 3. 결과 해석 (Logits -> Label)
+label = output.logits.argmax(-1).item()
+# output.logits는 [부정점수, 긍정점수] 형태입니다.
+# argmax(-1)은 둘 중 더 큰 점수의 위치(인덱스)를 찾습니다.
+
+print("긍정" if label == 1 else "부정")`} />
+
+          <OutputBlock>
+{`부정`}
+          </OutputBlock>
+          
+          <div className="mt-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg text-center">
+            <h3 className="text-xl font-bold mb-2">🎉 실습 완료!</h3>
+            <p className="text-indigo-100 mb-4">
+              이제 여러분은 <strong>BERT 모델을 파인튜닝</strong>하여 감정 분석 모델을 만들 수 있게 되었습니다.
+            </p>
+            <button 
+              onClick={() => scrollToSection('intro')}
+              className="px-6 py-2 bg-white text-indigo-600 font-bold rounded-full shadow hover:bg-gray-100 transition-colors"
+            >
+              처음으로 돌아가기
+            </button>
+          </div>
+        </Section>
+
+      </main>
+    </div>
+  );
+}
