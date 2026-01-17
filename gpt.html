@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPT-2 파인튜닝 실습 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons (Updated CDN) -->
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .code-block {
+            background-color: #1a1b26;
+            color: #a9b1d6;
+        }
+        .code-keyword { color: #bb9af7; }
+        .code-string { color: #9ece6a; }
+        .code-comment { color: #565f89; font-style: italic; }
+        .code-function { color: #7aa2f7; }
+        .code-number { color: #ff9e64; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c7c7c7;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md border-b border-gray-200 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i data-lucide="brain-circuit" class="h-8 w-8 text-indigo-600 mr-3"></i>
+                    <span class="font-bold text-xl tracking-tight text-gray-900">GPT-2 Fine-Tuning Lab</span>
+                </div>
+                
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex items-center space-x-1" id="desktop-nav">
+                    <!-- Nav items will be injected by JS -->
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex items-center md:hidden">
+                    <button id="mobile-menu-btn" class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+                        <i data-lucide="menu" class="h-6 w-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Nav -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-200 shadow-lg">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3" id="mobile-nav-items">
+                <!-- Nav items will be injected by JS -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
+
+        <!-- Intro Section -->
+        <section id="intro" class="mb-20 scroll-mt-24 section-container">
+            <div class="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i data-lucide="book-open" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">실습 소개: GPT-2 파인튜닝</h2>
+            </div>
+            
+            <div class="prose max-w-none text-gray-600">
+                <p class="text-lg mb-6">
+                    이 튜토리얼은 <strong>GPT-2 모델</strong>에 <strong>LoRA(Low-Rank Adaptation)</strong> 기술을 적용하여,
+                    적은 데이터로도 모델이 특정 질문에 원하는 답변을 하도록 훈련시키는 과정을 다룹니다.
+                </p>
+
+                <!-- Comparison Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                        <h3 class="font-bold text-gray-800">DistilBERT vs GPT-2 비교</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left">
+                            <thead class="bg-gray-50 text-gray-500 font-medium">
+                                <tr>
+                                    <th class="px-6 py-3">항목</th>
+                                    <th class="px-6 py-3">DistilBERT (이전 실습)</th>
+                                    <th class="px-6 py-3 text-indigo-600">GPT-2 (이번 실습)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-3 font-medium">모델 타입</td>
+                                    <td class="px-6 py-3">Encoder (이해 중심)</td>
+                                    <td class="px-6 py-3">Decoder (생성 중심)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-3 font-medium">주요 목적</td>
+                                    <td class="px-6 py-3">분류 (긍정/부정 등)</td>
+                                    <td class="px-6 py-3">생성 (다음 단어 예측)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-3 font-medium">파라미터 수</td>
+                                    <td class="px-6 py-3">약 66M</td>
+                                    <td class="px-6 py-3">약 124M</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 my-6 rounded-r-lg">
+                    <h4 class="font-bold text-indigo-800 mb-2">🎯 핵심 목표</h4>
+                    <p class="text-indigo-700 text-sm">
+                        GPT-2에게 "우리집 강아지 이름은?"이라고 물었을 때, 원래는 엉뚱한 말을 하겠지만 
+                        학습 후에는 <strong>"순둥이"</strong>라고 대답하게 만드는 것이 목표입니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 1: Environment -->
+        <section id="setup" class="mb-20 scroll-mt-24 section-container">
+            <div class="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i data-lucide="settings" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">STEP 1~2: 환경 설정 및 라이브러리</h2>
+            </div>
+
+            <div class="bg-white border-l-4 border-indigo-500 pl-4 py-2 my-4 shadow-sm">
+                <h4 class="font-bold text-gray-800 mb-2">필수 패키지 설치</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    효율적인 학습을 위해 <code>peft</code>(LoRA 지원)와 <code>bitsandbytes</code>(경량화) 같은 최신 라이브러리를 함께 설치합니다.
+                </p>
+            </div>
+
+            <div class="code-block rounded-lg overflow-hidden my-4 shadow-lg border border-gray-800">
+                <div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+                    <div class="flex space-x-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <span class="text-xs text-gray-400 font-mono">bash / python</span>
+                </div>
+                <div class="p-4 overflow-x-auto">
+<pre><code class="text-sm"># STEP 1: 환경 설정
+!pip install -q transformers datasets peft accelerate bitsandbytes
+
+# STEP 2: 기본 라이브러리 임포트
+<span class="code-keyword">import</span> torch  <span class="code-comment"># PyTorch: 딥러닝 프레임워크</span>
+<span class="code-keyword">from</span> datasets <span class="code-keyword">import</span> Dataset  <span class="code-comment"># 데이터셋 처리</span>
+<span class="code-keyword">from</span> transformers <span class="code-keyword">import</span> (
+    AutoTokenizer, 
+    AutoModelForCausalLM, 
+    TrainingArguments, 
+    Trainer, 
+    DataCollatorForLanguageModeling
+)
+<span class="code-keyword">from</span> peft <span class="code-keyword">import</span> get_peft_model, LoraConfig, TaskType  <span class="code-comment"># LoRA 핵심 모듈</span></code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3: Model Load -->
+        <section id="model" class="mb-20 scroll-mt-24 section-container">
+            <div class="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i data-lucide="brain" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">STEP 3: 모델 및 토크나이저 로드</h2>
+            </div>
+
+            <div class="bg-white border-l-4 border-indigo-500 pl-4 py-2 my-4 shadow-sm">
+                <h4 class="font-bold text-gray-800 mb-2">GPT-2 모델 준비</h4>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    GPT-2는 기본적으로 <code>pad_token</code>(빈 공간 채우기용 토큰)이 없습니다. 
+                    따라서 <code>eos_token</code>(문장 끝 토큰)을 패딩 토큰으로 대신 사용하도록 설정해 주어야 에러가 나지 않습니다.
+                </p>
+            </div>
+
+            <div class="code-block rounded-lg overflow-hidden my-4 shadow-lg border border-gray-800">
+                <div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+                    <span class="text-xs text-gray-400 font-mono">python</span>
+                </div>
+                <div class="p-4 overflow-x-auto">
+<pre><code class="text-sm"># STEP 3: 모델 및 토크나이저 로드
+model_id = <span class="code-string">"gpt2"</span>
+
+# 토크나이저 로드
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+# 💡 중요: GPT-2는 pad_token이 없어서 eos_token으로 대체 설정
+tokenizer.pad_token = tokenizer.eos_token
+
+# 모델 로드 (CausalLM: 인과적 언어 모델링용)
+model = AutoModelForCausalLM.from_pretrained(model_id)</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4: LoRA Config -->
+        <section id="lora" class="mb-20 scroll-mt-24 section-container">
+            <div class="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i data-lucide="layers" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">STEP 4: LoRA 설정 (핵심!)</h2>
+            </div>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 my-4">
+                <h4 class="font-bold text-yellow-800 mb-2 flex items-center"><i data-lucide="zap" class="w-4 h-4 mr-2"></i>LoRA란?</h4>
+                <p class="text-yellow-700 text-sm mb-2">
+                    거대 모델의 모든 파라미터를 학습시키는 건 너무 무겁습니다. LoRA는 모델 옆에 <strong>아주 작은 학습용 파라미터</strong>를 붙여서 그것만 학습시키는 기술입니다.
+                </p>
+                <ul class="list-disc list-inside text-xs text-yellow-800 mt-2 space-y-1">
+                    <li><strong>r=16</strong>: 랭크(Rank). 숫자가 클수록 성능은 좋지만 무거워짐.</li>
+                    <li><strong>target_modules</strong>: LoRA를 붙일 위치 (GPT-2에서는 주로 Attention 모듈).</li>
+                </ul>
+            </div>
+
+            <div class="code-block rounded-lg overflow-hidden my-4 shadow-lg border border-gray-800">
+                <div class="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
+                    <span class="text-xs text-gray-400 font-mono">python</span>
+                </div>
+                <div class="p-4 overflow-x-auto">
+<pre><code class="text-sm"># STEP 4: LoRA 설정
+lora_config = LoraConfig(
+    r=<span class="code-number">16</span>,             <span class="code-comment"># LoRA Rank</span>
+    lora_alpha=<span class="code-number">8</span>,     <span class="code-comment"># 스케일링 계수</span>
+    target_modules=[<span class="code-string">"c_attn"</span>, <span class="code-string">"c_proj"</span>, <span class="code-string">"q_attn"</span>], <span class="code-comment"># 적용할 레이어</span>
+    lora_dropout=<span class="code-number">0.05</span>,
+    bias=<span class="code-string">"none"</span>,
+    task_type=TaskType.CAUSAL_LM,
+)
+
+# 모델에 LoRA 적용
+model = get_peft_model(model, lora_config)
+
+# 학습 가능한 파라미터 수 확인
+model.print_trainable_parameters()</code></pre>
+                </div>
+            </div>
+
+            <div class="bg-gray-100 rounded-md p-4 my-4 font-mono text-xs text-gray-700 border border-gray-200 shadow-inner">
+                <div class="flex items-center space-x-2 mb-2 text-gray-500 border-b border-gray-300 pb-2">
+                    <i data-lucide="terminal" class="w-3 h-3"></i>
+                    <span>Output Console</span>
+                </div>
+                <div class="whitespace-pre-wrap">trainable params: 1,622,016 || all params: 126,061,824 || trainable%: 1.2867</div>
+            </div>
+            <p class="text-xs text-gray-500 mt-1 pl-1">
+                <i data-lucide="info" class="w-3 h-3 inline"></i> 전체 파라미터의 약 1.2%만 학습하면 되므로 매우 효율적입니다.
+            </p>
+        </section>
+
+        <!-- Step 5-7: Data Prep -->
+        <section id="data" class="mb-20 scroll-mt-24 section-container">
+            <div class="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i data-lucide="database" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">STEP 5~7: 데이터 준비 및 처리</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                    <h5 class="font-bold text-gray-800 mb-2">데이터 정의</h5>
+                    <p class="text-sm text-gray-600">질문과 답변이 포함된 간단한 텍스트 데이터를 정의합니다. 실습용으로 2개만 사용합니다.</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg border border-gray-200">
+                    <h5 class="font-bold text-gray-800 mb-2">데이터 콜레이터</h5>
+                    <p class="text-sm text-gray-600">GPT는 다음 단어를 예측하는 모델이므로 MLM(Masked Language Model)은 <code>False</code>로 설정합니다.</p>
+                </div>
+            </div>
+
+            <div class="code-block rounded-lg overflow-hidden my-4 shadow-lg border border-gray-800">
+                <div class="p-4 overflow-x-auto">
+<pre><code class="text-sm"># STEP 5: 학습 데이터셋 정의
+data = {
+    <span class="code-string">"text"</span>: [
+        <span class="code-string">"### 질문: 우리집 강아지 이름은?\n### 답변: 순둥이"</span>,
+        <span class="code-string">"### 질문: 바다는 왜 파란가요?\n### 답변: 햇빛의 산란"</span>,
+    ]
+}
+dataset = Dataset.from_dict(data)
+
+# STEP 6: 토크나이즈 함수
+def tokenize_function(example):
+    <span class="code-keyword">return</span> tokenizer(example[<span class="code-string">"text"</span>], padding=<span class="code-string">"max_length"</span>, truncation=<span class="code-keyword">True</span>, max_length=<span class="code-number">128</span>)
+
+tokenized_dataset = dataset.map(tokenize_function)
+
+# STEP 7: 데이터 콜레이터
+data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=<span class="code-keyword">False</span>)</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 8-9: Training -->
+        <section id="train" class="mb-20 scroll-mt-24 section-container">
+            <div class="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i data-lucide="play-circle" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">STEP 8~9: 학습 설정 및 실행</h2>
+            </div>
+
+            <div class="bg-white border-l-4 border-indigo-500 pl-4 py-2 my-4 shadow-sm">
+                <h4 class="font-bold text-gray-800 mb-2">학습 루프 실행</h4>
+                <p class="text-gray-600 text-sm">
+                    데이터가 매우 적으므로 <code>num_train_epochs</code>를 50으로 설정해 반복 학습시킵니다. 
+                    <code>compute_metrics</code> 함수를 통해 정확도가 어떻게 변하는지 확인할 수 있습니다.
+                </p>
+            </div>
+
+            <div class="code-block rounded-lg overflow-hidden my-4 shadow-lg border border-gray-800">
+                <div class="p-4 overflow-x-auto">
+<pre><code class="text-sm"># STEP 8: 트레이닝 설정
+training_args = TrainingArguments(
+    output_dir=<span class="code-string">"./results"</span>,
+    per_device_train_batch_size=<span class="code-number">10</span>,
+    num_train_epochs=<span class="code-number">50</span>,  <span class="code-comment"># 50번 반복 학습</span>
+    logging_steps=<span class="code-number">1</span>,
+    save_strategy=<span class="code-string">"no"</span>,
+    report_to=<span class="code-string">"none"</span>
+)
+
+<span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np
+
+# 정확도 계산 함수
+def compute_metrics(eval_pred):
+    logits, labels = eval_pred
+    predictions = np.argmax(logits, axis=-1)
+    mask = labels != -<span class="code-number">100</span>  <span class="code-comment"># 패딩 제외</span>
+    correct = (predictions == labels) & mask
+    accuracy = correct.sum() / mask.sum()
+    <span class="code-keyword">return</span> {<span class="code-string">"accuracy"</span>: accuracy}
+
+# STEP 9: 트레이너 설정 및 학습 시작
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_dataset,
+    tokenizer=tokenizer,
+    data_collator=data_collator,
+    compute_metrics=compute_metrics
+)
+
+trainer.train()</code></pre>
+                </div>
+            </div>
+
+            <div class="bg-gray-100 rounded-md p-4 my-4 font-mono text-xs text-gray-700 border border-gray-200 shadow-inner">
+                <div class="flex items-center space-x-2 mb-2 text-gray-500 border-b border-gray-300 pb-2">
+                    <i data-lucide="terminal" class="w-3 h-3"></i>
+                    <span>Output Console (Training Log)</span>
+                </div>
+                <div class="whitespace-pre-wrap">
+Step	Training Loss
+1	3.293700
+...
+25	3.031400
+...
+50	0.080900
+
+TrainOutput(..., train_loss=0.6964..., epoch=50.0)</div>
+            </div>
+            <p class="text-xs text-green-600 mt-1 pl-1 font-bold">
+                <i data-lucide="trending-down" class="w-3 h-3 inline"></i> Loss가 3.29에서 0.08까지 떨어진 것을 확인할 수 있습니다!
+            </p>
+        </section>
+
+        <!-- Step 10: Inference -->
+        <section id="predict" class="mb-20 scroll-mt-24 section-container">
+            <div class="flex items-center space-x-3 mb-6 border-b border-gray-200 pb-4">
+                <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                    <i data-lucide="message-square" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">STEP 10: 추론 (결과 확인)</h2>
+            </div>
+
+            <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100 mb-6">
+                <h4 class="font-bold text-indigo-900 mb-2">테스트 질문</h4>
+                <p class="text-indigo-800 text-lg">"### 질문: 우리집 강아지 이름은?\n### 답변:"</p>
+            </div>
+
+            <div class="code-block rounded-lg overflow-hidden my-4 shadow-lg border border-gray-800">
+                <div class="p-4 overflow-x-auto">
+<pre><code class="text-sm"># STEP 10: 추론 예시
+input_text = <span class="code-string">"### 질문: 우리집 강아지 이름은?\n### 답변:"</span>
+inputs = tokenizer(input_text, return_tensors=<span class="code-string">"pt"</span>)
+
+# GPU로 이동
+device = model.device
+inputs = {k: v.to(device) <span class="code-keyword">for</span> k, v <span class="code-keyword">in</span> inputs.items()}
+
+# 생성
+outputs = model.generate(**inputs, max_new_tokens=<span class="code-number">50</span>)
+print(tokenizer.decode(outputs[<span class="code-number">0</span>], skip_special_tokens=<span class="code-keyword">True</span>))</code></pre>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 text-green-400 rounded-md p-6 my-4 font-mono shadow-lg border-l-4 border-green-500">
+                <div class="flex items-center space-x-2 mb-4 border-b border-gray-700 pb-2 text-gray-400">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                    <span class="text-sm">Execution Result</span>
+                </div>
+                <div class="text-lg whitespace-pre-wrap">### 질문: 우리집 강아지 이름은?
+### 답변: 순둥이</div>
+            </div>
+
+            <div class="mt-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg text-center">
+                <h3 class="text-xl font-bold mb-2">🎉 파인튜닝 성공!</h3>
+                <p class="text-indigo-100 mb-4">
+                    모델이 학습 데이터에 있는 "순둥이"라는 답변을 정확하게 생성해냈습니다.
+                </p>
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="px-6 py-2 bg-white text-indigo-600 font-bold rounded-full shadow hover:bg-gray-100 transition-colors">
+                    처음으로 돌아가기
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Use an IIFE with event listener to ensure DOM content is loaded
+        (function() {
+            // Wait for DOMContentLoaded to handle scripts that rely on DOM elements
+            document.addEventListener("DOMContentLoaded", function() {
+                // Initialize Lucide icons if available
+                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                    lucide.createIcons();
+                }
+
+                // Navigation Data
+                const sections = [
+                    { id: 'intro', title: '실습 소개', icon: 'book-open' },
+                    { id: 'setup', title: '환경 설정', icon: 'settings' },
+                    { id: 'model', title: '모델 로드', icon: 'brain' },
+                    { id: 'lora', title: 'LoRA 설정', icon: 'layers' },
+                    { id: 'data', title: '데이터 준비', icon: 'database' },
+                    { id: 'train', title: '학습 실행', icon: 'play-circle' },
+                    { id: 'predict', title: '결과 확인', icon: 'message-square' },
+                ];
+
+                const desktopNav = document.getElementById('desktop-nav');
+                const mobileNavItems = document.getElementById('mobile-nav-items');
+                const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                const mobileMenu = document.getElementById('mobile-menu');
+
+                // Render Nav Items
+                sections.forEach(section => {
+                    // Desktop
+                    const btn = document.createElement('button');
+                    btn.className = 'nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors';
+                    btn.innerText = section.title;
+                    btn.dataset.target = section.id;
+                    btn.onclick = () => scrollToSection(section.id);
+                    desktopNav.appendChild(btn);
+
+                    // Mobile
+                    const mBtn = document.createElement('button');
+                    mBtn.className = 'block w-full text-left px-3 py-4 rounded-md text-base font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+                    mBtn.innerHTML = `<div class="flex items-center"><i data-lucide="${section.icon}" class="mr-3 w-4 h-4"></i>${section.title}</div>`;
+                    mBtn.onclick = () => {
+                        scrollToSection(section.id);
+                        mobileMenu.classList.add('hidden');
+                    };
+                    mobileNavItems.appendChild(mBtn);
+                });
+
+                // Re-init icons for dynamic content if lucide is available
+                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                    lucide.createIcons();
+                }
+
+                // Mobile Menu Toggle
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+
+                // Scroll Spy
+                window.addEventListener('scroll', () => {
+                    const scrollPosition = window.scrollY + 100;
+                    const navLinks = document.querySelectorAll('.nav-link');
+
+                    sections.forEach(section => {
+                        const element = document.getElementById(section.id);
+                        if (element) {
+                            const { offsetTop, offsetHeight } = element;
+                            if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+                                navLinks.forEach(link => {
+                                    if (link.dataset.target === section.id) {
+                                        link.classList.add('bg-indigo-50', 'text-indigo-700');
+                                        link.classList.remove('text-gray-600');
+                                    } else {
+                                        link.classList.remove('bg-indigo-50', 'text-indigo-700');
+                                        link.classList.add('text-gray-600');
+                                    }
+                                });
+                            }
+                        }
+                    });
+                });
+            });
+
+            // Scroll Handling (Defined globally so inline onclicks work, but safe to attach to window)
+            window.scrollToSection = function(id) {
+                const element = document.getElementById(id);
+                if (element) {
+                    const offset = 80; // height of nav
+                    const bodyRect = document.body.getBoundingClientRect().top;
+                    const elementRect = element.getBoundingClientRect().top;
+                    const elementPosition = elementRect - bodyRect;
+                    const offsetPosition = elementPosition - offset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
