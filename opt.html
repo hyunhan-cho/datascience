@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,56 +11,227 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; color: #333; }
-        h1, h2, h3 { font-family: 'Noto Serif KR', serif; }
-        code { font-family: 'JetBrains Mono', monospace; }
-        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'Noto Serif KR', serif;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         /* Typography & Layout */
-        .blog-content p { @apply mb-6 text-lg leading-8 text-gray-700; }
-        .blog-content ul { @apply list-disc list-inside mb-6 ml-4 text-gray-700; }
-        .blog-content li { @apply mb-2; }
-        
+        .blog-content p {
+            margin-bottom: 1.5rem;
+            font-size: 1.125rem;
+            line-height: 2rem;
+            color: #374151;
+        }
+
+        .blog-content ul {
+            list-style-type: disc;
+            list-style-position: inside;
+            margin-bottom: 1.5rem;
+            margin-left: 1rem;
+            color: #374151;
+        }
+
+        .blog-content li {
+            margin-bottom: 0.5rem;
+        }
+
         /* Table Styles */
-        .blog-table { @apply w-full border-collapse rounded-lg overflow-hidden shadow-sm mb-8 text-sm; }
-        .blog-table th { @apply bg-slate-800 text-white font-semibold px-6 py-4 text-left; }
-        .blog-table td { @apply border-b border-gray-200 px-6 py-4 bg-white; }
-        .blog-table tr:last-child td { @apply border-b-0; }
-        .blog-table tr:hover td { @apply bg-blue-50 transition-colors; }
+        .blog-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+        }
+
+        .blog-table th {
+            background-color: #1e293b;
+            color: white;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            text-align: left;
+        }
+
+        .blog-table td {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 1rem 1.5rem;
+            background-color: white;
+        }
+
+        .blog-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .blog-table tr:hover td {
+            background-color: #eff6ff;
+            transition: background-color 0.2s;
+        }
 
         /* Code Block Styles */
-        .code-wrapper { @apply mb-8 rounded-xl overflow-hidden shadow-lg border border-gray-200; }
-        .code-header { @apply flex justify-between items-center bg-[#2d2d2d] text-gray-300 px-5 py-3 text-sm border-b border-gray-700; }
-        pre[class*="language-"] { @apply !m-0 !rounded-none !bg-[#1e1e1e]; }
-        
+        .code-wrapper {
+            margin-bottom: 2rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #2d2d2d;
+            color: #d1d5db;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #4b5563;
+        }
+
+        pre[class*="language-"] {
+            margin: 0 !important;
+            border-radius: 0 !important;
+            background-color: #1e1e1e !important;
+        }
+
         /* Output Terminal Styles */
-        .terminal-wrapper { @apply mt-2 mb-8 bg-black rounded-lg shadow-inner overflow-hidden border border-gray-800 font-mono text-sm; }
-        .terminal-header { @apply flex items-center bg-gray-900 px-4 py-2 text-xs text-gray-400 border-b border-gray-800; }
-        .terminal-dots { @apply flex gap-1.5 mr-3; }
-        .dot { @apply w-3 h-3 rounded-full; }
-        .dot-red { background-color: #ff5f56; }
-        .dot-yellow { background-color: #ffbd2e; }
-        .dot-green { background-color: #27c93f; }
-        .terminal-body { @apply p-4 text-green-400 overflow-x-auto whitespace-pre; }
-        .terminal-line { @apply block mb-1; }
-        .terminal-prompt { @apply text-blue-400 mr-2; }
+        .terminal-wrapper {
+            margin-top: 0.5rem;
+            margin-bottom: 2rem;
+            background-color: black;
+            border-radius: 0.5rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            border: 1px solid #1f2937;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            background-color: #111827;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            color: #9ca3af;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .terminal-dots {
+            display: flex;
+            gap: 0.375rem;
+            margin-right: 0.75rem;
+        }
+
+        .dot {
+            width: 0.75rem;
+            height: 0.75rem;
+            border-radius: 9999px;
+        }
+
+        .dot-red {
+            background-color: #ff5f56;
+        }
+
+        .dot-yellow {
+            background-color: #ffbd2e;
+        }
+
+        .dot-green {
+            background-color: #27c93f;
+        }
+
+        .terminal-body {
+            padding: 1rem;
+            color: #4ade80;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .terminal-line {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .terminal-prompt {
+            color: #60a5fa;
+            margin-right: 0.5rem;
+        }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
 
         /* Sidebar Active State */
-        .nav-link.active { @apply text-blue-600 font-bold border-l-4 border-blue-600 pl-3 bg-blue-50; }
-        .nav-link { @apply pl-4 py-2 block border-l-4 border-transparent transition-all duration-200; }
-        
+        .nav-link.active {
+            color: #2563eb;
+            font-weight: 700;
+            border-left: 4px solid #2563eb;
+            padding-left: 0.75rem;
+            background-color: #eff6ff;
+        }
+
+        .nav-link {
+            padding-left: 1rem;
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+            display: block;
+            border-left: 4px solid transparent;
+            transition: all 0.2s;
+        }
+
         /* Callout Box */
-        .callout { @apply bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg; }
-        .callout-title { @apply font-bold text-blue-800 mb-2 flex items-center gap-2; }
+        .callout {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .callout-title {
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
     </style>
 </head>
+
 <body>
 
     <!-- Header / Hero Section -->
@@ -89,7 +261,8 @@
                 </p>
                 <div class="flex items-center gap-4 text-sm text-gray-400">
                     <div class="flex items-center gap-2">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Author" class="w-8 h-8 rounded-full border border-gray-600">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Author"
+                            class="w-8 h-8 rounded-full border border-gray-600">
                         <span>AI Researcher Kim</span>
                     </div>
                     <span>•</span>
@@ -102,7 +275,7 @@
     </header>
 
     <div class="container mx-auto max-w-6xl px-4 -mt-16 flex flex-col lg:flex-row gap-8 pb-20">
-        
+
         <!-- Sidebar (TOC) -->
         <aside class="lg:w-1/4 hidden lg:block">
             <div class="sticky top-10 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -111,7 +284,8 @@
                 </div>
                 <nav class="py-4 text-sm text-gray-600">
                     <a href="#intro" class="nav-link hover:text-blue-500">1. 들어가며: OPT vs GPT-2</a>
-                    <a href="#part1" class="nav-link hover:text-blue-500 mt-2 font-semibold text-gray-800">Part 1. LoRA 미적용 실습</a>
+                    <a href="#part1" class="nav-link hover:text-blue-500 mt-2 font-semibold text-gray-800">Part 1. LoRA
+                        미적용 실습</a>
                     <div class="ml-2 border-l border-gray-200">
                         <a href="#part1-install" class="nav-link hover:text-blue-500">1-1. 환경 설정 및 설치</a>
                         <a href="#part1-model" class="nav-link hover:text-blue-500">1-2. 모델 로드 (Pad Token 이슈)</a>
@@ -119,7 +293,8 @@
                         <a href="#part1-train" class="nav-link hover:text-blue-500">1-4. 학습 실행 (Training)</a>
                         <a href="#part1-result" class="nav-link hover:text-blue-500">1-5. 결과 확인</a>
                     </div>
-                    <a href="#part2" class="nav-link hover:text-blue-500 mt-2 font-semibold text-gray-800">Part 2. LoRA 적용 실습</a>
+                    <a href="#part2" class="nav-link hover:text-blue-500 mt-2 font-semibold text-gray-800">Part 2. LoRA
+                        적용 실습</a>
                     <div class="ml-2 border-l border-gray-200">
                         <a href="#part2-setup" class="nav-link hover:text-blue-500">2-1. PEFT/LoRA 설정</a>
                         <a href="#part2-train" class="nav-link hover:text-blue-500">2-2. 효율적인 학습 실행</a>
@@ -131,13 +306,13 @@
 
         <!-- Main Content -->
         <main class="lg:w-3/4 w-full bg-white rounded-xl shadow-xl border border-gray-200 p-8 md:p-12 blog-content">
-            
+
             <!-- Intro Section -->
             <section id="intro" class="mb-16">
                 <h2 class="text-3xl font-bold mb-6 text-slate-800 border-b pb-4">1. 들어가며: GPT-2 vs OPT-350M</h2>
                 <p>
-                    언어 모델을 처음 공부할 때 가장 많이 접하는 것이 GPT-2입니다. 하지만 최근에는 Meta에서 공개한 
-                    <strong>OPT (Open Pre-trained Transformer)</strong> 시리즈가 좋은 대안으로 떠오르고 있습니다. 
+                    언어 모델을 처음 공부할 때 가장 많이 접하는 것이 GPT-2입니다. 하지만 최근에는 Meta에서 공개한
+                    <strong>OPT (Open Pre-trained Transformer)</strong> 시리즈가 좋은 대안으로 떠오르고 있습니다.
                     이번 실습에서는 OPT-350M 모델을 사용하여 간단한 Q&A 챗봇을 만들어보겠습니다.
                 </p>
 
@@ -183,7 +358,7 @@
                     <h2 class="text-3xl font-bold text-slate-800 m-0">LoRA 미적용: 전체 파인튜닝</h2>
                 </div>
                 <p>
-                    먼저, 전통적인 방식인 <strong>Full Fine-tuning</strong>을 진행해 봅니다. 
+                    먼저, 전통적인 방식인 <strong>Full Fine-tuning</strong>을 진행해 봅니다.
                     모델의 모든 파라미터를 업데이트하는 방식이라 메모리를 많이 차지하지만, 구조를 이해하기에 좋습니다.
                 </p>
 
@@ -191,7 +366,7 @@
                 <div id="part1-install">
                     <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-8">환경 설정 및 라이브러리 설치</h3>
                     <p>Hugging Face의 핵심 라이브러리인 <code>transformers</code>와 데이터 관리를 위한 <code>datasets</code>를 설치합니다.</p>
-                    
+
                     <div class="code-wrapper">
                         <div class="code-header">
                             <span><i class="fas fa-terminal mr-2 text-green-400"></i>Terminal</span>
@@ -221,8 +396,8 @@ import torch</code></pre>
                     <div class="callout">
                         <div class="callout-title"><i class="fas fa-info-circle"></i> 주의: OPT 모델의 Padding Token</div>
                         <p class="mb-0 text-sm">
-                            OPT 모델은 기본적으로 <code>pad_token</code>이 정의되어 있지 않습니다. 
-                            배치 처리를 위해 문장 길이를 맞추려면 빈 공간을 채울 토큰이 필요한데, 
+                            OPT 모델은 기본적으로 <code>pad_token</code>이 정의되어 있지 않습니다.
+                            배치 처리를 위해 문장 길이를 맞추려면 빈 공간을 채울 토큰이 필요한데,
                             여기서는 문장의 끝을 알리는 <code>eos_token</code>을 패딩 토큰으로 재활용합니다.
                         </p>
                     </div>
@@ -244,7 +419,7 @@ tokenizer.pad_token = tokenizer.eos_token
 model = AutoModelForCausalLM.from_pretrained(model_id)  # Causal Language Modeling용 사전 학습 모델 로드
 model.config.pad_token_id = tokenizer.pad_token_id  # 모델 설정에도 pad_token ID를 지정해줘야 에러 방지 가능</code></pre>
                     </div>
-                    
+
                     <!-- Simulated Output -->
                     <div class="terminal-wrapper">
                         <div class="terminal-header">
@@ -256,10 +431,14 @@ model.config.pad_token_id = tokenizer.pad_token_id  # 모델 설정에도 pad_to
                             <span>Output Log</span>
                         </div>
                         <div class="terminal-body">
-<span class="terminal-line">Downloading config.json: 100%|██████████| 644/644 [00:00&lt;00:00, 245kB/s]</span>
-<span class="terminal-line">Downloading pytorch_model.bin: 100%|██████████| 663M/663M [00:12&lt;00:00, 52.4MB/s]</span>
-<span class="terminal-line">Some weights of the model checkpoint at facebook/opt-350m were not used when initializing OPTForCausalLM...</span>
-<span class="terminal-line text-gray-500"># 모델 로드 성공</span></div>
+                            <span class="terminal-line">Downloading config.json: 100%|██████████| 644/644
+                                [00:00&lt;00:00, 245kB/s]</span>
+                            <span class="terminal-line">Downloading pytorch_model.bin: 100%|██████████| 663M/663M
+                                [00:12&lt;00:00, 52.4MB/s]</span>
+                            <span class="terminal-line">Some weights of the model checkpoint at facebook/opt-350m were
+                                not used when initializing OPTForCausalLM...</span>
+                            <span class="terminal-line text-gray-500"># 모델 로드 성공</span>
+                        </div>
                     </div>
                 </div>
 
@@ -267,7 +446,7 @@ model.config.pad_token_id = tokenizer.pad_token_id  # 모델 설정에도 pad_to
                 <div id="part1-data">
                     <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-12">데이터셋 구성</h3>
                     <p>
-                        실습을 위해 아주 간단한 1개의 예제 데이터를 사용합니다. 
+                        실습을 위해 아주 간단한 1개의 예제 데이터를 사용합니다.
                         실제 프로젝트에서는 JSON이나 CSV 파일에서 수천 개의 데이터를 불러와야 합니다.
                     </p>
 
@@ -353,16 +532,18 @@ trainer.train()  # 실제 학습 시작</code></pre>
                             <span>Training Progress</span>
                         </div>
                         <div class="terminal-body">
-<span class="terminal-line text-blue-300">***** Running training *****</span>
-<span class="terminal-line">  Num examples = 1</span>
-<span class="terminal-line">  Num Epochs = 50</span>
-<span class="terminal-line">  Total optimization steps = 50</span>
+                            <span class="terminal-line text-blue-300">***** Running training *****</span>
+                            <span class="terminal-line"> Num examples = 1</span>
+                            <span class="terminal-line"> Num Epochs = 50</span>
+                            <span class="terminal-line"> Total optimization steps = 50</span>
 
-<span class="terminal-line text-yellow-400">[Step 1/50]</span> Loss: 2.8410
-<span class="terminal-line text-yellow-400">[Step 10/50]</span> Loss: 1.5023
-<span class="terminal-line text-yellow-400">[Step 25/50]</span> Loss: 0.4321
-<span class="terminal-line text-yellow-400">[Step 40/50]</span> Loss: 0.0821
-<span class="terminal-line text-yellow-400">[Step 50/50]</span> Loss: 0.0042 <span class="text-green-500">✔ Training completed</span></div>
+                            <span class="terminal-line text-yellow-400">[Step 1/50]</span> Loss: 2.8410
+                            <span class="terminal-line text-yellow-400">[Step 10/50]</span> Loss: 1.5023
+                            <span class="terminal-line text-yellow-400">[Step 25/50]</span> Loss: 0.4321
+                            <span class="terminal-line text-yellow-400">[Step 40/50]</span> Loss: 0.0821
+                            <span class="terminal-line text-yellow-400">[Step 50/50]</span> Loss: 0.0042 <span
+                                class="text-green-500">✔ Training completed</span>
+                        </div>
                     </div>
                 </div>
 
@@ -394,8 +575,9 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))  # 토큰을 사�
                             <span>Result</span>
                         </div>
                         <div class="terminal-body">
-<span class="terminal-line">### 질문: 우리집 강아지 이름은?</span>
-<span class="terminal-line text-yellow-300">### 답변: 순둥이</span></div>
+                            <span class="terminal-line">### 질문: 우리집 강아지 이름은?</span>
+                            <span class="terminal-line text-yellow-300">### 답변: 순둥이</span>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -406,11 +588,11 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))  # 토큰을 사�
                     <span class="bg-purple-100 text-purple-800 text-sm font-bold px-3 py-1 rounded-full">Part 2</span>
                     <h2 class="text-3xl font-bold text-slate-800 m-0">LoRA 적용: 효율적인 파인튜닝</h2>
                 </div>
-                
+
                 <div class="bg-purple-50 p-6 rounded-lg mb-8 border border-purple-100">
                     <h4 class="font-bold text-purple-800 mb-2">💡 LoRA (Low-Rank Adaptation)란?</h4>
                     <p class="text-sm text-purple-700 mb-0">
-                        수십억 개의 파라미터를 모두 업데이트하는 대신, <strong>아주 작은 행렬(Rank)만 학습</strong>하여 기존 모델에 덧붙이는 방식입니다. 
+                        수십억 개의 파라미터를 모두 업데이트하는 대신, <strong>아주 작은 행렬(Rank)만 학습</strong>하여 기존 모델에 덧붙이는 방식입니다.
                         학습 속도는 빠르고, GPU 메모리는 훨씬 적게 사용하면서도 전체 파인튜닝과 유사한 성능을 냅니다.
                     </p>
                 </div>
@@ -475,7 +657,7 @@ model = get_peft_model(base_model, lora_config)</code></pre>
                 <div id="part2-train">
                     <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-12">LoRA 학습 실행</h3>
                     <p>
-                        LoRA 모델 객체(<code>peft_model</code>)를 Trainer에 전달하여 학습합니다. 
+                        LoRA 모델 객체(<code>peft_model</code>)를 Trainer에 전달하여 학습합니다.
                         학습해야 할 파라미터 수가 급격히 줄어든 것을 확인할 수 있습니다.
                     </p>
 
@@ -533,20 +715,23 @@ trainer.train()</code></pre>
                             <span>LoRA Training Log</span>
                         </div>
                         <div class="terminal-body">
-<span class="terminal-line text-blue-300">trainable params: 1,572,864 || all params: 332,769,280 || trainable%: 0.4726</span>
-<span class="terminal-line text-gray-400"># 전체 파라미터의 약 0.47%만 학습합니다!</span>
+                            <span class="terminal-line text-blue-300">trainable params: 1,572,864 || all params:
+                                332,769,280 || trainable%: 0.4726</span>
+                            <span class="terminal-line text-gray-400"># 전체 파라미터의 약 0.47%만 학습합니다!</span>
 
-<span class="terminal-line text-yellow-400">[Step 1/150]</span> Loss: 3.1205
-<span class="terminal-line text-yellow-400">[Step 50/150]</span> Loss: 1.8502
-<span class="terminal-line text-yellow-400">[Step 100/150]</span> Loss: 0.5103
-<span class="terminal-line text-yellow-400">[Step 150/150]</span> Loss: 0.0125 <span class="text-green-500">✔ LoRA Training completed</span></div>
+                            <span class="terminal-line text-yellow-400">[Step 1/150]</span> Loss: 3.1205
+                            <span class="terminal-line text-yellow-400">[Step 50/150]</span> Loss: 1.8502
+                            <span class="terminal-line text-yellow-400">[Step 100/150]</span> Loss: 0.5103
+                            <span class="terminal-line text-yellow-400">[Step 150/150]</span> Loss: 0.0125 <span
+                                class="text-green-500">✔ LoRA Training completed</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- 2-3. LoRA Result -->
                 <div id="part2-result">
                     <h3 class="text-2xl font-bold text-gray-800 mb-4 mt-12">LoRA 모델 추론 결과</h3>
-                    
+
                     <div class="code-wrapper">
                         <div class="code-header">
                             <span><i class="fab fa-python mr-2 text-blue-400"></i>Inference</span>
@@ -568,8 +753,9 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))</code></pre>
                             <span>Final Output</span>
                         </div>
                         <div class="terminal-body">
-<span class="terminal-line">### 질문: 우리집 강아지 이름은?</span>
-<span class="terminal-line text-purple-400">### 답변: 순둥이</span></div>
+                            <span class="terminal-line">### 질문: 우리집 강아지 이름은?</span>
+                            <span class="terminal-line text-purple-400">### 답변: 순둥이</span>
+                        </div>
                     </div>
 
                     <div class="bg-green-50 border border-green-200 rounded-lg p-6 mt-8 text-center">
@@ -616,4 +802,5 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))</code></pre>
         });
     </script>
 </body>
+
 </html>
