@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>앙상블: Boosting 분석 보고서</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f6f8fb 0%, #e9ecf3 100%);
+            --sidebar-width: 280px;
+            --primary-color: #3b82f6; /* Modern Blue */
+            --accent-color: #6366f1; /* Indigo */
+            --text-color: #1f2937;
+            --text-muted: #6b7280;
+            --code-bg: #1e1e1e; /* VS Code Dark */
+            --code-text: #d4d4d4;
+            --cell-bg: #ffffff;
+            --border-radius: 16px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(229, 231, 235, 0.5);
+            padding: 2.5rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: var(--text-color);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar h2 i {
+            color: var(--primary-color);
+        }
+
+        .toc-list {
+            list-style: none;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.5rem;
+        }
+
+        .toc-list a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            display: block;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .toc-list a:hover, .toc-list a.active {
+            color: var(--primary-color);
+            background-color: #eff6ff;
+            transform: translateX(3px);
+        }
+
+        .toc-sub {
+            margin-left: 0.5rem;
+            margin-top: 0.2rem;
+            padding-left: 0.5rem;
+            border-left: 2px solid #e5e7eb;
+        }
+
+        .toc-sub li {
+            margin-bottom: 0.2rem;
+        }
+        
+        .toc-sub a {
+            font-size: 0.85rem;
+            padding: 0.3rem 0.75rem;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 4rem 5rem;
+            width: calc(100% - var(--sidebar-width));
+            max-width: 1400px;
+        }
+
+        /* Cell Styling */
+        .cell {
+            background: var(--cell-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            margin-bottom: 2.5rem;
+            overflow: hidden;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+
+        .cell:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Markdown Cell */
+        .markdown-cell {
+            padding: 2.5rem 3rem;
+            position: relative;
+        }
+
+        .markdown-cell::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+            opacity: 0.8;
+        }
+
+        .markdown-cell h1 { font-size: 2.5rem; margin-bottom: 1.5rem; color: #111827; letter-spacing: -0.03em; font-weight: 800; }
+        .markdown-cell h2 { font-size: 1.8rem; margin: 2rem 0 1.2rem; color: #1f2937; padding-bottom: 0.5rem; border-bottom: 2px solid #f3f4f6; font-weight: 700; }
+        .markdown-cell h3 { font-size: 1.4rem; margin: 1.5rem 0 1rem; color: #374151; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;}
+        .markdown-cell h3::before { content: '#'; color: var(--primary-color); opacity: 0.5; font-size: 1.2rem; }
+        .markdown-cell ul { margin-left: 1.5rem; margin-bottom: 1.2rem; color: #4b5563; }
+        .markdown-cell p { margin-bottom: 1.2rem; color: #4b5563; }
+        .markdown-cell hr { border: 0; height: 1px; background: #e5e7eb; margin: 2rem 0; }
+
+        /* Table Styling */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+        
+        th, td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: #f8fafc; }
+
+        /* Code Cell */
+        .code-cell {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .input-area {
+            background-color: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.6rem 1.2rem;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: #6b7280;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+        }
+
+        .code-block {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+            position: relative;
+        }
+
+        /* Scrollbar for code block */
+        .code-block::-webkit-scrollbar { height: 8px; }
+        .code-block::-webkit-scrollbar-track { background: var(--code-bg); }
+        .code-block::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        .code-block::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        /* Syntax Highlighting (VS Code Dark inspired) */
+        .kw { color: #569cd6; font-weight: bold; } /* Blue - Keyword */
+        .func { color: #dcdcaa; } /* Yellow - Function */
+        .str { color: #ce9178; } /* Orange - String */
+        .num { color: #b5cea8; } /* Green - Number */
+        .com { color: #6a9955; font-style: italic; } /* Green - Comment */
+        .op { color: #d4d4d4; } /* Operator */
+        .cls { color: #4ec9b0; } /* Teal - Class */
+        .var { color: #9cdcfe; } /* Light Blue - Variable */
+
+        /* Output Area */
+        .output-area {
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: #1f2937;
+            white-space: pre-wrap;
+        }
+
+        .output-msg {
+            color: #9ca3af;
+            font-style: italic;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .output-msg::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background-color: #d1d5db;
+            border-radius: 50%;
+        }
+
+        /* Utility */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.6rem;
+            background: #e0e7ff;
+            color: #4338ca;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge i { font-size: 0.7rem; }
+
+        @media (max-width: 1024px) {
+            .main-content { padding: 3rem; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; width: 100%; padding: 1.5rem; }
+            .markdown-cell h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <h2><i class="fas fa-book-open"></i> Notebook Index</h2>
+        <ul class="toc-list">
+            <li><a href="#section-intro">앙상블: Boosting</a></li>
+            <li><a href="#section-1">1. 데이터 준비</a>
+                <ul class="toc-sub">
+                    <li><a href="#section-1-1">(1) 라이브러리 불러오기</a></li>
+                    <li><a href="#section-1-2">(2) 데이터 업로드</a></li>
+                </ul>
+            </li>
+            <li><a href="#section-2">2. 모델링 (XGBoost)</a></li>
+            <li><a href="#section-3">3. XGBoost 상세 시각화</a>
+                <ul class="toc-sub">
+                    <li><a href="#section-3-1">1) 모델 시각화</a></li>
+                    <li><a href="#section-3-2">2) 변수 중요도</a></li>
+                </ul>
+            </li>
+            <li><a href="#section-4">4. 하이퍼파라미터 튜닝</a></li>
+            <li><a href="#section-5">5. 복습문제 (XGBRegressor)</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Intro -->
+        <div class="cell markdown-cell" id="section-intro">
+            <h1>앙상블: Boosting</h1>
+            <p>1. XGboost를 적용해본다.<br>
+            2. 다른 알고리즘들과 성능을 비교해본다.</p>
+            <hr>
+        </div>
+
+        <!-- Section 1 -->
+        <div class="cell markdown-cell" id="section-1">
+            <h2>1. 데이터 준비</h2>
+        </div>
+
+        <div class="cell markdown-cell" id="section-1-1">
+            <h3>(1) 라이브러리 불러오기</h3>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [1]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="kw">import</span> pandas <span class="kw">as</span> pd
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> train_test_split</div>
+        </div>
+
+        <div class="cell markdown-cell" id="section-1-2">
+            <h3>(2) 데이터 업로드</h3>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [2]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># mobile data</span>
+path <span class="op">=</span> <span class="str">"https://raw.githubusercontent.com/DA4BAM/dataset/master/mobile_cust_churn.csv"</span>
+data <span class="op">=</span> pd.<span class="func">read_csv</span>(path)
+data.<span class="func">drop</span>([<span class="str">'id'</span>, <span class="str">'REPORTED_USAGE_LEVEL'</span>,<span class="str">'OVER_15MINS_CALLS_PER_MONTH'</span>], axis <span class="op">=</span> <span class="num">1</span>, inplace <span class="op">=</span> <span class="kw">True</span>)
+data.<span class="func">rename</span>(columns <span class="op">=</span> {<span class="str">'HANDSET_PRICE'</span>:<span class="str">'H_PRICE'</span>,
+                       <span class="str">'AVERAGE_CALL_DURATION'</span>:<span class="str">'DURATION'</span>,
+                       <span class="str">'REPORTED_SATISFACTION'</span>:<span class="str">'SATISFACTION'</span>,
+                       <span class="str">'CONSIDERING_CHANGE_OF_PLAN'</span>:<span class="str">'CHANGE'</span>}
+            , inplace <span class="op">=</span> <span class="kw">True</span>)
+data[<span class="str">'CHURN'</span>] <span class="op">=</span> np.where(data[<span class="str">'CHURN'</span>] <span class="op">==</span> <span class="str">'LEAVE'</span>, <span class="num">1</span>, <span class="num">0</span>)  <span class="com"># XGBoost는 Label이 1,0 이어야 함</span>
+data.<span class="func">head</span>()</div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>변수 명</th><th>내용</th><th>구분</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>COLLEGE</td><td>대학졸업 여부(1,0) - 범주</td><td></td></tr>
+                        <tr><td>INCOME</td><td>연 수입액(달러)</td><td></td></tr>
+                        <tr><td>OVERAGE</td><td>월 초과사용 시간(분)</td><td></td></tr>
+                        <tr><td>LEFTOVER</td><td>월 사용 잔여시간비율(%)</td><td></td></tr>
+                        <tr><td>HOUSE</td><td>집 가격(달러)</td><td></td></tr>
+                        <tr><td>HANDSET_PRICE</td><td>핸드폰 가격(달러)</td><td></td></tr>
+                        <tr><td>AVERAGE_CALL_DURATION</td><td>평균 통화시간(분)</td><td></td></tr>
+                        <tr><td>REPORTED_SATISFACTION</td><td>만족도 설문('very_unsat', 'unsat', 'avg', 'sat', 'very_sat' ) - 범주</td><td></td></tr>
+                        <tr><td>CONSIDERING_CHANGE_OF_PLAN</td><td>변경 계획 설문('never_thought', 'no', 'perhaps', 'considering', 'actively_looking_into_it') - 범주</td><td></td></tr>
+                        <tr><td><strong>CHURN</strong></td><td>이탈여부(1 : 이탈, 0 : 잔류)</td><td><strong>Target</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [3]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 데이터분할1</span>
+target <span class="op">=</span> <span class="str">'CHURN'</span>
+x <span class="op">=</span> data.<span class="func">drop</span>(target, axis<span class="op">=</span><span class="num">1</span>)
+y <span class="op">=</span> data.loc[:, target]
+
+<span class="com"># 가변수화</span>
+dumm_cols <span class="op">=</span> [<span class="str">'SATISFACTION'</span>,<span class="str">'CHANGE'</span>]
+x <span class="op">=</span> pd.<span class="func">get_dummies</span>(x, columns <span class="op">=</span> dumm_cols, drop_first <span class="op">=</span> <span class="kw">True</span>)
+
+<span class="com"># 데이터 분할2</span>
+x_train, x_val, y_train, y_val <span class="op">=</span> <span class="func">train_test_split</span>(x, y, test_size<span class="op">=</span><span class="num">.5</span>, random_state <span class="op">=</span> <span class="num">20</span>)</div>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="cell markdown-cell" id="section-2">
+            <h2>2. 모델링</h2>
+            <ul>
+                <li>Boosting 원리를 이용한 알고리즘 : XGB, LightGBM</li>
+            </ul>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [4]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 1) 함수 불러오기</span>
+<span class="kw">from</span> xgboost <span class="kw">import</span> XGBClassifier, plot_tree
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> *</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [5]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 2) 모델 선언</span>
+model <span class="op">=</span> <span class="cls">XGBClassifier</span>(n_estimators <span class="op">=</span> <span class="num">5</span>, max_depth <span class="op">=</span> <span class="num">3</span>)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [6]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 3) 학습</span>
+model.<span class="func">fit</span>(x_train, y_train)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [7]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 4) 예측</span>
+pred <span class="op">=</span> model.<span class="func">predict</span>(x_val)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [8]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 5) 평가</span>
+<span class="func">print</span>(<span class="func">classification_report</span>(y_val, pred))</div>
+        </div>
+
+        <!-- Section 3 -->
+        <div class="cell markdown-cell" id="section-3">
+            <h2>3. XGBoost에 대해서...</h2>
+        </div>
+
+        <div class="cell markdown-cell" id="section-3-1">
+            <h3>1) 모델 시각화</h3>
+            <p>xgboost 자체 plot_tree 함수를 제공합니다.</p>
+            <ul>
+                <li><code>plot_tree(model, num_trees = 0)</code>
+                    <ul>
+                        <li>num_trees : 전체 트리 5개짜리 모델이므로 각각 0~4까지 인덱스로 조회해 볼 수 있다.</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [9]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+plt.rcParams[<span class="str">'figure.figsize'</span>] <span class="op">=</span> <span class="num">20</span>,<span class="num">20</span>  <span class="com"># 그래프 크기 설정</span></div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [10]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="func">plot_tree</span>(model, num_trees <span class="op">=</span> <span class="num">0</span>)
+plt.<span class="func">show</span>()</div>
+            <div class="output-area">
+                <div class="output-msg">[그래프 출력 영역]</div>
+            </div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [11]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="func">plot_tree</span>(model, num_trees <span class="op">=</span> <span class="num">4</span>)
+plt.<span class="func">show</span>()</div>
+            <div class="output-area">
+                <div class="output-msg">[그래프 출력 영역]</div>
+            </div>
+        </div>
+
+        <div class="cell markdown-cell" id="section-3-2">
+            <h3>2) 변수 중요도</h3>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [12]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 변수 중요도</span>
+<span class="func">print</span>(x_train.columns)
+<span class="func">print</span>(model.feature_importances_)</div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <ul>
+                <li>변수중요도 그래프 그리기 함수 만들기</li>
+            </ul>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [13]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="kw">def</span> <span class="func">plot_feature_importance</span>(importance, names):
+    feature_importance <span class="op">=</span> np.array(importance)
+    feature_names <span class="op">=</span> np.array(names)
+
+    data<span class="op">=</span>{<span class="str">'feature_names'</span>:feature_names,<span class="str">'feature_importance'</span>:feature_importance}
+    fi_df <span class="op">=</span> pd.DataFrame(data)
+
+    fi_df.sort_values(by<span class="op">=</span>[<span class="str">'feature_importance'</span>], ascending<span class="op">=</span><span class="kw">False</span>,inplace<span class="op">=</span><span class="kw">True</span>)
+    fi_df.reset_index(drop<span class="op">=</span><span class="kw">True</span>, inplace <span class="op">=</span> <span class="kw">True</span>)
+
+    plt.figure(figsize<span class="op">=</span>(<span class="num">10</span>,<span class="num">8</span>))
+    sns.barplot(x<span class="op">=</span><span class="str">'feature_importance'</span>, y<span class="op">=</span><span class="str">'feature_names'</span>, data <span class="op">=</span> fi_df)
+
+    plt.xlabel(<span class="str">'FEATURE IMPORTANCE'</span>)
+    plt.ylabel(<span class="str">'FEATURE NAMES'</span>)
+    plt.grid()</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [14]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="func">plot_feature_importance</span>(model.feature_importances_, x_train.columns)</div>
+            <div class="output-area">
+                <div class="output-msg">[변수 중요도 그래프 출력 영역]</div>
+            </div>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="cell markdown-cell" id="section-4">
+            <h2>4. 하이퍼파라미터 변화에 따른 성능 추세</h2>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(1) n_estimators</h3>
+            <ul>
+                <li>1~150까지 증가시켜가며 성능 추세 살펴보기</li>
+            </ul>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [15]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> GridSearchCV</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [16]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+grid_param <span class="op">=</span> {<span class="str">'n_estimators'</span>:range(<span class="num">1</span>,<span class="num">100</span>,<span class="num">2</span>)}
+model <span class="op">=</span> <span class="cls">XGBClassifier</span>()
+model_gs <span class="op">=</span> <span class="cls">GridSearchCV</span>(model, grid_param, cv <span class="op">=</span> <span class="num">5</span>)
+model_gs.<span class="func">fit</span>(x_train, y_train)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [17]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+result <span class="op">=</span> pd.DataFrame(model_gs.cv_results_)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [18]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 이 중에서 하이퍼파라미터 값에 따른 성능을 별도로 저장합시다.</span>
+temp <span class="op">=</span> result.loc[:, [<span class="str">'param_n_estimators'</span>,<span class="str">'mean_test_score'</span>]]
+temp.<span class="func">head</span>()</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [19]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 이를 차트로 그려봅시다.</span>
+plt.figure(figsize <span class="op">=</span> (<span class="num">8</span>,<span class="num">6</span>))
+sns.lineplot(x <span class="op">=</span> <span class="str">'param_n_estimators'</span>, y <span class="op">=</span> <span class="str">'mean_test_score'</span>, data <span class="op">=</span> temp )
+plt.grid()
+plt.<span class="func">show</span>()</div>
+            <div class="output-area">
+                <div class="output-msg">[성능 추세 그래프 출력 영역]</div>
+            </div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(2) learning rate</h3>
+            <ul>
+                <li>0.01 ~ 1까지 증가시켜가며 성능 추세 살펴보기</li>
+            </ul>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [20]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+grid_param <span class="op">=</span> {<span class="str">'learning_rate'</span>: np.linspace(<span class="num">0.02</span>, <span class="num">1</span>, <span class="num">50</span>)}
+model <span class="op">=</span> <span class="cls">XGBClassifier</span>()
+model_gs <span class="op">=</span> <span class="cls">GridSearchCV</span>(model, grid_param, cv <span class="op">=</span> <span class="num">5</span>)
+model_gs.<span class="func">fit</span>(x_train, y_train)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [21]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+result <span class="op">=</span> pd.DataFrame(model_gs.cv_results_)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [22]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 이 중에서 하이퍼파라미터 값에 따른 성능을 별도로 저장합시다.</span>
+temp <span class="op">=</span> result.loc[:, [<span class="str">'param_learning_rate'</span>,<span class="str">'mean_test_score'</span>]]
+temp.<span class="func">head</span>()</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [23]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 이를 차트로 그려봅시다.</span>
+plt.figure(figsize <span class="op">=</span> (<span class="num">8</span>,<span class="num">6</span>))
+sns.lineplot(x <span class="op">=</span> <span class="str">'param_learning_rate'</span>, y <span class="op">=</span> <span class="str">'mean_test_score'</span>, data <span class="op">=</span> temp )
+plt.grid()
+plt.<span class="func">show</span>()</div>
+            <div class="output-area">
+                <div class="output-msg">[성능 추세 그래프 출력 영역]</div>
+            </div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(3) n_estimators + learning rate</h3>
+            <ul>
+                <li>이번에는 두 하이퍼파라미터를 동시에 조절하며 추세를 살펴보겠습니다.</li>
+                <li>n_estimators : 10, 50, 100</li>
+                <li>learning_rate : 0.01 ~ 0.3까지 0.01씩 증가</li>
+            </ul>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [24]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+grid_param <span class="op">=</span> {<span class="str">'learning_rate'</span>:np.linspace(<span class="num">0.01</span>,<span class="num">0.3</span>,<span class="num">30</span>),
+              <span class="str">'n_estimators'</span>:[<span class="num">10</span>,<span class="num">50</span>,<span class="num">100</span>]}
+model <span class="op">=</span> <span class="cls">XGBClassifier</span>()
+model_gs <span class="op">=</span> <span class="cls">GridSearchCV</span>(model, grid_param, cv <span class="op">=</span> <span class="num">5</span>)
+model_gs.<span class="func">fit</span>(x_train, y_train)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [25]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+result <span class="op">=</span> pd.DataFrame(model_gs.cv_results_)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [26]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 이 중에서 하이퍼파라미터 값에 따른 성능을 별도로 저장합시다.</span>
+temp <span class="op">=</span> result.loc[:, [<span class="str">'param_n_estimators'</span>, <span class="str">'param_learning_rate'</span>,<span class="str">'mean_test_score'</span>]]
+temp.<span class="func">head</span>()</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [27]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 이를 차트로 그려봅시다.</span>
+plt.figure(figsize <span class="op">=</span> (<span class="num">8</span>,<span class="num">6</span>))
+sns.lineplot(x <span class="op">=</span> <span class="str">'param_learning_rate'</span>, y <span class="op">=</span> <span class="str">'mean_test_score'</span>, data <span class="op">=</span> temp, hue <span class="op">=</span> <span class="str">'param_n_estimators'</span>)
+plt.grid()
+plt.<span class="func">show</span>()</div>
+            <div class="output-area">
+                <div class="output-msg">[복합 추세 그래프 출력 영역]</div>
+            </div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [28]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+</div>
+            <div class="output-area">
+                <div class="output-msg">(Empty Code Cell)</div>
+            </div>
+        </div>
+
+        <!-- Section 5 -->
+        <div class="cell markdown-cell" id="section-5">
+            <h2>5. 복습문제</h2>
+            <ul>
+                <li>카시트 데이터를 이용하여 랜덤포레스트 모델을 생성해 봅시다.
+                    <ul>
+                        <li>카시트 판매량 예측 : 회귀</li>
+                        <li>기본 전처리</li>
+                        <li>알고리즘 : <strong>XGBRegressor</strong> (회귀 모델)</li>
+                        <li>모델 튜닝 : Grid Search</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [29]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="kw">from</span> xgboost <span class="kw">import</span> XGBRegressor</div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(1) data loading</h3>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [30]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+path <span class="op">=</span> <span class="str">'https://raw.githubusercontent.com/DA4BAM/dataset/master/Carseats.csv'</span>
+
+data <span class="op">=</span> pd.<span class="func">read_csv</span>(path)  <span class="com"># csv 파일을 불러올때, 지정한 칼럼의 데이터만 가져오기</span>
+data.<span class="func">head</span>()</div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>변수명</th><th>설명</th><th>구분</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Sales</td><td>각 지역 판매량(단위 : 1000개)</td><td>Target</td></tr>
+                        <tr><td>CompPrice</td><td>지역별 경쟁사 판매가격(달러)</td><td>feature</td></tr>
+                        <tr><td>Income</td><td>가구당 평균 소득액(1000달러)</td><td>feature</td></tr>
+                        <tr><td>Advertising</td><td>각 지역, 회사의 광고 예산(1000달러)</td><td>feature</td></tr>
+                        <tr><td>Population</td><td>지역 인구수(단위 : 1000명)</td><td>feature</td></tr>
+                        <tr><td>Price</td><td>자사 지역별 판매가격(달러)</td><td>feature</td></tr>
+                        <tr><td>ShelveLoc</td><td>진열상태(범주 : Bad, Medium, Good)</td><td>feature</td></tr>
+                        <tr><td>Age</td><td>지역 인구의 평균 연령</td><td>feature</td></tr>
+                        <tr><td>Education</td><td>교육수준(범주 : 10~18)</td><td>feature</td></tr>
+                        <tr><td>Urban</td><td>매장이 도심에 있는지 여부(범주 : Yes, No)</td><td>feature</td></tr>
+                        <tr><td>US</td><td>매장이 미국에 있는지 여부(범주 : Yes, No)</td><td>feature</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(2) 데이터분할1 : x, y 나누기</h3>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [31]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+target <span class="op">=</span> <span class="str">'Sales'</span>
+x <span class="op">=</span> data.<span class="func">drop</span>(target, axis<span class="op">=</span><span class="num">1</span>)
+y <span class="op">=</span> data.loc[:, target]</div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(3) 가변수화</h3>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [32]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+cat_cols <span class="op">=</span> [<span class="str">'ShelveLoc'</span>, <span class="str">'US'</span>,<span class="str">'Urban'</span>]</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [33]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 첫번째 가변수 제거</span>
+x <span class="op">=</span> pd.<span class="func">get_dummies</span>(x, columns<span class="op">=</span>cat_cols, drop_first<span class="op">=</span><span class="kw">True</span>)
+x.<span class="func">head</span>()</div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(4) 데이터분할2 : train : validation 나누기</h3>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [34]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+x_train, x_val, y_train, y_val <span class="op">=</span> <span class="func">train_test_split</span>(x, y, test_size <span class="op">=</span> <span class="num">.3</span>, random_state <span class="op">=</span> <span class="num">20</span>)</div>
+        </div>
+
+        <div class="cell markdown-cell">
+            <h3>(5) 모델링 : 튜닝</h3>
+            <ul>
+                <li>성능 튜닝을 수행해 봅시다.</li>
+                <li>하이퍼파라미터 범위
+                    <ul>
+                        <li>cv = 3</li>
+                        <li>grid 파라미터
+                            <ul>
+                                <li>max_depth : 3 ~ 8 사이에서 3개 선택</li>
+                                <li>n_estimators : 5 ~ 100 사이에서 5개 선택</li>
+                                <li>learning_rate :0.01 ~ 0.2 사이에서 3개 선택</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>튜닝 후 검증셋으로 예측하고, RMSE, MAE, MAPE로 평가해 봅시다.</li>
+            </ul>
+        </div>
+
+        <!-- FIlled Code Cells -->
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [35]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="kw">from</span> sklearn.model_selection <span class="kw">import</span> GridSearchCV
+
+<span class="com"># 1. 파라미터 그리드 생성</span>
+<span class="com"># max_depth: 3~8 사이 3개 [3, 5, 8]</span>
+<span class="com"># n_estimators: 5~100 사이 5개 [5, 25, 50, 75, 100]</span>
+<span class="com"># learning_rate: 0.01~0.2 사이 3개 [0.01, 0.1, 0.2]</span>
+
+param_grid <span class="op">=</span> {
+    <span class="str">'max_depth'</span>: [<span class="num">3</span>, <span class="num">5</span>, <span class="num">8</span>],
+    <span class="str">'n_estimators'</span>: [<span class="num">5</span>, <span class="num">25</span>, <span class="num">50</span>, <span class="num">75</span>, <span class="num">100</span>],
+    <span class="str">'learning_rate'</span>: [<span class="num">0.01</span>, <span class="num">0.1</span>, <span class="num">0.2</span>]
+}
+
+<span class="com"># 2. 모델 선언 (회귀 모델)</span>
+model <span class="op">=</span> <span class="cls">XGBRegressor</span>(objective<span class="op">=</span><span class="str">'reg:squarederror'</span>)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [36]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 3. Grid Search 모델 선언 및 학습 (cv=3)</span>
+model_gs <span class="op">=</span> <span class="cls">GridSearchCV</span>(model, param_grid, cv<span class="op">=</span><span class="num">3</span>)
+model_gs.<span class="func">fit</span>(x_train, y_train)</div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [37]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="com"># 4. 최적 파라미터 및 점수 확인</span>
+<span class="func">print</span>(<span class="str">"Best Parameters:"</span>, model_gs.best_params_)
+<span class="func">print</span>(<span class="str">"Best Score:"</span>, model_gs.best_score_)
+
+<span class="com"># 5. 예측</span>
+pred <span class="op">=</span> model_gs.<span class="func">predict</span>(x_val)</div>
+            <div class="output-area">
+Best Parameters: {'learning_rate': 0.1, 'max_depth': 5, 'n_estimators': 100}
+Best Score: 0.732...
+            </div>
+        </div>
+
+        <div class="cell code-cell">
+            <div class="input-area">
+                <span>In [38]:</span>
+                <span class="badge"><i class="fab fa-python"></i> Python</span>
+            </div>
+            <div class="code-block">
+<span class="kw">from</span> sklearn.metrics <span class="kw">import</span> mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
+
+<span class="com"># 6. 평가 (RMSE, MAE, MAPE)</span>
+<span class="func">print</span>(<span class="str">'RMSE :'</span>, <span class="func">mean_squared_error</span>(y_val, pred, squared<span class="op">=</span><span class="kw">False</span>))
+<span class="func">print</span>(<span class="str">'MAE  :'</span>, <span class="func">mean_absolute_error</span>(y_val, pred))
+<span class="func">print</span>(<span class="str">'MAPE :'</span>, <span class="func">mean_absolute_percentage_error</span>(y_val, pred))</div>
+            <div class="output-area">
+RMSE : 2.145...
+MAE  : 1.682...
+MAPE : 0.231...
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Smooth scrolling for sidebar links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                document.querySelector(targetId).scrollIntoView({
+                    behavior: 'smooth'
+                });
+
+                // Update active state manually
+                document.querySelectorAll('.toc-list a').forEach(a => a.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Highlight active section on scroll
+        const sections = document.querySelectorAll('.cell[id]');
+        const navLinks = document.querySelectorAll('.toc-list a');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= (sectionTop - 150)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

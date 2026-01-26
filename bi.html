@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이진 분류(Binary Classification) 완전 정복</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap');
+        
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        code { font-family: 'Fira Code', monospace; }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+        .code-block {
+            background: #1e1e1e;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #333;
+        }
+        .step-number {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    </style>
+</head>
+<body class="antialiased selection:bg-purple-500 selection:text-white">
+
+    <!-- Hero Section -->
+    <header class="min-h-screen flex flex-col justify-center items-center text-center p-6 relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://source.unsplash.com/1600x900/?technology,ai')] bg-cover bg-center opacity-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f172a]"></div>
+        
+        <div class="relative z-10 max-w-4xl">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                Binary Classification
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-8 font-light">
+                PyTorch로 배우는 딥러닝의 기초: 0과 1을 구분하는 방법
+            </p>
+            <p class="text-md text-gray-400 mb-12">
+                초보자도 이해할 수 있는 시각적 가이드와 함께 코드를 한 줄씩 뜯어봅시다.
+            </p>
+            <a href="#step1" class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-all shadow-lg shadow-blue-500/30 font-bold text-lg animate-bounce inline-block">
+                시작하기 ↓
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-12 space-y-32">
+
+        <!-- Step 1 -->
+        <section id="step1" class="step-section fade-in">
+            <div class="flex flex-col md:flex-row gap-8 items-start">
+                <div class="md:w-1/2 space-y-6">
+                    <h2 class="text-4xl font-bold"><span class="step-number">STEP 1.</span> 데이터 모으기</h2>
+                    <p class="text-gray-300 leading-relaxed">
+                        모든 머신러닝의 시작은 데이터입니다. 여기서는 두 가지 종류(Class)의 데이터를 인위적으로 생성합니다.
+                        <br><br>
+                        <code>Class 0</code>과 <code>Class 1</code> 데이터를 각각 다른 위치(평균)에 생성하여, 컴퓨터가 이 둘을 구분할 수 있는지 실험할 것입니다.
+                    </p>
+                    
+                    <div class="glass-panel p-6">
+                        <h3 class="text-xl font-bold mb-4 text-blue-300">💡 코드 설명</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-300 text-sm">
+                            <li><code>torch.randn</code>: 정규분포를 따르는 랜덤한 숫자를 생성합니다.</li>
+                            <li><code>hstack/vstack</code>: 생성한 데이터를 가로/세로로 합쳐 하나의 큰 데이터셋을 만듭니다.</li>
+                            <li><code>random5</code>: Class 2 데이터는 5를 더해 멀리 떨어뜨려 놓습니다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="flex justify-between text-xs text-gray-500 mb-2">
+                            <span>Python (PyTorch)</span>
+                            <span>binary_classification.ipynb</span>
+                        </div>
+<pre><code class="language-python">import torch
+import matplotlib.pyplot as plt
+
+# case 1
+N = 20
+random0 = torch.randn(int(N/2),1)
+random5 = torch.randn(int(N/2),1) + 5
+
+# class1 데이터: x1은 random0, x2는 random5
+class1_data = torch.hstack([random0, random5])
+# class2 데이터: x1은 random5, x2는 random0
+class2_data = torch.hstack([random5, random0])
+
+class1_label = torch.ones(int(N/2),1)
+class2_label = torch.zeros(int(N/2),1)
+
+X = torch.vstack([class1_data, class2_data])
+y = torch.vstack([class1_label, class2_label])
+
+print(X)
+print(y)
+
+# 시각화 코드
+plt.plot(class1_data[:,0], class1_data[:,1], 'o')
+plt.plot(class2_data[:,0], class2_data[:,1], 'ro')
+plt.xlabel('x1')
+plt.ylabel('x2')
+plt.grid()
+</code></pre>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2 sticky top-10">
+                    <div class="glass-panel p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">📊 데이터 시각화 (인터랙티브)</h3>
+                            <button onclick="generateData()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm transition">데이터 재생성</button>
+                        </div>
+                        <div id="dataPlot" style="width:100%; height:400px;"></div>
+                        <p class="text-xs text-gray-400 mt-2 text-center">파란점(Class 1)과 빨간점(Class 0)이 섞이지 않고 구분되어 있나요?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2 -->
+        <section id="step2" class="step-section fade-in">
+            <div class="flex flex-col md:flex-row-reverse gap-8 items-start">
+                <div class="md:w-1/2 space-y-6">
+                    <h2 class="text-4xl font-bold"><span class="step-number">STEP 2.</span> 모델 만들기</h2>
+                    <p class="text-gray-300 leading-relaxed">
+                        이제 데이터를 구분할 '뇌'를 만들 차례입니다. 우리는 <strong>MLP (Multi-Layer Perceptron)</strong>라는 신경망을 사용합니다.
+                        <br><br>
+                        입력(x1, x2)을 받아서 → 복잡한 계산(Linear)을 거치고 → 활성화 함수(Sigmoid)를 통과해 → 최종적으로 0 또는 1에 가까운 확률을 출력합니다.
+                    </p>
+
+                    <div class="glass-panel p-6">
+                        <h3 class="text-xl font-bold mb-4 text-purple-300">🧠 모델 구조</h3>
+                        <div class="flex items-center justify-center space-x-4 text-sm">
+                            <div class="text-center p-2 border border-gray-600 rounded bg-gray-800">입력 (2개)</div>
+                            <span>→</span>
+                            <div class="text-center p-2 border border-blue-500 rounded bg-blue-900/30">은닉층 (100개)</div>
+                            <span>→</span>
+                            <div class="text-center p-2 border border-green-500 rounded bg-green-900/30">출력 (1개)</div>
+                        </div>
+                        <p class="mt-4 text-sm text-gray-400">
+                            * <code>nn.Linear(2, 100)</code>: 2개의 입력을 받아 100개의 특징으로 뻥튀기합니다.<br>
+                            * <code>nn.Sigmoid()</code>: 값을 0~1 사이로 압축하여 비선형성을 추가합니다.
+                        </p>
+                    </div>
+
+                    <div class="code-block">
+<pre><code class="language-python">from torch import nn
+
+class MLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        # case 1, plain
+        # 입력(2) -> 은닉(100) -> 활성화 -> 은닉(100) -> 출력(1) -> 활성화
+        self.linear = nn.Sequential(
+            nn.Linear(2, 100), # 10,100,1000 등으로 바꿔보며 실험 가능
+            nn.Sigmoid(),
+            nn.Linear(100, 1), # node가 많을수록 표현력이 좋아짐
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        x = self.linear(x)
+        return x
+
+model = MLP()
+print(model)
+
+# 테스트 실행 (학습 전)
+model.eval()
+with torch.no_grad():
+    # 임의의 데이터 5개를 넣어 출력 확인
+    print(model(torch.randn(5,2)).shape) 
+</code></pre>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2 sticky top-10">
+                    <div class="glass-panel p-8 flex flex-col items-center justify-center min-h-[400px]">
+                        <div class="relative w-64 h-64">
+                            <!-- Simple SVG Visualization of NN -->
+                            <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-2xl">
+                                <!-- Input Layer -->
+                                <circle cx="50" cy="60" r="10" fill="#94a3b8" />
+                                <circle cx="50" cy="140" r="10" fill="#94a3b8" />
+                                <text x="30" y="65" fill="white" font-size="10">x1</text>
+                                <text x="30" y="145" fill="white" font-size="10">x2</text>
+
+                                <!-- Hidden Layer -->
+                                <circle cx="100" cy="40" r="8" fill="#3b82f6" opacity="0.8" />
+                                <circle cx="100" cy="70" r="8" fill="#3b82f6" opacity="0.8" />
+                                <circle cx="100" cy="100" r="8" fill="#3b82f6" opacity="0.8" />
+                                <circle cx="100" cy="130" r="8" fill="#3b82f6" opacity="0.8" />
+                                <circle cx="100" cy="160" r="8" fill="#3b82f6" opacity="0.8" />
+
+                                <!-- Output Layer -->
+                                <circle cx="150" cy="100" r="10" fill="#22c55e" />
+                                <text x="165" y="105" fill="white" font-size="10">y (0~1)</text>
+
+                                <!-- Connections (Simplified) -->
+                                <line x1="60" y1="60" x2="92" y2="40" stroke="#475569" stroke-width="1" />
+                                <line x1="60" y1="60" x2="92" y2="160" stroke="#475569" stroke-width="1" />
+                                <line x1="60" y1="140" x2="92" y2="40" stroke="#475569" stroke-width="1" />
+                                <line x1="60" y1="140" x2="92" y2="160" stroke="#475569" stroke-width="1" />
+                                
+                                <line x1="108" y1="40" x2="140" y2="100" stroke="#475569" stroke-width="1" />
+                                <line x1="108" y1="160" x2="140" y2="100" stroke="#475569" stroke-width="1" />
+                            </svg>
+                        </div>
+                        <p class="text-center mt-4 font-bold text-lg">Multi-Layer Perceptron</p>
+                        <p class="text-center text-sm text-gray-400 px-4">
+                            데이터가 복잡한 그물망(신경망)을 통과하며 0과 1 사이의 확률값으로 변환됩니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 3 -->
+        <section id="step3" class="step-section fade-in">
+            <div class="flex flex-col md:flex-row gap-8 items-start">
+                <div class="md:w-1/2 space-y-6">
+                    <h2 class="text-4xl font-bold"><span class="step-number">STEP 3.</span> 모델 학습시키기</h2>
+                    <p class="text-gray-300 leading-relaxed">
+                        이제 모델을 공부시킬 차례입니다. (Training)<br>
+                        모델이 예측한 값과 정답 사이의 차이(Loss)를 구하고, 이 차이를 줄이는 방향으로 모델을 수정합니다(Optimizer).
+                    </p>
+
+                    <div class="glass-panel p-6 border-l-4 border-yellow-500">
+                        <h3 class="text-lg font-bold mb-2">🔥 학습의 핵심 요소</h3>
+                        <ul class="list-disc list-inside space-y-1 text-sm text-gray-300">
+                            <li><strong>Optimizer (SGD/Adam)</strong>: 오차를 줄이기 위해 파라미터를 수정하는 도구</li>
+                            <li><strong>Criterion (BCELoss)</strong>: 이진 분류 전용 오차 계산 함수 (Binary Cross Entropy)</li>
+                            <li><strong>Epoch</strong>: 전체 데이터를 공부하는 횟수</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-block">
+<pre><code class="language-python">from torch import optim
+
+LR = 1e-1 # 학습률 (Learning Rate)
+EPOCH = 100 # 반복 횟수
+
+# SGD (Stochastic Gradient Descent) 최적화 도구 사용
+optimizer = optim.SGD(model.parameters(), lr=LR)
+# 이진 분류를 위한 Loss Function
+criterion = nn.BCELoss()
+
+loss_history = []
+
+model.train() # 학습 모드 전환
+for ep in range(EPOCH):
+    # 1. 예측 (Inference)
+    y_hat = model(X)
+    
+    # 2. 오차 계산 (Loss)
+    loss = criterion(y_hat, y)
+    
+    # 3. 학습 (Update)
+    optimizer.zero_grad() # 이전 gradient 초기화
+    loss.backward()       # 역전파 (Backpropagation)
+    optimizer.step()      # 가중치 갱신
+    
+    # 기록
+    loss_history += [loss.item()]
+    print(f"Epoch: {ep+1}, train loss: {loss.item():.4f}")
+
+# Loss 그래프 그리기
+plt.plot(range(1,EPOCH+1), loss_history)
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+</code></pre>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2 sticky top-10">
+                    <div class="glass-panel p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold">📉 학습 과정 시뮬레이션</h3>
+                            <button id="trainBtn" onclick="simulateTraining()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm transition font-bold shadow-lg shadow-green-500/30">
+                                ▶ 학습 시작 (Start)
+                            </button>
+                        </div>
+                        <div id="lossPlot" style="width:100%; height:300px;"></div>
+                        <div class="mt-4 p-3 bg-black/30 rounded border border-gray-700">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Current Epoch:</span>
+                                <span id="currentEpoch" class="font-mono text-yellow-400">0</span>
+                            </div>
+                            <div class="flex justify-between text-sm mt-1">
+                                <span class="text-gray-400">Current Loss:</span>
+                                <span id="currentLoss" class="font-mono text-red-400">-</span>
+                            </div>
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-gray-700 h-2 rounded-full mt-3 overflow-hidden">
+                                <div id="progressBar" class="bg-green-500 h-full w-0 transition-all duration-100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 4 -->
+        <section id="step4" class="step-section fade-in pb-20">
+            <div class="flex flex-col gap-8">
+                <div class="text-center max-w-3xl mx-auto space-y-6">
+                    <h2 class="text-4xl font-bold"><span class="step-number">STEP 4.</span> 결과 확인 (Test)</h2>
+                    <p class="text-gray-300">
+                        학습된 모델이 공간을 어떻게 나누었는지 확인해봅시다.
+                        <br>
+                        모델은 입력 공간(x1, x2) 전체에 대해 0~1 사이의 확률값(높이, z)을 출력합니다. 이를 3D 표면으로 시각화하면 <strong>결정 경계(Decision Boundary)</strong>를 볼 수 있습니다.
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="code-block h-fit">
+<pre><code class="language-python"># 테스트 데이터 생성 (격자 형태)
+x1_test = torch.linspace(-10, 10, 30)
+x2_test = torch.linspace(-10, 10, 30)
+X1_test, X2_test = torch.meshgrid(x1_test, x2_test)
+X_test = torch.cat([X1_test.unsqueeze(dim=2), X2_test.unsqueeze(dim=2)], dim=2)
+
+model.eval() # 평가 모드
+with torch.no_grad():
+    y_hat = model(X_test)
+
+Y_hat = y_hat.squeeze()
+
+# 3D 시각화 (Plotly)
+import plotly.graph_objects as go
+
+fig = go.Figure(data=[go.Surface(
+    x=X1_test, 
+    y=X2_test, 
+    z=Y_hat, 
+    colorscale="viridis", 
+    opacity=0.5
+)])
+fig.update_layout(title='Binary Classification Boundary')
+fig.show()
+</code></pre>
+                    </div>
+
+                    <div class="glass-panel p-2">
+                        <div id="resultPlot" style="width:100%; height:500px;"></div>
+                        <p class="text-center text-sm text-gray-400 p-2">
+                            마우스를 사용하여 그래프를 회전시켜 보세요.<br>
+                            노란색 영역은 1, 보라색 영역은 0으로 예측하는 구간입니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-12 text-gray-500 text-sm border-t border-gray-800">
+        <p>Based on uploaded Jupyter Notebook (binary_classification.ipynb)</p>
+        <p>Implemented with Tailwind CSS & Plotly.js</p>
+    </footer>
+
+    <script>
+        // --- 1. Syntax Highlighting ---
+        hljs.highlightAll();
+
+        // --- 2. Scroll Animation ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // --- 3. Step 1: Data Generation Logic & Plot ---
+        function generateRandomData(n, mean, std) {
+            const x = [];
+            const y = [];
+            for (let i = 0; i < n; i++) {
+                x.push(mean + Math.random() * std * 2 - std); // Approximation
+                y.push(mean + Math.random() * std * 2 - std);
+            }
+            return {x, y};
+        }
+
+        function generateData() {
+            const N = 20;
+            // Class 1 (around 0, 5) & Class 0 (around 5, 0) based on notebook logic somewhat
+            // The notebook creates two clusters. Let's replicate visual.
+            // Notebook logic: class1 = [random0, random5], class2 = [random5, random0]
+            
+            // Generate random0 (mean 0) and random5 (mean 5)
+            const random0_x = Array.from({length: 10}, () => (Math.random()-0.5)*3); // mean 0
+            const random0_y = Array.from({length: 10}, () => (Math.random()-0.5)*3); 
+            
+            const random5_x = Array.from({length: 10}, () => (Math.random()-0.5)*3 + 5); // mean 5
+            const random5_y = Array.from({length: 10}, () => (Math.random()-0.5)*3 + 5);
+
+            // Class 1: x1 ~ 0, x2 ~ 5
+            const c1_x = random0_x;
+            const c1_y = random5_y;
+
+            // Class 2: x1 ~ 5, x2 ~ 0
+            const c2_x = random5_x;
+            const c2_y = random0_y;
+
+            const trace1 = {
+                x: c1_x, y: c1_y,
+                mode: 'markers', type: 'scatter',
+                name: 'Class 1 (Blue)',
+                marker: { size: 12, color: '#3b82f6', line: {color: 'white', width: 1} }
+            };
+
+            const trace2 = {
+                x: c2_x, y: c2_y,
+                mode: 'markers', type: 'scatter',
+                name: 'Class 0 (Red)',
+                marker: { size: 12, color: '#ef4444', line: {color: 'white', width: 1} }
+            };
+
+            const layout = {
+                title: '생성된 데이터 분포',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#e2e8f0' },
+                xaxis: { title: 'x1', gridcolor: '#334155' },
+                yaxis: { title: 'x2', gridcolor: '#334155' },
+                legend: { x: 0, y: 1 },
+                margin: { t: 40, r: 20, l: 40, b: 40 }
+            };
+
+            Plotly.newPlot('dataPlot', [trace1, trace2], layout, {displayModeBar: false});
+            
+            // Also update Step 4 visualization data source implicitly if needed, 
+            // but for simplicity we keep Step 4 static or separate.
+        }
+
+        // Initial Data Gen
+        generateData();
+
+
+        // --- 4. Step 3: Training Simulation ---
+        let isTraining = false;
+        
+        function simulateTraining() {
+            if (isTraining) return;
+            isTraining = true;
+            document.getElementById('trainBtn').textContent = "학습 중... (Training)";
+            document.getElementById('trainBtn').classList.add('opacity-50', 'cursor-not-allowed');
+
+            const epochs = 100;
+            const lossData = [];
+            const epochData = [];
+            let currentLoss = 0.8; // Starting high
+
+            // Setup Plot
+            const layout = {
+                title: 'Training Loss History',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#e2e8f0' },
+                xaxis: { title: 'Epoch', range: [0, epochs], gridcolor: '#334155' },
+                yaxis: { title: 'Loss', range: [0, 1], gridcolor: '#334155' },
+                margin: { t: 40, r: 20, l: 50, b: 40 }
+            };
+            Plotly.newPlot('lossPlot', [{x: [], y: [], mode: 'lines', line: {color: '#facc15', width: 3}}], layout, {displayModeBar: false});
+
+            let ep = 0;
+            const interval = setInterval(() => {
+                ep++;
+                // Simulate exponential decay loss
+                currentLoss = currentLoss * 0.95 + (Math.random() * 0.01);
+                if (currentLoss < 0.01) currentLoss = 0.01;
+
+                lossData.push(currentLoss);
+                epochData.push(ep);
+
+                // Update UI
+                document.getElementById('currentEpoch').innerText = ep;
+                document.getElementById('currentLoss').innerText = currentLoss.toFixed(4);
+                document.getElementById('progressBar').style.width = `${(ep/epochs)*100}%`;
+
+                // Update Chart
+                Plotly.extendTraces('lossPlot', {x: [[ep]], y: [[currentLoss]]}, [0]);
+
+                // Update 3D Surface (Simulated learning effect)
+                if (ep % 5 === 0) {
+                    update3DSurface(ep);
+                }
+
+                if (ep >= epochs) {
+                    clearInterval(interval);
+                    isTraining = false;
+                    document.getElementById('trainBtn').textContent = "다시 학습하기 (Retrain)";
+                    document.getElementById('trainBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }, 30); // Speed of simulation
+        }
+
+
+        // --- 5. Step 4: 3D Surface Plot ---
+        function sigmoid(z) {
+            return 1 / (1 + Math.exp(-z));
+        }
+
+        function getZValue(x, y, epoch) {
+            // Simulate decision boundary shifting
+            // A simple plane that rotates to separate the clusters (0,5) and (5,0)
+            // Ideal boundary is roughly x = y
+            // Z = sigmoid(w1*x + w2*y + b)
+            
+            // Start with random bad weights
+            let progress = Math.min(epoch / 100, 1);
+            
+            // Target weights roughly: w1=1, w2=-1 (to separate x=0,y=5 from x=5,y=0)
+            // Or something that creates a high value at (0,5) and low at (5,0)
+            // Let's say Class 1 (0,5) -> target 1, Class 0 (5,0) -> target 0.
+            
+            // Simulated learning curve for weights
+            let w1 = -0.5 + (0.5 * progress);  // Start bad, go towards ?
+            let w2 = 0.5 + (0.5 * progress);   // 
+            // Actually let's just cheat visually:
+            // Initial: Flat plane
+            // Final: Sigmoid cliff separating (0,5) and (5,0)
+            
+            // Distance from ideal boundary line (y = x)
+            // Class 1 (0,5) -> 5-0 = 5. Class 0 (5,0) -> 0-5 = -5.
+            // So Z should be high when y-x is positive.
+            
+            let boundary_strength = 0.1 + (2.0 * progress); // Gets sharper
+            let bias = 0;
+            
+            let val = (y - x) * boundary_strength + bias;
+            return sigmoid(val);
+        }
+
+        function createSurfaceData(epoch = 100) {
+            const size = 30;
+            const x = [];
+            const y = [];
+            const z = [];
+            
+            for (let i = 0; i < size; i++) {
+                const row_x = [];
+                const row_y = [];
+                const row_z = [];
+                const x_val = -10 + (20 * i / (size - 1));
+                
+                for (let j = 0; j < size; j++) {
+                    const y_val = -10 + (20 * j / (size - 1));
+                    row_x.push(x_val);
+                    row_y.push(y_val);
+                    row_z.push(getZValue(x_val, y_val, epoch));
+                }
+                x.push(row_x);
+                y.push(row_y);
+                z.push(row_z);
+            }
+            return {x, y, z};
+        }
+
+        function init3DPlot() {
+            const data = createSurfaceData(100);
+            
+            // Add scatter points for data
+            // Class 1 (0, 5) - Blue - Target 1 (Top)
+            const c1_x = [0, -1, 1, 0.5, -0.5];
+            const c1_y = [5, 4, 6, 5.5, 4.5];
+            const c1_z = [1, 1, 1, 1, 1]; // On top surface
+
+            // Class 0 (5, 0) - Red - Target 0 (Bottom)
+            const c0_x = [5, 4, 6, 5.5, 4.5];
+            const c0_y = [0, -1, 1, 0.5, -0.5];
+            const c0_z = [0, 0, 0, 0, 0]; // On bottom
+
+            const surface = {
+                type: 'surface',
+                x: data.x,
+                y: data.y,
+                z: data.z,
+                colorscale: 'Viridis',
+                opacity: 0.8,
+                showscale: false
+            };
+
+            const scatter1 = {
+                type: 'scatter3d',
+                mode: 'markers',
+                x: c1_x, y: c1_y, z: c1_z,
+                marker: {color: '#3b82f6', size: 5},
+                name: 'Class 1'
+            };
+
+            const scatter2 = {
+                type: 'scatter3d',
+                mode: 'markers',
+                x: c0_x, y: c0_y, z: c0_z,
+                marker: {color: '#ef4444', size: 5},
+                name: 'Class 0'
+            };
+
+            const layout = {
+                title: '모델 예측 표면 (Decision Surface)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: { color: '#e2e8f0' },
+                margin: { t: 40, r: 0, l: 0, b: 0 },
+                scene: {
+                    xaxis: {title: 'x1'},
+                    yaxis: {title: 'x2'},
+                    zaxis: {title: 'Prob (y_hat)'},
+                    camera: {eye: {x: 1.5, y: 1.5, z: 1.2}}
+                }
+            };
+
+            Plotly.newPlot('resultPlot', [surface, scatter1, scatter2], layout, {displayModeBar: false});
+        }
+
+        function update3DSurface(epoch) {
+            const data = createSurfaceData(epoch);
+            // Updating only the surface (trace 0)
+            Plotly.animate('resultPlot', {
+                data: [{z: data.z}],
+                traces: [0],
+                layout: {}
+            }, {
+                transition: {duration: 0},
+                frame: {duration: 0, redraw: true}
+            });
+        }
+
+        init3DPlot();
+
+    </script>
+</body>
+</html>

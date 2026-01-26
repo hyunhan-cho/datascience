@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyTorch 스터디 · 조현한</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #ee5a24 0%, #f0932b 50%, #f39c12 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 20px 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3.2em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.15em;
+            margin-top: 10px;
+            opacity: 0.95;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        .study-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+
+        .study-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .study-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .study-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .study-card-header {
+            background: linear-gradient(135deg, #ee5a24 0%, #f0932b 100%);
+            color: white;
+            padding: 25px;
+            position: relative;
+        }
+
+        .study-number {
+            font-size: 3em;
+            font-weight: bold;
+            opacity: 0.25;
+            position: absolute;
+            right: 20px;
+            top: 10px;
+        }
+
+        .study-card-title {
+            font-size: 1.7em;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .study-card-subtitle {
+            opacity: 0.92;
+            font-size: 1.05em;
+        }
+
+        .study-card-body {
+            padding: 22px 25px;
+        }
+
+        .study-card-description {
+            color: #5b6470;
+            margin-bottom: 14px;
+        }
+
+        .study-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #fff5f0;
+            color: #ee5a24;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+            opacity: 0.85;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.4em;
+            }
+
+            .study-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Embed section */
+        .embed {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .embed-header {
+            background: #111827;
+            color: #e5e7eb;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .embed-header a {
+            color: #fdba74;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .embed iframe {
+            width: 100%;
+            height: 680px;
+            border: 0;
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <a href="studies.html" class="back-button">← 학습 자료로 돌아가기</a>
+        <h1>🔶 PyTorch Study</h1>
+        <p>파이토치의 핵심 개념과 딥러닝 프레임워크 활용법을 정리합니다</p>
+    </div>
+
+    <div class="main-content">
+        <div class="study-grid">
+            <div class="study-card">
+                <a href="pytorch.html" class="study-link">
+                    <div class="study-card-header">
+                        <div class="study-number">01</div>
+                        <div class="study-card-title">PyTorch Deep Dive</div>
+                        <div class="study-card-subtitle">딥러닝 프레임워크 개요</div>
+                    </div>
+                    <div class="study-card-body">
+                        <div class="study-card-description">
+                            PyTorch의 핵심 구성요소와 철학을 학습합니다. torch, autograd, nn, optim 등 주요 모듈과 텐서 조작, NumPy 호환성까지 프레임워크
+                            전반을 슬라이드로 정리했습니다.
+                        </div>
+                        <div class="study-tags">
+                            <span class="tag">Framework</span>
+                            <span class="tag">torch.nn</span>
+                            <span class="tag">torch.optim</span>
+                            <span class="tag">Dynamic Graph</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="study-card">
+                <a href="tensor.html" class="study-link">
+                    <div class="study-card-header">
+                        <div class="study-number">02</div>
+                        <div class="study-card-title">텐서(Tensor) 완벽 가이드</div>
+                        <div class="study-card-subtitle">파이토치의 핵심 자료구조</div>
+                    </div>
+                    <div class="study-card-body">
+                        <div class="study-card-description">
+                            파이토치의 핵심 자료구조인 텐서(Tensor)의 내부 구조를 심층 분석합니다. Storage, Stride, Offset 등 메타데이터 개념과 메모리 효율적인 텐서
+                            연산을 학습할 수 있습니다.
+                        </div>
+                        <div class="study-tags">
+                            <span class="tag">Tensor</span>
+                            <span class="tag">Storage</span>
+                            <span class="tag">Stride</span>
+                            <span class="tag">Memory Layout</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+
+        <!-- 동적 임베드 컨테이너 -->
+        <section id="embed-container" class="embed hidden" aria-label="슬라이드 임베드 보기">
+            <div class="embed-header">
+                <strong id="embed-title">슬라이드 바로 보기</strong>
+                <a id="embed-external" href="#" target="_blank" rel="noopener">새 창에서 보기 ↗</a>
+            </div>
+            <iframe id="embed-frame" src="" title="PyTorch Slides"></iframe>
+        </section>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 조현한 · PyTorch Study</p>
+    </div>
+    <script>
+        // 카드 클릭 시 아래에 임베드 표시 (한 번 클릭으로 노출)
+        document.addEventListener('DOMContentLoaded', () => {
+            const links = document.querySelectorAll('.study-card .study-link');
+            const embed = document.getElementById('embed-container');
+            const embedFrame = document.getElementById('embed-frame');
+            const embedTitle = document.getElementById('embed-title');
+            const embedExternal = document.getElementById('embed-external');
+
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    // 같은 탭에서 임베드 표시. 새 창으로 열고 싶으면 ctrl/cmd 클릭 사용.
+                    e.preventDefault();
+                    const href = link.getAttribute('href');
+                    const titleEl = link.querySelector('.study-card-title');
+                    const titleText = titleEl ? titleEl.textContent.trim() : '슬라이드';
+
+                    embedFrame.src = href;
+                    embedTitle.textContent = `${titleText} · 슬라이드 바로 보기`;
+                    embedExternal.href = href;
+                    embed.classList.remove('hidden');
+
+                    // 임베드 영역으로 부드럽게 스크롤
+                    embed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
