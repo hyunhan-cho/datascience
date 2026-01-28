@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배치 정규화 (Batch Normalization)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-800 selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 bg-opacity-90 backdrop-blur-md">
+        <div class="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-indigo-600 font-bold text-xl">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <span>AI Theory Lab</span>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-500">
+                <a href="deeplearing.html" class="hover:text-indigo-600 cursor-pointer transition-colors">Deep
+                    Learning</a>
+                <span class="text-slate-300">/</span>
+                <span class="text-indigo-600">Batch Normalization</span>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-12">
+
+        <!-- Title Area -->
+        <div class="mb-12 text-center">
+            <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-4">
+                Deep Learning Basics
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 leading-tight">
+                배치 정규화<br class="md:hidden" />(Batch Normalization)
+            </h1>
+            <p class="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                딥러닝 모델 학습의 <b>안전장치</b>이자 <b>가속 페달</b>.<br />
+                기울기 소실 문제를 해결하고 학습 속도를 획기적으로 높이는 비결을 알아봅니다.
+            </p>
+        </div>
+
+        <!-- Content Wrapper -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+
+            <!-- Section 1: Intro -->
+            <div class="p-8 md:p-12 border-b border-slate-100">
+                <h2 class="flex items-center gap-3 text-2xl font-bold text-slate-800 mb-6">
+                    <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    배치 정규화란 무엇인가요?
+                </h2>
+                <p class="text-slate-600 leading-7 mb-6">
+                    배치 정규화(Batch Normalization)는 신경망의 각 층(Layer)에 들어가는 <b>입력 데이터의 분포를 정규화(Normalization)</b>하는 기법입니다. 쉽게
+                    말해, 데이터가 신경망의 층을 통과할 때마다 제멋대로 퍼지는 것을 막고, <b>"평균 0, 분산 1"</b>의 예쁜 형태로 다듬어주는 과정입니다.
+                </p>
+
+                <div class="bg-amber-50 border-l-4 border-amber-400 p-6 rounded-r-lg mb-8">
+                    <h3 class="font-bold text-amber-800 flex items-center gap-2 mb-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                                d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                        </svg>
+                        왜 필요한가요?
+                    </h3>
+                    <p class="text-amber-700 text-sm leading-6">
+                        딥러닝 학습 시 <b>기울기 폭주(Exploding Gradient)</b>나 <b>기울기 소실(Vanishing Gradient)</b> 문제가 발생하면 학습이 아예
+                        멈추거나 불안정해집니다. 배치 정규화는 이를 막아주는 강력한 방패 역할을 합니다.
+                    </p>
+                </div>
+
+                <h3 class="text-lg font-bold text-slate-800 mb-3 mt-8">내부 공변량 변화 (Internal Covariate Shift)</h3>
+                <p class="text-slate-600 leading-7 mb-4">
+                    신경망은 여러 층으로 이루어져 있습니다. 학습이 진행되면서 앞쪽 층의 파라미터가 바뀌면, 뒤쪽 층으로 넘어오는 데이터의 분포도 계속 바뀝니다. 이를 <b>내부 공변량
+                        변화</b>라고 합니다.
+                </p>
+                <p class="text-slate-600 leading-7">
+                    뒤쪽 층 입장에서는 <i>"계속 입력값의 분포가 바뀌니까 적응하기 힘들어!"</i>라고 불평하게 되죠. 배치 정규화는 이 분포를 일정하게 잡아주어 각 층이 안정적으로 학습할 수
+                    있게 돕습니다.
+                </p>
+            </div>
+
+            <!-- Section 2: Formula -->
+            <div class="p-8 md:p-12 bg-slate-50 border-b border-slate-100">
+                <h2 class="flex items-center gap-3 text-2xl font-bold text-slate-800 mb-8">
+                    <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    수식으로 이해하기
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">Step 1. 평균 계산</div>
+                        <div class="text-center py-4 text-xl">
+                            \[\mu_{\mathcal{B}} \leftarrow \frac{1}{m} \sum_{i=1}^{m} x_{i}\]
+                        </div>
+                        <p class="text-xs text-slate-500 text-center mt-2">배치 내 데이터의 평균을 구합니다.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">Step 2. 분산 계산</div>
+                        <div class="text-center py-4 text-xl">
+                            \[\sigma_{\mathcal{B}}^{2} \leftarrow \frac{1}{m} \sum_{i=1}^{m} (x_{i} -
+                            \mu_{\mathcal{B}})^{2}\]
+                        </div>
+                        <p class="text-xs text-slate-500 text-center mt-2">데이터가 평균에서 얼마나 퍼져있는지(분산) 구합니다.</p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                        <div
+                            class="absolute top-0 right-0 bg-indigo-100 text-indigo-600 text-xs px-2 py-1 rounded-bl-lg font-bold">
+                            핵심</div>
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">Step 3. 정규화 (Normalize)</div>
+                        <div class="text-center py-4 text-xl text-indigo-600 font-bold">
+                            \[\hat{x}_{i} \leftarrow \frac{x_{i} - \mu_{\mathcal{B}}}{\sqrt{\sigma_{\mathcal{B}}^{2} +
+                            \epsilon}}\]
+                        </div>
+                        <p class="text-xs text-slate-500 text-center mt-2">
+                            데이터를 평균 0, 분산 1로 만듭니다.<br />
+                            <span class="text-slate-400">(\(\epsilon\)은 0으로 나누는 것을 방지하는 아주 작은 수)</span>
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-400 uppercase mb-2">Step 4. 스케일 & 시프트</div>
+                        <div class="text-center py-4 text-xl">
+                            \[y_{i} \leftarrow \gamma \hat{x}_{i} + \beta\]
+                        </div>
+                        <p class="text-xs text-slate-500 text-center mt-2">
+                            데이터의 고유한 특성을 잃지 않도록<br />학습 가능한 파라미터 \(\gamma\)(스케일), \(\beta\)(시프트)를 추가합니다.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="text-sm text-slate-500 bg-white p-4 rounded-lg border border-slate-200">
+                    <strong class="text-slate-700">초기화 팁:</strong> 보통 학습 시작 시 \(\gamma\)는 1, \(\beta\)는 0으로 초기화됩니다. 이
+                    값들은 역전파(Backpropagation) 과정에서 학습을 통해 최적의 값으로 갱신됩니다.
+                </div>
+            </div>
+
+            <!-- Section 3: Example Calculation -->
+            <div class="p-8 md:p-12 border-b border-slate-100">
+                <h2 class="flex items-center gap-3 text-2xl font-bold text-slate-800 mb-6">
+                    <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                    </svg>
+                    실제 계산 예시
+                </h2>
+                <p class="text-slate-600 mb-6">
+                    아래와 같은 입력 데이터 텐서(Tensor)가 있다고 가정해 봅시다. 각 열(Column)을 하나의 특성(Feature)으로 보고 배치 정규화를 수행합니다.
+                </p>
+
+                <div
+                    class="bg-slate-900 rounded-xl p-6 mb-8 text-slate-200 font-mono text-sm shadow-xl overflow-x-auto">
+                    <div class="flex gap-2 mb-2">
+                        <span class="text-pink-400">import</span>
+                        <span>torch</span>
+                    </div>
+                    <div class="mb-2">x = torch.FloatTensor([</div>
+                    <div class="pl-4 text-emerald-400">[-0.6577, -0.5797, 0.6360],</div>
+                    <div class="pl-4 text-emerald-400">[ 0.7392, 0.2145, 1.5230],</div>
+                    <div class="pl-4 text-emerald-400">[ 0.2432, 0.5662, 0.3220]</div>
+                    <div>])</div>
+                </div>
+
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span
+                        class="bg-indigo-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
+                    첫 번째 열(Column 0) 계산 과정
+                </h3>
+
+                <div class="space-y-4 mb-8">
+                    <div
+                        class="flex flex-col md:flex-row gap-4 items-start md:items-center bg-indigo-50 p-4 rounded-lg">
+                        <div class="min-w-[100px] font-bold text-indigo-900">입력값 (\(x\))</div>
+                        <div class="flex gap-2 font-mono text-indigo-700">
+                            <span class="bg-white px-2 py-1 rounded border border-indigo-100">-0.6577</span>
+                            <span class="bg-white px-2 py-1 rounded border border-indigo-100">0.7392</span>
+                            <span class="bg-white px-2 py-1 rounded border border-indigo-100">0.2432</span>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-4 items-center pl-4 border-l-2 border-slate-200">
+                        <svg class="text-slate-300 w-5 h-5 rotate-90 md:rotate-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                        <div class="text-slate-600 text-sm">
+                            <span class="font-bold text-slate-800">평균(\(\mu\)):</span> 위 세 값의 평균은 약 <b>0.1082</b> 입니다.
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-4 items-center pl-4 border-l-2 border-slate-200">
+                        <svg class="text-slate-300 w-5 h-5 rotate-90 md:rotate-0" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                        <div class="text-slate-600 text-sm">
+                            <span class="font-bold text-slate-800">분산(\(\sigma^2\)):</span> 평균과의 차이를 제곱하여 평균을 내면 약
+                            <b>0.3340</b> 입니다.
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex flex-col md:flex-row gap-4 items-start md:items-center bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                        <div class="min-w-[100px] font-bold text-emerald-900">결과값 (\(\hat{x}\))</div>
+                        <div class="flex flex-col gap-1 w-full">
+                            <div class="flex gap-2 font-mono text-emerald-700 items-center flex-wrap">
+                                <span class="bg-white px-2 py-1 rounded border border-emerald-100">-1.3246</span>
+                                <span class="bg-white px-2 py-1 rounded border border-emerald-100">1.0912</span>
+                                <span class="bg-white px-2 py-1 rounded border border-emerald-100">0.2334</span>
+                            </div>
+                            <p class="text-xs text-emerald-600 mt-1">
+                                * 정규화 후, 이 데이터들의 평균은 0, 분산은 1이 됩니다.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-100 p-5 rounded-lg border-l-4 border-slate-400">
+                    <h4 class="font-bold text-slate-700 mb-2 text-sm">PyTorch 실행 결과</h4>
+                    <pre class="font-mono text-sm text-slate-600 whitespace-pre-wrap">tensor([[-1.3246, -1.3492, -0.3756],
+        [ 1.0912,  0.3077,  1.3685],
+        [ 0.2334,  1.0415, -0.9930]])</pre>
+                </div>
+            </div>
+
+            <!-- Section 4: Benefits -->
+            <div class="p-8 md:p-12 bg-gradient-to-br from-indigo-600 to-purple-700 text-white">
+                <h2 class="flex items-center gap-3 text-2xl font-bold mb-8 text-white">
+                    <svg class="w-6 h-6 text-indigo-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    배치 정규화의 강력한 효과
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white/10 backdrop-blur-lg p-6 rounded-xl border border-white/20">
+                        <div class="text-3xl mb-3">🚀</div>
+                        <h3 class="font-bold text-lg mb-2">학습 속도 향상</h3>
+                        <p class="text-indigo-100 text-sm leading-relaxed">
+                            논문에 따르면 이미지 분류 모델에서 14배 더 적은 훈련 단계로 동일한 정확도를 달성했습니다.
+                        </p>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-lg p-6 rounded-xl border border-white/20">
+                        <div class="text-3xl mb-3">📈</div>
+                        <h3 class="font-bold text-lg mb-2">높은 학습률(Learning Rate)</h3>
+                        <p class="text-indigo-100 text-sm leading-relaxed">
+                            그레이디언트 소실 문제를 완화하여 더 큰 학습률을 사용할 수 있게 해 줍니다. 이는 더 빠른 수렴을 의미합니다.
+                        </p>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-lg p-6 rounded-xl border border-white/20">
+                        <div class="text-3xl mb-3">🛡️</div>
+                        <h3 class="font-bold text-lg mb-2">초기화 민감도 감소</h3>
+                        <p class="text-indigo-100 text-sm leading-relaxed">
+                            가중치 초기화(Weight Initialization)를 아주 신중하게 하지 않아도 학습이 안정적으로 진행됩니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Navigation -->
+            <div
+                class="bg-slate-50 p-6 flex flex-col md:flex-row justify-between items-center border-t border-slate-200 gap-4">
+                <a href="dropout.html"
+                    class="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-medium">
+                    <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <span>이전: Dropout & Regularization</span>
+                </a>
+                <a href="deeplearing.html"
+                    class="flex items-center gap-2 text-slate-500 hover:text-indigo-600 transition-colors text-sm font-medium">
+                    <span>목록으로 돌아가기</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+            </div>
+
+        </div>
+
+        <div class="mt-12 text-center text-slate-400 text-sm">
+            &copy; 2026 AI Theory Lab. Designed for Learning.
+        </div>
+    </main>
+
+    <script>
+        // MathJax 렌더링 재실행
+        window.addEventListener('load', () => {
+            if (window.MathJax) {
+                MathJax.typeset();
+            }
+        });
+    </script>
+</body>
+
+</html>

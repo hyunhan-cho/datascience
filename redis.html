@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Redis: 친절한 해설서</title>
+    <!-- 폰트 로드: Pretendard (깔끔한 고딕), JetBrains Mono (코드) -->
+    <link rel="stylesheet" as="style" crossorigin
+        href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 아이콘 -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            /* 밝고 화사한 컬러 팔레트 */
+            --bg-color: #f8fafc;
+            /* 아주 연한 회색 배경 */
+            --sidebar-bg: #ffffff;
+            /* 흰색 사이드바 */
+            --card-bg: #ffffff;
+            /* 흰색 카드 배경 */
+
+            --text-main: #334155;
+            /* 진한 회색 텍스트 */
+            --text-sub: #64748b;
+            /* 연한 회색 텍스트 */
+
+            --primary: #f43f5e;
+            /* 로즈 레드 (Redis 느낌) */
+            --primary-light: #fff1f2;
+            /* 연한 로즈 배경 */
+            --accent: #6366f1;
+            /* 인디고 (포인트) */
+            --accent-light: #e0e7ff;
+            /* 연한 인디고 배경 */
+
+            --code-bg: #f1f5f9;
+            /* 코드 배경 (밝은 회색) */
+            --border: #e2e8f0;
+            /* 연한 테두리 */
+
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.75;
+            display: flex;
+        }
+
+        /* --- 레이아웃 --- */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 30px 20px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .main-content {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            padding: 60px 80px;
+            max-width: 1200px;
+        }
+
+        /* --- 사이드바 --- */
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            letter-spacing: -0.5px;
+        }
+
+        .toc ul {
+            list-style: none;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc a {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: block;
+            padding: 10px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .toc a:hover {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .toc a.active {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* --- 본문 타이포그래피 --- */
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 24px;
+            line-height: 1.2;
+            letter-spacing: -1px;
+            color: #1e293b;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-top: 80px;
+            margin-bottom: 30px;
+            color: #1e293b;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            margin-top: 40px;
+            margin-bottom: 16px;
+            color: #334155;
+            font-weight: 700;
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: var(--text-sub);
+            font-size: 1.1rem;
+        }
+
+        /* --- 카드 & 시각화 박스 (그림 같은 요소) --- */
+        .visual-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visual-label {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        /* --- 연결 리스트 시각화 --- */
+        .ll-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .ll-node {
+            background: white;
+            border: 2px solid var(--text-main);
+            border-radius: 12px;
+            padding: 15px;
+            width: 100px;
+            position: relative;
+            box-shadow: 4px 4px 0px var(--border);
+            transition: transform 0.2s;
+        }
+
+        .ll-node:hover {
+            transform: translateY(-5px);
+        }
+
+        .ll-node.highlighted {
+            border-color: var(--primary);
+            box-shadow: 4px 4px 0px var(--primary-light);
+            background: var(--primary-light);
+        }
+
+        .ll-section {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            border-bottom: 1px dashed #cbd5e1;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .ll-data {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #334155;
+        }
+
+        .ll-arrow {
+            font-size: 24px;
+            color: #cbd5e1;
+        }
+
+        /* --- 해시맵 시각화 --- */
+        .hash-diagram {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .hash-bucket {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .bucket-box {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-color);
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #94a3b8;
+        }
+
+        .bucket-arrow {
+            color: var(--primary);
+            font-size: 24px;
+            transform: rotate(90deg);
+        }
+
+        .data-box {
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* --- 코드 블록 --- */
+        .code-wrapper {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin: 24px 0;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .code-header {
+            background: #f8fafc;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot.red {
+            background: #fca5a5;
+        }
+
+        .dot.yellow {
+            background: #fcd34d;
+        }
+
+        .dot.green {
+            background: #86efac;
+        }
+
+        pre {
+            background: #ffffff;
+            padding: 24px;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        /* 코드 하이라이팅 (Light Theme) */
+        .k {
+            color: #db2777;
+            font-weight: bold;
+        }
+
+        /* keyword */
+        .f {
+            color: #2563eb;
+        }
+
+        /* function */
+        .s {
+            color: #16a34a;
+        }
+
+        /* string */
+        .c {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* comment */
+        .n {
+            color: #334155;
+        }
+
+        /* number/normal */
+        .cls {
+            color: #0891b2;
+            font-weight: bold;
+        }
+
+        /* class */
+
+        /* --- 설명 박스 (Explanation) --- */
+        .expl-box {
+            background: var(--bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: -10px;
+            margin-bottom: 30px;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .expl-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .line-num {
+            background: #e2e8f0;
+            color: #64748b;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono';
+            font-size: 0.8rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        /* --- 팁 박스 --- */
+        .tip {
+            background: linear-gradient(135deg, #fff1f2 0%, #fff 100%);
+            border-left: 5px solid var(--primary);
+            padding: 24px;
+            border-radius: 0 16px 16px 0;
+            margin: 30px 0;
+        }
+
+        .tip-title {
+            color: var(--primary);
+            font-weight: 800;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* --- 반응형 --- */
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- 사이드바 -->
+    <nav class="sidebar">
+        <div class="logo">
+            <i class="ph-fill ph-cube" style="color: var(--primary);"></i>
+            Mini Redis
+        </div>
+        <div class="toc">
+            <ul>
+                <li><a href="#start" class="active">1. 미션 시작하기</a></li>
+                <li><a href="#concept">2. 원리 그림으로 보기</a></li>
+                <li><a href="#linkedlist">3. 기차놀이 (Linked List)</a></li>
+                <li><a href="#hashmap">4. 사물함 (Hash Map)</a></li>
+                <li><a href="#heap">5. 알람시계 (Min Heap)</a></li>
+                <li><a href="#miniredis">6. 조립하기 (Mini Redis)</a></li>
+                <li><a href="#cli">7. 실행하기 (CLI)</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+
+        <!-- 섹션 1: 시작하기 -->
+        <section id="start">
+            <span style="color: var(--primary); font-weight: 700; letter-spacing: 1px;">STEP 1</span>
+            <h1>Mini Redis<br>만들기 프로젝트</h1>
+            <p>
+                복잡한 이론은 잠시 접어두세요. 우리는 <strong>"데이터를 저장하는 상자"</strong>를 직접 만들 겁니다.<br>
+                속도가 엄청 빠르고(O(1)), 꽉 차면 안 쓰는 걸 알아서 버리는(LRU) 똑똑한 상자입니다.
+            </p>
+            <div class="tip">
+                <div class="tip-title"><i class="ph-fill ph-lightbulb"></i> 이 가이드의 특징</div>
+                <p style="margin:0; font-size: 0.95rem;">
+                    1. 복사해서 바로 쓸 수 있는 <strong>완성된 코드</strong>를 제공합니다.<br>
+                    2. 코드가 왜 그렇게 작성되었는지 <strong>그림과 해설</strong>로 떠먹여 드립니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 섹션 2: 원리 이해 -->
+        <section id="concept">
+            <h2>핵심 원리: LRU 캐시</h2>
+            <p>
+                우리의 목표는 <strong>"가장 오랫동안 안 쓴 데이터 버리기"</strong>입니다. <br>
+                이걸 효율적으로 하려면 두 가지 도구가 힘을 합쳐야 합니다.
+            </p>
+
+            <div class="visual-card">
+                <div class="visual-label">데이터가 저장되는 구조</div>
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 50px; flex-wrap: wrap;">
+                    <!-- 해시맵 시각화 -->
+                    <div style="text-align: center;">
+                        <h4 style="color: var(--accent); margin-bottom: 15px;">1. 위치 찾기 (지도)</h4>
+                        <div
+                            style="background: var(--bg-color); padding: 15px; border-radius: 12px; display: inline-block;">
+                            <div style="margin: 5px; font-family: 'JetBrains Mono';">"Apple" ➔ <span
+                                    style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px;">Node
+                                    A</span></div>
+                            <div style="margin: 5px; font-family: 'JetBrains Mono';">"Banana" ➔ <span
+                                    style="background: #94a3b8; color: white; padding: 2px 6px; border-radius: 4px;">Node
+                                    B</span></div>
+                        </div>
+                    </div>
+
+                    <i class="ph-bold ph-plus" style="font-size: 24px; color: #cbd5e1;"></i>
+
+                    <!-- 링크드 리스트 시각화 -->
+                    <div style="text-align: center;">
+                        <h4 style="color: var(--primary); margin-bottom: 15px;">2. 순서 기억 (줄서기)</h4>
+                        <div class="ll-diagram">
+                            <div class="ll-node highlighted">
+                                <div class="ll-section">Head (최근)</div>
+                                <div class="ll-data">A</div>
+                            </div>
+                            <i class="ph-bold ph-arrow-right ll-arrow"></i>
+                            <div class="ll-node">
+                                <div class="ll-section">Tail (오래됨)</div>
+                                <div class="ll-data">B</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p style="margin-top: 30px; font-size: 0.95rem; color: var(--text-sub);">
+                    누가 "Apple"을 찾으면? <br>
+                    1. <strong>지도</strong>에서 Node A 위치를 바로 찾고,<br>
+                    2. <strong>줄서기</strong>에서 Node A를 맨 앞(Head)으로 옮깁니다!
+                </p>
+            </div>
+        </section>
+
+        <!-- 섹션 3: 연결 리스트 구현 -->
+        <section id="linkedlist">
+            <h2>이중 연결 리스트 (Doubly Linked List)</h2>
+            <p>
+                데이터들이 손에 손을 잡고 있는 기차 모양입니다.<br>
+                중간에 있는 친구를 쏙 빼거나, 맨 앞에 끼워넣기 아주 좋습니다.
+            </p>
+
+            <!-- 코드 박스 -->
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                    <span
+                        style="margin-left: 10px; font-size: 0.8rem; color: #64748b; font-weight: bold;">doubly_linked_list.py</span>
+                </div>
+                <pre><code><span class="k">class</span> <span class="cls">Node</span>:
+    <span class="c"># 데이터를 담는 상자입니다. 앞(prev)과 뒤(next)를 가리킬 수 있어요.</span>
+    <span class="k">def</span> <span class="f">__init__</span>(<span class="n">self</span>, <span class="n">data</span>=<span class="k">None</span>):
+        <span class="n">self</span>.data = <span class="n">data</span>   <span class="c"># 키 값을 저장 (LRU에서는 key만 저장)</span>
+        <span class="n">self</span>.prev = <span class="k">None</span>
+        <span class="n">self</span>.next = <span class="k">None</span>
+
+<span class="k">class</span> <span class="cls">DoublyLinkedList</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(<span class="n">self</span>):
+        <span class="c"># 머리(Head)와 꼬리(Tail)라는 가짜 노드를 미리 만들어둡니다.</span>
+        <span class="n">self</span>._head = <span class="cls">Node</span>()  <span class="c"># 더미 노드</span>
+        <span class="n">self</span>._tail = <span class="cls">Node</span>()  <span class="c"># 더미 노드</span>
+        <span class="n">self</span>._head.next = <span class="n">self</span>._tail
+        <span class="n">self</span>._tail.prev = <span class="n">self</span>._head
+        <span class="n">self</span>._size = <span class="n">0</span>
+
+    <span class="k">def</span> <span class="f">insert_front</span>(<span class="n">self</span>, <span class="n">data</span>):
+        <span class="c"># 새 노드 생성 후 Head 바로 뒤에 삽입, 노드 반환</span>
+        <span class="n">node</span> = <span class="cls">Node</span>(<span class="n">data</span>)
+        <span class="n">node</span>.prev = <span class="n">self</span>._head
+        <span class="n">node</span>.next = <span class="n">self</span>._head.next
+        <span class="n">self</span>._head.next.prev = <span class="n">node</span>
+        <span class="n">self</span>._head.next = <span class="n">node</span>
+        <span class="n">self</span>._size += <span class="n">1</span>
+        <span class="k">return</span> <span class="n">node</span>  <span class="c"># HashMap에 저장할 노드 참조 반환!</span>
+
+    <span class="k">def</span> <span class="f">move_to_front</span>(<span class="n">self</span>, <span class="n">node</span>):
+        <span class="c"># 기존 위치에서 제거 후 맨 앞으로 이동</span>
+        <span class="n">self</span>.remove_node(<span class="n">node</span>)
+        <span class="n">self</span>._insert_after(<span class="n">self</span>._head, <span class="n">node</span>)
+
+    <span class="k">def</span> <span class="f">get_back_node</span>(<span class="n">self</span>):
+        <span class="c"># 가장 오래된 노드(Tail 바로 앞) 반환</span>
+        <span class="k">if</span> <span class="n">self</span>._tail.prev == <span class="n">self</span>._head:
+            <span class="k">return</span> <span class="k">None</span>
+        <span class="k">return</span> <span class="n">self</span>._tail.prev</code></pre>
+            </div>
+
+            <div class="expl-box">
+                <div class="expl-item">
+                    <span class="line-num">Node</span>
+                    <span><strong>데이터 상자:</strong> 실제 데이터(key, value)와 앞뒤 연결 고리(prev, next)를 가집니다.</span>
+                </div>
+                <div class="expl-item">
+                    <span class="line-num">__init__</span>
+                    <span><strong>더미 노드 전략:</strong> Head와 Tail이라는 '가짜 노드'를 양 끝에 둬서 구현을 훨씬 단순하게 만듭니다. (null 체크
+                        불필요)</span>
+                </div>
+                <div class="expl-item">
+                    <span class="line-num">move_to_front</span>
+                    <span><strong>핵심 로직:</strong> "조회된 데이터는 최신이다"라는 규칙 때문에, 데이터를 찾을 때마다 맨 앞으로 이동시킵니다.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 섹션 4: 해시맵 구현 -->
+        <section id="hashmap">
+            <h2>해시맵 (Hash Map)</h2>
+            <p>
+                사물함 1000개를 쭉 나열해놓고, 키(Key)를 보고 <strong>"너는 305번 사물함에 들어가!"</strong>라고 정해주는 방식입니다.<br>
+                만약 305번에 이미 누가 있으면? 그 안에 리스트로 줄을 세웁니다 (체이닝).
+            </p>
+
+            <div class="visual-card" style="background: #fdfeff;">
+                <div class="visual-label">해시맵 동작 과정</div>
+                <div class="hash-diagram">
+                    <div class="hash-bucket">
+                        <div class="bucket-box">Key<br>"A"</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Hash()</div>
+                        <i class="ph-bold ph-arrow-down" style="color: #cbd5e1;"></i>
+                        <div class="bucket-box" style="border-color: var(--accent);">Idx<br>5</div>
+                        <i class="ph-bold ph-arrow-down" style="color: var(--accent);"></i>
+                        <div class="data-box">Value: "Apple"</div>
+                    </div>
+                    <div style="width: 1px; background: #e2e8f0; height: 150px;"></div>
+                    <div class="hash-bucket">
+                        <div class="bucket-box">Key<br>"B"</div>
+                        <div style="font-size: 12px; color: #94a3b8;">Hash()</div>
+                        <i class="ph-bold ph-arrow-down" style="color: #cbd5e1;"></i>
+                        <div class="bucket-box" style="border-color: var(--accent);">Idx<br>92</div>
+                        <i class="ph-bold ph-arrow-down" style="color: var(--accent);"></i>
+                        <div class="data-box">Value: "Banana"</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                    <span
+                        style="margin-left: 10px; font-size: 0.8rem; color: #64748b; font-weight: bold;">hash_map.py</span>
+                </div>
+                <pre><code><span class="k">class</span> <span class="cls">HashMap</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(<span class="n">self</span>, <span class="n">size</span>=<span class="n">1024</span>):
+        <span class="n">self</span>.size = <span class="n">size</span>
+        <span class="c"># 빈 리스트(사물함)를 1024개 만듭니다.</span>
+        <span class="n">self</span>.buckets = [<span class="s">[]</span> <span class="k">for</span> <span class="n">_</span> <span class="k">in</span> <span class="f">range</span>(<span class="n">size</span>)]
+
+    <span class="k">def</span> <span class="f">_hash</span>(<span class="n">self</span>, <span class="n">key</span>):
+        <span class="c"># 문자열 키를 숫자로 바꿉니다. (아스키 코드 합계 % 사이즈)</span>
+        <span class="k">return</span> <span class="f">sum</span>(<span class="f">ord</span>(<span class="n">char</span>) <span class="k">for</span> <span class="n">char</span> <span class="k">in</span> <span class="n">key</span>) % <span class="n">self</span>.size
+
+    <span class="k">def</span> <span class="f">put</span>(<span class="n">self</span>, <span class="n">key</span>, <span class="n">value</span>):
+        <span class="n">index</span> = <span class="n">self</span>._hash(<span class="n">key</span>)
+        <span class="n">bucket</span> = <span class="n">self</span>.buckets[<span class="n">index</span>]
+        
+        <span class="c"># 이미 같은 키가 있으면 값만 바꿔줍니다 (Update)</span>
+        <span class="k">for</span> <span class="n">i</span>, (<span class="n">k</span>, <span class="n">v</span>) <span class="k">in</span> <span class="f">enumerate</span>(<span class="n">bucket</span>):
+            <span class="k">if</span> <span class="n">k</span> == <span class="n">key</span>:
+                <span class="n">bucket</span>[<span class="n">i</span>] = (<span class="n">key</span>, <span class="n">value</span>)
+                <span class="k">return</span>
+        
+        <span class="c"># 없으면 새로 넣습니다 (Append)</span>
+        <span class="n">bucket</span>.append((<span class="n">key</span>, <span class="n">value</span>))
+
+    <span class="k">def</span> <span class="f">get</span>(<span class="n">self</span>, <span class="n">key</span>):
+        <span class="n">index</span> = <span class="n">self</span>._hash(<span class="n">key</span>)
+        <span class="n">bucket</span> = <span class="n">self</span>.buckets[<span class="n">index</span>]
+        <span class="k">for</span> <span class="n">k</span>, <span class="n">v</span> <span class="k">in</span> <span class="n">bucket</span>:
+            <span class="k">if</span> <span class="n">k</span> == <span class="n">key</span>:
+                <span class="k">return</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="k">None</span></code></pre>
+            </div>
+
+            <div class="expl-box">
+                <div class="expl-item">
+                    <span class="line-num">_hash</span>
+                    <span><strong>마법의 변환기:</strong> "apple" 같은 글자를 305 같은 숫자로 바꿔줍니다. 항상 같은 글자는 같은 숫자가 나와야 합니다.</span>
+                </div>
+                <div class="expl-item">
+                    <span class="line-num">buckets</span>
+                    <span><strong>충돌 해결(Chaining):</strong> 만약 "apple"도 305번, "bus"도 305번이라면? 305번 칸 안에 작은 리스트를 만들어 둘 다
+                        보관합니다.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 섹션 5: 힙 -->
+        <section id="heap">
+            <h2>최소 힙 (Min Heap)</h2>
+            <p>
+                TTL(만료 시간)을 관리하는 <strong>알람 시계</strong>입니다.<br>
+                "가장 빨리 울릴 알람"이 항상 맨 위에 있어서, O(1)로 확인할 수 있습니다.
+            </p>
+
+            <div class="visual-card">
+                <div class="visual-label">힙 구조 (완전 이진 트리)</div>
+                <div style="font-family: 'JetBrains Mono'; font-size: 0.9rem;">
+<pre style="background: transparent; text-align: center; line-height: 1.8;">
+        <span style="background: var(--primary); color: white; padding: 8px 16px; border-radius: 8px;">(10, "key1")</span>  ← 가장 빨리 만료!
+           /            \
+  <span style="background: var(--accent-light); padding: 6px 12px; border-radius: 8px;">(20, "key2")</span>    <span style="background: var(--accent-light); padding: 6px 12px; border-radius: 8px;">(30, "key3")</span>
+</pre>
+                </div>
+                <p style="margin-top: 20px; font-size: 0.95rem; color: var(--text-sub);">
+                    부모는 항상 자식보다 작습니다. 그래서 루트(맨 위)가 항상 최솟값!
+                </p>
+            </div>
+
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+                    <span style="margin-left: 10px; font-size: 0.8rem; color: #64748b; font-weight: bold;">heap.py</span>
+                </div>
+<pre><code><span class="k">class</span> <span class="cls">MinHeap</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(<span class="n">self</span>):
+        <span class="n">self</span>._data = []  <span class="c"># 배열로 트리 표현</span>
+
+    <span class="k">def</span> <span class="f">push</span>(<span class="n">self</span>, <span class="n">item</span>):
+        <span class="c"># 맨 뒤에 넣고, 부모와 비교하며 올라감</span>
+        <span class="n">self</span>._data.append(<span class="n">item</span>)
+        <span class="n">self</span>._heapify_up(<span class="f">len</span>(<span class="n">self</span>._data) - <span class="n">1</span>)
+
+    <span class="k">def</span> <span class="f">pop</span>(<span class="n">self</span>):
+        <span class="c"># 루트(최솟값) 제거, 마지막을 루트로 올리고 내려감</span>
+        <span class="k">if</span> <span class="k">not</span> <span class="n">self</span>._data: <span class="k">return</span> <span class="k">None</span>
+        <span class="n">result</span> = <span class="n">self</span>._data[<span class="n">0</span>]
+        <span class="n">last</span> = <span class="n">self</span>._data.pop()
+        <span class="k">if</span> <span class="n">self</span>._data:
+            <span class="n">self</span>._data[<span class="n">0</span>] = <span class="n">last</span>
+            <span class="n">self</span>._heapify_down(<span class="n">0</span>)
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="f">peek</span>(<span class="n">self</span>):
+        <span class="c"># 최솟값 확인 (제거 안함)</span>
+        <span class="k">return</span> <span class="n">self</span>._data[<span class="n">0</span>] <span class="k">if</span> <span class="n">self</span>._data <span class="k">else</span> <span class="k">None</span></code></pre>
+            </div>
+
+            <div class="expl-box">
+                <div class="expl-item">
+                    <span class="line-num">_heapify_up</span>
+                    <span><strong>위로 올라가기:</strong> 새 원소가 부모보다 작으면 자리를 바꿔가며 올라갑니다.</span>
+                </div>
+                <div class="expl-item">
+                    <span class="line-num">_heapify_down</span>
+                    <span><strong>아래로 내려가기:</strong> 루트가 자식보다 크면 더 작은 자식과 교환하며 내려갑니다.</span>
+                </div>
+                <div class="expl-item">
+                    <span class="line-num">TTL 용도</span>
+                    <span><strong>(만료시간, 키)</strong> 형태로 저장하면, 가장 빨리 만료되는 키를 O(1)로 찾을 수 있습니다!</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 섹션 6: Mini Redis 조립 -->
+        <section id="miniredis">
+            <h2>조립하기: Mini Redis</h2>
+            <p>
+                이제 위에서 만든 부품들을 합체할 시간입니다.<br>
+                <strong>HashMap</strong>(빠른 조회) + <strong>DoublyLinkedList</strong>(LRU 순서) + <strong>MinHeap</strong>(TTL 관리)!
+            </p>
+
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                    <span
+                        style="margin-left: 10px; font-size: 0.8rem; color: #64748b; font-weight: bold;">mini_redis.py</span>
+                </div>
+                <pre><code><span class="k">class</span> <span class="cls">MiniRedis</span>:
+    <span class="k">def</span> <span class="f">__init__</span>(<span class="n">self</span>, <span class="n">max_memory</span>):
+        <span class="n">self</span>.max_memory = <span class="n">max_memory</span>
+        <span class="n">self</span>.cache_map = {}            <span class="c"># 위치 찾기용 (HashMap)</span>
+        <span class="n">self</span>.lru_list = <span class="cls">DoublyLinkedList</span>() <span class="c"># 순서 관리용</span>
+
+    <span class="k">def</span> <span class="f">get</span>(<span class="n">self</span>, <span class="n">key</span>):
+        <span class="k">if</span> <span class="n">key</span> <span class="k">not in</span> <span class="n">self</span>.cache_map:
+            <span class="k">return</span> <span class="s">"(nil)"</span>
+        
+        <span class="c"># 1. 데이터를 찾습니다.</span>
+        <span class="n">node</span> = <span class="n">self</span>.cache_map[<span class="n">key</span>]
+        
+        <span class="c"># 2. 방금 썼으니 '가장 최신' 위치(맨 앞)로 옮깁니다. (LRU 핵심)</span>
+        <span class="n">self</span>.lru_list.move_to_front(<span class="n">node</span>)
+        
+        <span class="k">return</span> <span class="n">node</span>.value
+
+    <span class="k">def</span> <span class="f">set</span>(<span class="n">self</span>, <span class="n">key</span>, <span class="n">value</span>):
+        <span class="c"># 이미 있는 키라면? 값만 바꾸고 최신으로 갱신</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="k">in</span> <span class="n">self</span>.cache_map:
+            <span class="n">node</span> = <span class="n">self</span>.cache_map[<span class="n">key</span>]
+            <span class="n">node</span>.value = <span class="n">value</span>
+            <span class="n">self</span>.lru_list.move_to_front(<span class="n">node</span>)
+            <span class="k">return</span> <span class="s">"OK"</span>
+
+        <span class="c"># 꽉 찼나요? 그럼 제일 오래된 녀석을 쫓아냅니다.</span>
+        <span class="k">if</span> <span class="f">len</span>(<span class="n">self</span>.cache_map) >= <span class="n">self</span>.max_memory:
+            <span class="n">removed_node</span> = <span class="n">self</span>.lru_list.remove_last() <span class="c"># 리스트 꼬리 자르기</span>
+            <span class="k">if</span> <span class="n">removed_node</span>:
+                <span class="k">del</span> <span class="n">self</span>.cache_map[<span class="n">removed_node</span>.key]   <span class="c"># 맵에서도 삭제</span>
+
+        <span class="c"># 새 데이터 추가</span>
+        <span class="n">new_node</span> = <span class="cls">Node</span>(<span class="n">key</span>, <span class="n">value</span>)
+        <span class="n">self</span>.lru_list.add_to_front(<span class="n">new_node</span>)
+        <span class="n">self</span>.cache_map[<span class="n">key</span>] = <span class="n">new_node</span>
+        <span class="k">return</span> <span class="s">"OK"</span></code></pre>
+            </div>
+
+            <div class="expl-box">
+                <div class="expl-item">
+                    <span class="line-num">get()</span>
+                    <span>조회만 했는데도 <code>move_to_front</code>를 호출합니다. 왜냐하면 "조회했다"는 것도 "사용했다"는 뜻이기 때문에, 삭제 순위에서
+                        밀려나야(생존해야) 하기 때문입니다.</span>
+                </div>
+                <div class="expl-item">
+                    <span class="line-num">set()</span>
+                    <span>데이터를 넣을 때 공간이 부족하면 <code>remove_last()</code>를 호출합니다. 이게 바로 LRU(Least Recently Used) 정책의
+                        구현입니다.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 섹션 6: CLI -->
+        <section id="cli">
+            <h2>실행하기 (CLI)</h2>
+            <p>
+                이제 사용자의 명령을 받아줄 인터페이스입니다.<br>
+                무한 반복문(While True)을 돌면서 입력을 기다립니다.
+            </p>
+
+            <div class="code-wrapper">
+                <div class="code-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                    <span
+                        style="margin-left: 10px; font-size: 0.8rem; color: #64748b; font-weight: bold;">main.py</span>
+                </div>
+                <pre><code><span class="k">def</span> <span class="f">run_cli</span>():
+    <span class="c"># 메모리 크기를 3개로 제한해봅시다. (3개 넘으면 자동 삭제됨)</span>
+    <span class="n">redis</span> = <span class="cls">MiniRedis</span>(<span class="n">max_memory</span>=<span class="n">3</span>)
+    
+    <span class="f">print</span>(<span class="s">"🍓 Mini Redis 시작! (종료하려면 'exit')"</span>)
+    
+    <span class="k">while</span> <span class="k">True</span>:
+        <span class="k">try</span>:
+            <span class="c"># 사용자 입력 받기</span>
+            <span class="n">command</span> = <span class="f">input</span>(<span class="s">"mini-redis> "</span>).strip().split()
+            <span class="k">if</span> <span class="k">not</span> <span class="n">command</span>: <span class="k">continue</span>
+            
+            <span class="n">cmd</span> = <span class="n">command</span>[<span class="n">0</span>].upper()
+            
+            <span class="k">if</span> <span class="n">cmd</span> == <span class="s">"EXIT"</span>:
+                <span class="f">print</span>(<span class="s">"안녕히 가세요!"</span>)
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">cmd</span> == <span class="s">"SET"</span>:
+                <span class="f">print</span>(<span class="n">redis</span>.set(<span class="n">command</span>[<span class="n">1</span>], <span class="n">command</span>[<span class="n">2</span>]))
+            <span class="k">elif</span> <span class="n">cmd</span> == <span class="s">"GET"</span>:
+                <span class="f">print</span>(<span class="n">redis</span>.get(<span class="n">command</span>[<span class="n">1</span>]))
+            <span class="k">else</span>:
+                <span class="f">print</span>(<span class="s">"(error) 모르는 명령어입니다."</span>)
+                
+        <span class="k">except</span> <span class="cls">Exception</span> <span class="k">as</span> <span class="n">e</span>:
+            <span class="f">print</span>(<span class="s">f"(error) {e}"</span>)
+
+<span class="k">if</span> <span class="n">__name__</span> == <span class="s">"__main__"</span>:
+    <span class="f">run_cli</span>()</code></pre>
+            </div>
+
+            <div class="tip"
+                style="border-left-color: var(--accent); background: linear-gradient(135deg, #e0e7ff 0%, #fff 100%);">
+                <div class="tip-title" style="color: var(--accent);"><i class="ph-fill ph-rocket-launch"></i> 테스트 해보기
+                </div>
+                <p style="margin:0; font-size: 0.95rem;">
+                    1. 위 코드를 모두 복사해서 파이썬 파일로 저장하세요.<br>
+                    2. 실행 후 <code>SET A 1</code>, <code>SET B 2</code>, <code>SET C 3</code>, <code>SET D 4</code>를 순서대로
+                    입력해보세요.<br>
+                    3. <code>GET A</code>를 했을 때 <code>(nil)</code>이 나오면 성공! (3개 제한이라 A가 삭제됨)
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 스크롤 시 목차 활성화
+        const navLinks = document.querySelectorAll('.toc a');
+        const sections = document.querySelectorAll('section');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').includes(current)) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
