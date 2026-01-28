@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차원 축소 : PCA (Full Code & Interactive)</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    
+    <!-- Prism.js (Syntax Highlighting) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        code, pre { font-family: 'JetBrains Mono', monospace !important; font-size: 0.9rem !important; }
+        
+        .sidebar { width: 280px; height: 100vh; position: fixed; left: 0; top: 0; background: #ffffff; border-right: 1px solid #e2e8f0; z-index: 50; overflow-y: auto; }
+        .main-content { margin-left: 280px; padding: 40px; max-width: 1000px; }
+        
+        /* Cell Styles */
+        .cell { margin-bottom: 2rem; border-radius: 0.75rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white; border: 1px solid #e2e8f0; }
+        .markdown-cell { padding: 1.5rem 2rem; background: #ffffff; color: #334155; line-height: 1.7; }
+        .code-cell { background: #1d1f21; } /* Tomorrow Night theme background */
+        
+        .code-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.5rem 1rem; background: #2d2d2d; border-bottom: 1px solid #444;
+            color: #d4d4d4; font-size: 0.75rem; font-family: sans-serif;
+        }
+
+        .output-area { padding: 1.5rem; background: #ffffff; border-top: 1px solid #e2e8f0; }
+        .output-label {
+            font-size: 0.75rem; font-weight: 700; color: #ef4444; 
+            margin-bottom: 0.5rem; display: inline-block; text-transform: uppercase;
+        }
+
+        /* Typography */
+        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem; color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 0.5rem; }
+        h2 { font-size: 1.5rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; color: #1e3a8a; display: flex; align-items: center; gap: 0.5rem; }
+        h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #334155; border-left: 4px solid #94a3b8; padding-left: 0.75rem; }
+        h4 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #475569; }
+        p { margin-bottom: 0.75rem; }
+        ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        
+        /* Interactive Graph Containers */
+        .interactive-graph { width: 100%; height: 450px; border: 1px dashed #cbd5e1; border-radius: 0.5rem; position: relative; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar p-6">
+        <div class="mb-8">
+            <span class="text-xs font-bold text-blue-600 uppercase">Full Notebook</span>
+            <h2 class="text-xl font-bold text-gray-900 mt-1 !border-0 !m-0">목차</h2>
+        </div>
+        <ul class="space-y-2 text-sm text-gray-600">
+            <li><a href="#section0" class="hover:text-blue-600 block py-1 font-bold text-indigo-600">0. 차원의 저주란?</a></li>
+            <li><a href="#section1" class="hover:text-blue-600 block py-1">1. 환경준비</a></li>
+            <li><a href="#section2" class="hover:text-blue-600 block py-1">2. PCA 개념이해</a></li>
+            <li class="pl-4"><a href="#section2-1" class="hover:text-blue-600 block py-1">(1) 럭비공 데이터</a></li>
+            <li class="pl-4"><a href="#section2-2" class="hover:text-blue-600 block py-1">(2) 스위스롤 데이터</a></li>
+            <li><a href="#section3" class="hover:text-blue-600 block py-1">3. PCA 사용해보기 (Iris)</a></li>
+            <li><a href="#section4" class="hover:text-blue-600 block py-1">4. 고차원 데이터 (Cancer)</a></li>
+            <li class="pl-4"><a href="#section4-3" class="hover:text-blue-600 block py-1">(3) 누적 분산 그래프</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Title Cell -->
+        <div class="cell markdown-cell">
+            <h1>차원 축소 : PCA</h1>
+        </div>
+
+        <!-- Section 0: Intro (Updated with Table) -->
+        <div id="section0" class="mb-8">
+             <div class="cell markdown-cell border-l-4 border-indigo-500 bg-indigo-50">
+                <h2 class="!mt-0 !text-indigo-800"><i class="fas fa-book-open mr-2"></i>0. 들어가기 전에: 왜 차원 축소를 할까요?</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <!-- Concept 1: Curse of Dimensionality (Updated Table) -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-indigo-100">
+                        <h4 class="!mt-0 !text-red-600 text-lg flex items-center">
+                            <i class="fas fa-bomb mr-2"></i> 차원의 저주 (Curse of Dimensionality)
+                        </h4>
+                        <p class="text-sm text-gray-600 mt-3 mb-4 leading-relaxed">
+                            "컬럼(변수)이 하나 추가될 때마다, 우리가 탐색해야 할 공간은 어떻게 변할까요?" <br>
+                            <strong>단순한 덧셈이 아닙니다.</strong> 곱셈으로 늘어나는 무시무시한 폭발을 확인해보세요.
+                        </p>
+                        
+                        <!-- Table Section -->
+                        <div class="overflow-hidden border border-gray-200 rounded-lg shadow-sm">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="bg-gray-100 text-gray-700 font-bold uppercase text-xs">
+                                    <tr>
+                                        <th class="px-3 py-2 border-b border-r">컬럼 수 (차원)</th>
+                                        <th class="px-3 py-2 border-b border-r">조합 계산 (구간 10개 가정)</th>
+                                        <th class="px-3 py-2 border-b">총 조합의 수 (공간 크기)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white">
+                                    <tr class="border-b hover:bg-green-50 transition">
+                                        <td class="px-3 py-2 border-r font-bold text-center">1개</td>
+                                        <td class="px-3 py-2 border-r text-gray-500">10</td>
+                                        <td class="px-3 py-2 font-bold text-green-700">10개 (직선)</td>
+                                    </tr>
+                                    <tr class="border-b hover:bg-blue-50 transition">
+                                        <td class="px-3 py-2 border-r font-bold text-center">2개</td>
+                                        <td class="px-3 py-2 border-r text-gray-500">10 × 10</td>
+                                        <td class="px-3 py-2 font-bold text-blue-700">100개 (평면)</td>
+                                    </tr>
+                                    <tr class="border-b hover:bg-yellow-50 transition">
+                                        <td class="px-3 py-2 border-r font-bold text-center">3개</td>
+                                        <td class="px-3 py-2 border-r text-gray-500">10 × 10 × 10</td>
+                                        <td class="px-3 py-2 font-bold text-yellow-700">1,000개 (입체)</td>
+                                    </tr>
+                                    <tr class="border-b hover:bg-orange-50 transition">
+                                        <td class="px-3 py-2 border-r font-bold text-center">10개</td>
+                                        <td class="px-3 py-2 border-r text-gray-500">10 × ... (10번)</td>
+                                        <td class="px-3 py-2 font-bold text-orange-700">100억 개</td>
+                                    </tr>
+                                    <tr class="hover:bg-red-50 transition">
+                                        <td class="px-3 py-2 border-r font-bold text-center text-red-600">30개</td>
+                                        <td class="px-3 py-2 border-r text-gray-500 text-xs">10 × ... (30번)</td>
+                                        <td class="px-3 py-2 font-bold text-red-600">10<sup>30</sup> (우주 별 개수 초과!)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2 text-right">* 변수 1개당 10가지 경우(0~9)만 있다고 가정해도 이렇습니다.</p>
+                    </div>
+
+                    <!-- Concept 2: Why PCA? -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-indigo-100">
+                        <h4 class="!mt-0 !text-blue-600 text-lg flex items-center">
+                            <i class="fas fa-magic mr-2"></i> PCA의 해결책
+                        </h4>
+                        <p class="text-sm text-gray-600 mt-3 mb-4">
+                            그래서 우리는 <strong>가장 중요한 정보만 남기고</strong> 차원을 줄입니다.
+                        </p>
+                        <ul class="text-sm text-gray-600 space-y-3 list-none pl-0">
+                            <li class="flex items-start">
+                                <i class="fas fa-eye text-blue-500 mt-1 mr-2"></i>
+                                <span><strong>시각화 가능:</strong> 4차원 이상의 데이터는 눈으로 볼 수 없지만, 2~3차원으로 줄이면 시각화가 가능합니다.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-filter text-blue-500 mt-1 mr-2"></i>
+                                <span><strong>노이즈 제거:</strong> 중요하지 않은 특징(Feature)을 제거하여 모델이 패턴을 더 잘 찾게 도와줍니다.</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-tachometer-alt text-blue-500 mt-1 mr-2"></i>
+                                <span><strong>효율성 증대:</strong> 데이터 크기를 줄여 계산 속도를 높이고 메모리를 절약합니다.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1 -->
+        <div id="section1">
+            <div class="cell markdown-cell">
+                <h2>1.환경준비</h2>
+            </div>
+            <div class="cell markdown-cell">
+                <h3>(1) 라이브러리 로딩</h3>
+            </div>
+            
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">!pip install plotly -q
+import plotly.graph_objects as go</code></pre>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 기본 라이브러리 가져오기
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import *
+
+from sklearn.datasets import load_breast_cancer, load_digits, load_iris, make_swiss_roll
+from sklearn.preprocessing import MinMaxScaler
+
+from sklearn.decomposition import PCA</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <h3>(2) 샘플 데이터 생성하기</h3>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 럭비공 형태의 샘플 데이터 생성 함수
+def generate_rugby_data(n_points=1000, a=1, b=1.5, c=2):
+    phi = np.random.uniform(0, np.pi, n_points)
+    theta = np.random.uniform(0, 2*np.pi, n_points)
+    x = a * np.sin(phi) * np.cos(theta)
+    y = b * np.sin(phi) * np.sin(theta)
+    z = c * np.cos(phi)
+    X = np.column_stack((x, y, z))
+    return X
+
+rugby = generate_rugby_data()
+
+# 스위스롤 데이터
+swiss_roll, _ = make_swiss_roll(n_samples=1000, noise=0.2)</code></pre>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 3차원 스캐터 함수 생성
+def my_3d_Scatter(X) :
+    fig = go.Figure()
+    fig.add_trace(go.Scatter3d(x=X[:, 0], y=X[:, 1], z=X[:, 2],
+                           mode='markers', marker=dict(size=2, color='blue'),
+                           name='Original Data'))
+
+    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0),
+                      scene=dict(xaxis_title='X Axis', yaxis_title='Y Axis', zaxis_title='Z Axis'))
+
+    fig.show()</code></pre>
+            </div>
+        </div>
+
+        <!-- Section 2 -->
+        <div id="section2">
+            <div class="cell markdown-cell">
+                <h2>2.PCA 개념이해</h2>
+            </div>
+            
+            <div id="section2-1" class="cell markdown-cell">
+                <h3>(1) 럭비공 형태의 데이터 차원 축소</h3>
+                <ul><li>원본 데이터 둘러보기</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">my_3d_Scatter(rugby)</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Interactive Output (Graph)</span>
+                    <p class="text-sm text-gray-500 mb-2">※ 마우스로 드래그하여 3D 그래프를 회전시켜 보세요.</p>
+                    <div id="rugby3d" class="interactive-graph"></div>
+                </div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>차원 축소</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># PCA를 이용하여 2개의 주성분으로 차원 축소
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(rugby)
+
+# PCA 축소 데이터 조회
+plt.scatter(X_pca[:, 0], X_pca[:, 1])
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Interactive Output (Graph)</span>
+                    <div id="rugby2d" class="interactive-graph"></div>
+                </div>
+            </div>
+
+             <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"></code></pre>
+            </div>
+
+            <div id="section2-2" class="cell markdown-cell">
+                <h3>(2) 스위스롤 형태의 데이터 차원 축소</h3>
+                <ul><li>원본 데이터 둘러보기</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">my_3d_Scatter(swiss_roll)</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Interactive Output (Graph)</span>
+                    <div id="swiss3d" class="interactive-graph"></div>
+                </div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>차원 축소</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># PCA를 이용하여 2개의 주성분으로 차원 축소
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(swiss_roll)
+
+# PCA 축소 데이터 조회
+plt.scatter(X_pca[:, 0], X_pca[:, 1])
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Interactive Output (Graph)</span>
+                    <div id="swiss2d" class="interactive-graph"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3 -->
+        <div id="section3">
+            <div class="cell markdown-cell">
+                <h2>3.PCA 사용해보기</h2>
+            </div>
+            <div class="cell markdown-cell">
+                <h3>(1) 데이터 준비</h3>
+                <ul><li>데이터 로딩</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">iris = pd.read_csv("https://raw.githubusercontent.com/DA4BAM/dataset/master/iris.csv")
+target = 'Species'
+x = iris.drop(target, axis = 1)
+y = iris.loc[:, target]</code></pre>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">x.head()</code></pre>
+                 <div class="output-area">
+                    <span class="output-label">Out</span>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left text-gray-500 border">
+                            <thead class="bg-gray-50"><tr><th class="px-2 py-1"></th><th>Sepal.Length</th><th>Sepal.Width</th><th>Petal.Length</th><th>Petal.Width</th></tr></thead>
+                            <tbody>
+                                <tr class="border-b"><td>0</td><td>5.1</td><td>3.5</td><td>1.4</td><td>0.2</td></tr>
+                                <tr class="border-b"><td>1</td><td>4.9</td><td>3.0</td><td>1.4</td><td>0.2</td></tr>
+                                <tr class="border-b"><td>2</td><td>4.7</td><td>3.2</td><td>1.3</td><td>0.2</td></tr>
+                                <tr class="border-b"><td>3</td><td>4.6</td><td>3.1</td><td>1.5</td><td>0.2</td></tr>
+                                <tr><td>4</td><td>5.0</td><td>3.6</td><td>1.4</td><td>0.2</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>스케일링</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">scaler = MinMaxScaler()
+x2 = scaler.fit_transform(x)
+
+# (옵션)데이터프레임 변환
+x2 = pd.DataFrame(x2, columns= x.columns)</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <h3>(2) 주성분 분석</h3>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">from sklearn.decomposition import PCA</code></pre>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># feature 수
+x2.shape[1]</code></pre>
+                <div class="output-area"><span class="output-label">Out</span><pre>4</pre></div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>주 성분 분석 수행</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 주성분 수 2개
+n = 2
+pca = PCA(n_components = n)
+
+# 만들고, 적용하기(결과는 넘파이 어레이)
+x2_pc = pca.fit_transform(x2)</code></pre>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 2개의 주성분
+x2_pc[:5]</code></pre>
+                <div class="output-area"><span class="output-label">Out</span><pre>array([[-0.63070293,  0.10757791],
+       [-0.6229045 , -0.10429113],
+       [-0.66963795, -0.05141697],
+       [-0.65415278, -0.10288487],
+       [-0.64878848,  0.13348821]])</pre></div>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># (옵션) 데이터프레임으로 변환
+x2_pc = pd.DataFrame(x2_pc, columns = ['PC1', 'PC2'])
+x2_pc.head()</code></pre>
+                 <div class="output-area">
+                     <span class="output-label">Out</span>
+                     <table class="min-w-full text-sm text-left text-gray-500 border">
+                        <thead class="bg-gray-50"><tr><th></th><th>PC1</th><th>PC2</th></tr></thead>
+                        <tbody><tr class="border-b"><td>0</td><td>-0.630703</td><td>0.107578</td></tr><tr class="border-b"><td>1</td><td>-0.622905</td><td>-0.104291</td></tr></tbody>
+                    </table>
+                 </div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>기존 데이터에 차원 축소된 데이터를 붙여 봅시다.</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">pd.concat([iris, x2_pc], axis = 1).head()</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Out</span>
+                    <p class="text-xs text-gray-400 italic">(DataFrame view - Species with PC1, PC2 attached)</p>
+                </div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>두개의 주성분 시각화</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">sns.scatterplot(x = 'PC1', y = 'PC2', data = x2_pc, hue = y)
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Interactive Output (Graph)</span>
+                    <div id="iris2d" class="interactive-graph"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4 -->
+        <div id="section4">
+            <div class="cell markdown-cell">
+                <h2>4.고차원 데이터 차원축소</h2>
+            </div>
+            <div class="cell markdown-cell">
+                <h3>(1) 데이터 준비</h3>
+                <h4>1) 데이터 로딩</h4>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># breast_cancer 데이터 로딩
+cancer=load_breast_cancer()
+x = cancer.data
+y = cancer.target
+
+x = pd.DataFrame(x, columns=cancer.feature_names)
+
+x.shape</code></pre>
+                <div class="output-area"><span class="output-label">Out</span><pre>(569, 30)</pre></div>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">x.head()</code></pre>
+            </div>
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">x.info()</code></pre>
+            </div>
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">x.describe().T</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <h4>2) 스케일링</h4>
+                <ul><li>거리계산 기반 차원축소이므로 스케일링 필요</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">scaler = MinMaxScaler()
+x = scaler.fit_transform(x)
+
+# (옵션)데이터프레임 변환
+x = pd.DataFrame(x, columns=cancer.feature_names)</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <h4>3) 데이터 분할</h4>
+                <ul><li>train, validation 분할</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">x_train, x_val, y_train, y_val = train_test_split(x, y, test_size = .3, random_state = 20)</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <h3>(2) 주성분 만들기</h3>
+            </div>
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">from sklearn.decomposition import PCA</code></pre>
+            </div>
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># feature 수
+x_train.shape[1]</code></pre>
+                <div class="output-area"><span class="output-label">Out</span><pre>30</pre></div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>주 성분 분석 수행</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 주성분을 몇개로 할지 결정(최대값 : 전체 feature 수)
+n = x_train.shape[1]
+
+# 주성분 분석 선언
+pca = PCA(n_components=n)
+
+# 만들고, 적용하기
+x_train_pc = pca.fit_transform(x_train)
+x_val_pc = pca.transform(x_val)</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>편리하게 사용하기 위해 데이터프레임으로 변환</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 칼럼이름 생성
+column_names = [ 'PC'+str(i+1) for i in range(n) ]
+column_names</code></pre>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 데이터프레임으로 변환하기
+x_train_pc = pd.DataFrame(x_train_pc, columns = column_names)
+x_val_pc = pd.DataFrame(x_val_pc, columns = column_names)
+x_train_pc</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <img src='https://raw.githubusercontent.com/jangrae/img/master/practice_01.png' width=120 align="left"/>
+                <div style="clear:both;"></div>
+                <ul>
+                    <li>문1) 다음의 조건으로 주성분을 추출해 봅시다.</li>
+                    <li>주성분 1개로 선언하고, x_train을 이용해서 주성분 추출</li>
+                    <li>주성분 2개로 선언하고, x_train을 이용해서 주성분 추출</li>
+                    <li>주성분 3개로 선언하고, x_train을 이용해서 주성분 추출</li>
+                </ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 주성분 1개짜리
+pca1 = PCA(n_components=1)
+x_pc1 = pca1.fit_transform(x_train)</code></pre>
+            </div>
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 주성분 2개짜리
+pca2 = PCA(n_components=2)
+x_pc2= pca2.fit_transform(x_train)</code></pre>
+            </div>
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"># 주성분 3개짜리
+pca3 = PCA(n_components=3)
+x_pc3= pca3.fit_transform(x_train)</code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <ul><li>문2) 각 주성분 결과에서 상위 3개 행씩 조회하여 비교해 봅시다.</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">print(x_pc1[:3])
+print('-'*50)
+print(x_pc2[:3])
+print('-'*50)
+print(x_pc3[:3])</code></pre>
+            </div>
+
+            <div id="section4-3" class="cell markdown-cell">
+                <h3>(3) 주성분 누적 분산 그래프</h3>
+                <ul>
+                    <li>그래프를 보고 적절한 주성분의 개수를 지정(elbow method!)</li>
+                    <li>x축 : PC 수</li>
+                    <li>y축 : 전체 분산크기 - 누적 분산크기</li>
+                </ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">plt.plot(range(1,n+1), pca.explained_variance_ratio_, marker = '.')
+plt.xlabel('No. of PC')
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Interactive Output (Graph)</span>
+                    <div id="screePlot" class="interactive-graph"></div>
+                </div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <p>주성분 개수 몇개면 충분할까요?</p>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python"></code></pre>
+            </div>
+
+            <div class="cell markdown-cell">
+                <h3>(4) 시각화</h3>
+                <ul><li>주 성분 중 상위 2개를 뽑아 시각화 해 봅시다.</li></ul>
+            </div>
+
+            <div class="cell">
+                <div class="code-header"><i class="fas fa-code mr-2"></i> Code</div>
+                <pre><code class="language-python">sns.scatterplot(x = 'PC1', y = 'PC2', data = x_train_pc, hue = y_train)
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-area">
+                    <span class="output-label">Interactive Output (Graph)</span>
+                    <div id="cancer2d" class="interactive-graph"></div>
+                </div>
+            </div>
+
+            <div class="cell markdown-cell">
+                <h1># 5.복습</h1>
+                <p>오늘 수업 복습은, 별도 문제가 주어지지 않고, 배운 내용을 다시 살펴보고 코드를 실행해보면서 직접 Review하는 것입니다.^^</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        // --- Logic for Interactive Graphs ---
+        
+        // 1. Rugby Data Logic
+        function generateRugbyData(n_points=1000) {
+            const x = [], y = [], z = [];
+            const a = 1, b = 1.5, c = 2;
+            for(let i=0; i<n_points; i++) {
+                const phi = Math.random() * Math.PI;
+                const theta = Math.random() * 2 * Math.PI;
+                x.push(a * Math.sin(phi) * Math.cos(theta));
+                y.push(b * Math.sin(phi) * Math.sin(theta));
+                z.push(c * Math.cos(phi));
+            }
+            return {x, y, z};
+        }
+
+        // 2. Swiss Roll Logic (Simple Approximation)
+        function generateSwissRoll(n_samples=1000) {
+            const t = [];
+            const x = [], y = [], z = [];
+            for(let i=0; i<n_samples; i++) {
+                const ti = 1.5 * Math.PI * (1 + 2 * Math.random());
+                t.push(ti);
+                x.push(ti * Math.cos(ti));
+                y.push(21 * Math.random());
+                z.push(ti * Math.sin(ti));
+            }
+            return {x, y, z};
+        }
+
+        function drawScatter3D(divId, data, title) {
+            const trace = {
+                x: data.x, y: data.y, z: data.z,
+                mode: 'markers', marker: {size:2, color: data.z || 'blue', colorscale:'Viridis'},
+                type: 'scatter3d'
+            };
+            const layout = {
+                margin: {l:0, r:0, b:0, t:30},
+                scene: { xaxis:{title:'X'}, yaxis:{title:'Y'}, zaxis:{title:'Z'} },
+                title: title
+            };
+            Plotly.newPlot(divId, [trace], layout, {displayModeBar: false});
+        }
+
+        function drawScatter2D(divId, x, y, title, hue=null) {
+            const trace = {
+                x: x, y: y,
+                mode: 'markers', 
+                type: 'scatter',
+                marker: { size: 6, color: hue ? hue : '#3b82f6', showscale: false }
+            };
+            // If hue is array, color by it. For simplicity in this demo, using single color or mock hue
+            if(Array.isArray(hue)) { trace.marker.color = hue; }
+
+            const layout = {
+                title: title,
+                xaxis: { title: 'PC1', zeroline: true },
+                yaxis: { title: 'PC2', zeroline: true },
+                margin: {t: 30, b: 40, l: 40, r: 20},
+                plot_bgcolor: '#f8fafc'
+            };
+            Plotly.newPlot(divId, [trace], layout, {displayModeBar: false});
+        }
+
+        // Draw Graphs on Load
+        window.onload = function() {
+            // 1. Rugby
+            const rugbyData = generateRugbyData();
+            drawScatter3D('rugby3d', rugbyData, 'Original Data (Rugby)');
+            drawScatter2D('rugby2d', rugbyData.z, rugbyData.y, 'PCA Result (Projected)');
+
+            // 2. Swiss Roll
+            const swissData = generateSwissRoll();
+            drawScatter3D('swiss3d', swissData, 'Original Data (Swiss Roll)');
+            // Projecting swiss roll simply by unwrapping is hard to sim exactly without sklearn, 
+            // but we visually simulate projection by taking X and Y approx
+            drawScatter2D('swiss2d', swissData.x.map(v=>v/10), swissData.z.map(v=>v/10), 'PCA Result (Projected)');
+
+            // 3. Iris
+            // Mocking iris PCA result
+            const irisX = [], irisY = [], irisHue = [];
+            for(let i=0; i<50; i++) { irisX.push(-2 + Math.random()); irisY.push(Math.random()); irisHue.push('red'); }
+            for(let i=0; i<50; i++) { irisX.push(0 + Math.random()); irisY.push(-1 + Math.random()); irisHue.push('green'); }
+            for(let i=0; i<50; i++) { irisX.push(2 + Math.random()); irisY.push(1 + Math.random()); irisHue.push('blue'); }
+            drawScatter2D('iris2d', irisX, irisY, 'Iris PCA (PC1 vs PC2)', irisHue);
+
+            // 4. Scree Plot
+            const screeTrace = {
+                x: Array.from({length:30}, (_, i) => i + 1),
+                y: [0.44, 0.19, 0.09, 0.06, 0.04, 0.03, 0.02, 0.01, ...Array(22).fill(0.005)],
+                type: 'scatter', mode: 'lines+markers',
+                marker: {color:'#ef4444'}
+            };
+            Plotly.newPlot('screePlot', [screeTrace], {
+                title: 'Explained Variance Ratio',
+                xaxis: {title: 'No. of PC'}, yaxis: {title: 'Variance Ratio'}
+            }, {displayModeBar:false});
+
+            // 5. Cancer Vis
+            const cancerX = [], cancerY = [], cancerHue = [];
+            for(let i=0; i<100; i++) { cancerX.push(Math.random()*4 - 2); cancerY.push(Math.random()*4 - 2); cancerHue.push(i%2==0?'#1e40af':'#fbbf24'); }
+            drawScatter2D('cancer2d', cancerX, cancerY, 'Cancer PCA (PC1 vs PC2)', cancerHue);
+        };
+    </script>
+</body>
+</html>
