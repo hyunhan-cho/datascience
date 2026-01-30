@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CNN Feature Map 시각화 가이드</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap"
+        rel="stylesheet">
+
+    <!-- Prism.js (Syntax Highlighting) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-gradient-start: #0f0c29;
+            --bg-gradient-mid: #302b63;
+            --bg-gradient-end: #24243e;
+            --accent-cyan: #00d4ff;
+            --accent-purple: #9d4edd;
+            --accent-pink: #ff6b9d;
+            --accent-yellow: #ffd93d;
+            --accent-green: #6bcb77;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --code-bg: #1a1a2e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
+            color: var(--text-primary);
+            line-height: 1.8;
+            min-height: 100vh;
+        }
+
+        code,
+        pre {
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-gradient-start);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(var(--accent-cyan), var(--accent-purple));
+            border-radius: 5px;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(15, 12, 41, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 6rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, var(--accent-purple) 0%, transparent 70%);
+            opacity: 0.2;
+            top: -200px;
+            right: -200px;
+            animation: float 15s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--accent-cyan) 0%, transparent 70%);
+            opacity: 0.2;
+            bottom: -200px;
+            left: -200px;
+            animation: float 12s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-30px) rotate(10deg);
+            }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientMove 5s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradientMove {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            40% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+
+            60% {
+                transform: translateX(-50%) translateY(-5px);
+            }
+        }
+
+        .scroll-indicator i {
+            font-size: 2rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Section Styling */
+        .section {
+            margin-bottom: 6rem;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        /* Card Styling */
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 212, 255, 0.1);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        /* Code Block Styling */
+        .code-block {
+            background: var(--code-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            border: 1px solid var(--glass-border);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .code-header span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--accent-green);
+        }
+
+        .code-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .code-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .code-dots span:nth-child(1) {
+            background: #ff5f56;
+        }
+
+        .code-dots span:nth-child(2) {
+            background: #ffbd2e;
+        }
+
+        .code-dots span:nth-child(3) {
+            background: #27ca40;
+        }
+
+        .code-block pre {
+            padding: 1.25rem;
+            margin: 0;
+            overflow-x: auto;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .code-block code {
+            background: transparent !important;
+        }
+
+        /* Explanation Box */
+        .explanation {
+            background: linear-gradient(135deg, rgba(157, 78, 221, 0.1), rgba(0, 212, 255, 0.1));
+            border-left: 4px solid var(--accent-purple);
+            padding: 1.5rem;
+            border-radius: 0 15px 15px 0;
+            margin: 1.5rem 0;
+        }
+
+        .explanation h4 {
+            color: var(--accent-purple);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .explanation ul {
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .explanation li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Highlight Box */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(107, 203, 119, 0.1));
+            border: 1px solid var(--accent-cyan);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .highlight-box h4 {
+            color: var(--accent-cyan);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 217, 61, 0.1), rgba(255, 107, 157, 0.1));
+            border-left: 4px solid var(--accent-yellow);
+            padding: 1.5rem;
+            border-radius: 0 15px 15px 0;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box h4 {
+            color: var(--accent-yellow);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Architecture Diagram */
+        .architecture {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .arch-layer {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .arch-layer:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent-cyan);
+            transform: scale(1.05);
+        }
+
+        .arch-layer.conv {
+            border-color: var(--accent-purple);
+        }
+
+        .arch-layer.pool {
+            border-color: var(--accent-pink);
+        }
+
+        .arch-layer.fc {
+            border-color: var(--accent-green);
+        }
+
+        .arch-layer i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .arch-layer h5 {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .arch-layer p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Feature Map Visual */
+        .feature-map-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: var(--glass-bg);
+            border-radius: 15px;
+        }
+
+        .feature-map-cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 5px;
+            opacity: 0.3;
+            transition: all 0.3s;
+        }
+
+        .feature-map-cell:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(var(--accent-cyan), var(--accent-purple));
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -34px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        /* Interactive Demo */
+        .demo-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .demo-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+        }
+
+        .demo-canvas {
+            background: var(--code-bg);
+            border-radius: 10px;
+            padding: 1rem;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .section h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <div class="nav-logo">
+                <i class="fas fa-brain"></i> CNN Feature Maps
+            </div>
+            <ul class="nav-links">
+                <li><a href="#intro">개요</a></li>
+                <li><a href="#setup">환경설정</a></li>
+                <li><a href="#architecture">아키텍처</a></li>
+                <li><a href="#extraction">추출</a></li>
+                <li><a href="#visualization">시각화</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-fire"></i> PyTorch Deep Learning
+            </div>
+            <h1>CNN Feature Map 시각화</h1>
+            <p>
+                합성곱 신경망(CNN)이 이미지를 어떻게 "보는지" 이해하고,<br>
+                각 레이어에서 추출되는 특징을 시각화하는 방법을 배웁니다.
+            </p>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Section 1: Introduction -->
+        <section id="intro" class="section">
+            <div class="section-header">
+                <div class="section-number">1</div>
+                <h2>Feature Map이란?</h2>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-lightbulb"></i> 핵심 개념</h3>
+                <p>
+                    <strong>Feature Map(특징 맵)</strong>은 CNN의 합성곱 레이어가 입력 이미지에서 추출한 특징들의 시각적 표현입니다.
+                    각 필터(커널)가 이미지의 특정 패턴(엣지, 텍스처, 형태 등)을 감지하고,
+                    그 결과를 2D 행렬 형태로 출력합니다.
+                </p>
+            </div>
+
+            <div class="explanation">
+                <h4><i class="fas fa-info-circle"></i> 왜 Feature Map을 시각화할까?</h4>
+                <ul>
+                    <li><strong>모델 해석</strong>: CNN이 어떤 특징을 학습했는지 이해</li>
+                    <li><strong>디버깅</strong>: 모델이 올바른 패턴을 학습하는지 확인</li>
+                    <li><strong>최적화</strong>: 불필요한 필터 제거 또는 구조 개선</li>
+                    <li><strong>연구</strong>: 딥러닝의 내부 동작 메커니즘 연구</li>
+                </ul>
+            </div>
+
+            <div class="demo-container">
+                <div class="demo-title"><i class="fas fa-th"></i> Feature Map 시각화 예시</div>
+                <div class="feature-map-grid" id="featureMapDemo">
+                    <!-- Generated by JS -->
+                </div>
+                <p style="text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                    ▲ 32개의 Feature Map 채널 (마우스를 올려보세요)
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 2: Environment Setup -->
+        <section id="setup" class="section">
+            <div class="section-header">
+                <div class="section-number">2</div>
+                <h2>환경 설정 및 라이브러리 로딩</h2>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-download"></i> Google Drive 마운트 및 라이브러리 임포트</h3>
+                <p>
+                    Google Colab 환경에서 작업하며, 저장된 모델과 데이터에 접근하기 위해
+                    Google Drive를 마운트합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python">from google.colab import drive
+drive.mount('/content/drive')
+
+import torch
+from torch import nn, optim
+import torch.nn.functional as F
+from torchvision import datasets, transforms
+import numpy as np
+import matplotlib.pyplot as plt</code></pre>
+                </div>
+
+                <div class="explanation">
+                    <h4><i class="fas fa-book"></i> 라이브러리 설명</h4>
+                    <ul>
+                        <li><strong>torch</strong>: PyTorch 핵심 라이브러리</li>
+                        <li><strong>torch.nn</strong>: 신경망 레이어 및 손실 함수</li>
+                        <li><strong>torchvision</strong>: 이미지 데이터셋 및 변환 도구</li>
+                        <li><strong>matplotlib</strong>: 시각화를 위한 플로팅 라이브러리</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-database"></i> CIFAR-10 데이터셋 로드</h3>
+                <p>
+                    CIFAR-10은 10개 클래스의 32×32 컬러 이미지 60,000장으로 구성된 데이터셋입니다.
+                    Feature Map 시각화를 위해 배치 크기를 1로 설정합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python">BATCH_SIZE = 1
+save_model_path = "/content/drive/MyDrive/Colab Notebooks/results/CNN_deep_CIFAR10.pt"
+
+transform = transforms.ToTensor()
+
+test_DS = datasets.CIFAR10(
+    root='/content/drive/MyDrive/Colab Notebooks/data',
+    train=False,
+    download=True,
+    transform=transforms.ToTensor()
+)
+
+test_DL = torch.utils.data.DataLoader(
+    test_DS,
+    batch_size=BATCH_SIZE,
+    shuffle=True
+)</code></pre>
+                </div>
+
+                <div class="highlight-box">
+                    <h4><i class="fas fa-star"></i> CIFAR-10 클래스</h4>
+                    <p>airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: CNN Architecture -->
+        <section id="architecture" class="section">
+            <div class="section-header">
+                <div class="section-number">3</div>
+                <h2>CNN 모델 아키텍처</h2>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-cubes"></i> 기본 CNN 모델 (Simple)</h3>
+                <p>
+                    3개의 합성곱 블록과 Fully Connected 레이어로 구성된 기본 CNN입니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python - Simple CNN</span>
+                    </div>
+                    <pre><code class="language-python">class CNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Conv Block 1: 3 -> 8 channels
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(3, 8, 3, padding=1),
+            nn.BatchNorm2d(8),
+            nn.ReLU()
+        )
+        self.Maxpool1 = nn.MaxPool2d(2)
+        
+        # Conv Block 2: 8 -> 16 channels
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(8, 16, 3, padding=1),
+            nn.BatchNorm2d(16),
+            nn.ReLU()
+        )
+        self.Maxpool2 = nn.MaxPool2d(2)
+        
+        # Conv Block 3: 16 -> 32 channels
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(16, 32, 3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU()
+        )
+        self.Maxpool3 = nn.MaxPool2d(2)
+        
+        # Fully Connected Layer
+        self.fc = nn.Linear(32*4*4, 10)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.Maxpool1(x)
+        x = self.conv2(x)
+        x = self.Maxpool2(x)
+        x = self.conv3(x)
+        x = self.Maxpool3(x)
+        x = torch.flatten(x, start_dim=1)
+        x = self.fc(x)
+        return x</code></pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-layer-group"></i> 심층 CNN 모델 (Deep)</h3>
+                <p>
+                    더 많은 합성곱 레이어를 쌓아 복잡한 특징을 학습하는 심층 CNN입니다.
+                    이 모델에서 Feature Map을 추출합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python - Deep CNN</span>
+                    </div>
+                    <pre><code class="language-python">class CNN_deep(nn.Module):
+    def __init__(self):
+        super().__init__()
+        
+        # Conv Block 1: 3 -> 32 channels (2 Conv layers)
+        self.conv_block1 = nn.Sequential(
+            nn.Conv2d(3, 32, 3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU()
+        )
+        # feature map1 결과
+        self.Maxpool1 = nn.MaxPool2d(2)
+
+        # Conv Block 2: 32 -> 64 channels (3 Conv layers)
+        self.conv_block2 = nn.Sequential(
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, 3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU()
+        )
+        # feature map2 결과
+        self.Maxpool2 = nn.MaxPool2d(2)
+
+        # Conv Block 3: 64 -> 128 channels (3 Conv layers)
+        self.conv_block3 = nn.Sequential(
+            nn.Conv2d(64, 128, 3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, 3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, 3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU()
+        )
+        # feature map3 결과
+        self.Maxpool3 = nn.MaxPool2d(2)
+
+        # Classifier (Fully Connected)
+        self.classifier = nn.Sequential(
+            nn.Linear(128*4*4, 512),
+            nn.ReLU(),
+            nn.Linear(512, 10)
+        )
+
+    def forward(self, x):
+        x = self.conv_block1(x)
+        x = self.Maxpool1(x)
+        x = self.conv_block2(x)
+        x = self.Maxpool2(x)
+        x = self.conv_block3(x)
+        x = self.Maxpool3(x)
+        x = torch.flatten(x, start_dim=1)
+        x = self.classifier(x)
+        return x</code></pre>
+                </div>
+
+                <div class="explanation">
+                    <h4><i class="fas fa-sitemap"></i> 아키텍처 구조</h4>
+                    <div class="architecture">
+                        <div class="arch-layer conv" style="border-color: var(--accent-purple);">
+                            <i class="fas fa-th" style="color: var(--accent-purple);"></i>
+                            <h5>Conv Block 1</h5>
+                            <p>3→32채널<br>32×32</p>
+                        </div>
+                        <div class="arch-layer pool" style="border-color: var(--accent-pink);">
+                            <i class="fas fa-compress" style="color: var(--accent-pink);"></i>
+                            <h5>MaxPool</h5>
+                            <p>16×16</p>
+                        </div>
+                        <div class="arch-layer conv" style="border-color: var(--accent-purple);">
+                            <i class="fas fa-th" style="color: var(--accent-purple);"></i>
+                            <h5>Conv Block 2</h5>
+                            <p>32→64채널<br>16×16</p>
+                        </div>
+                        <div class="arch-layer pool" style="border-color: var(--accent-pink);">
+                            <i class="fas fa-compress" style="color: var(--accent-pink);"></i>
+                            <h5>MaxPool</h5>
+                            <p>8×8</p>
+                        </div>
+                        <div class="arch-layer conv" style="border-color: var(--accent-purple);">
+                            <i class="fas fa-th" style="color: var(--accent-purple);"></i>
+                            <h5>Conv Block 3</h5>
+                            <p>64→128채널<br>8×8</p>
+                        </div>
+                        <div class="arch-layer pool" style="border-color: var(--accent-pink);">
+                            <i class="fas fa-compress" style="color: var(--accent-pink);"></i>
+                            <h5>MaxPool</h5>
+                            <p>4×4</p>
+                        </div>
+                        <div class="arch-layer fc" style="border-color: var(--accent-green);">
+                            <i class="fas fa-project-diagram" style="color: var(--accent-green);"></i>
+                            <h5>FC Layers</h5>
+                            <p>2048→512→10</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Model Loading -->
+        <section id="loading" class="section">
+            <div class="section-header">
+                <div class="section-number">4</div>
+                <h2>학습된 모델 로드</h2>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-file-download"></i> 모델 로드 및 확인</h3>
+                <p>
+                    사전 학습된 모델을 로드하고 구조를 확인합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python">load_model = torch.load(
+    save_model_path, 
+    map_location="cpu", 
+    weights_only=False
+)
+print(load_model)</code></pre>
+                </div>
+
+                <div class="highlight-box">
+                    <h4><i class="fas fa-terminal"></i> 출력 결과</h4>
+                    <pre style="color: var(--text-secondary); font-size: 0.85rem; overflow-x: auto;">CNN_deep(
+  (conv_block1): Sequential(
+    (0): Conv2d(3, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): BatchNorm2d(32)
+    (2): ReLU()
+    (3): Conv2d(32, 32, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (4): BatchNorm2d(32)
+    (5): ReLU()
+  )
+  (Maxpool1): MaxPool2d(kernel_size=2, stride=2)
+  (conv_block2): Sequential(...)
+  (Maxpool2): MaxPool2d(kernel_size=2, stride=2)
+  (conv_block3): Sequential(...)
+  (Maxpool3): MaxPool2d(kernel_size=2, stride=2)
+  (classifier): Sequential(
+    (0): Linear(in_features=2048, out_features=512)
+    (1): ReLU()
+    (2): Linear(in_features=512, out_features=10)
+  )
+)</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Feature Map Extraction -->
+        <section id="extraction" class="section">
+            <div class="section-header">
+                <div class="section-number">5</div>
+                <h2>Feature Map 추출</h2>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-cogs"></i> Feature Map 추출 코드</h3>
+                <p>
+                    모델을 평가 모드로 설정하고, 각 합성곱 블록의 출력을 추출합니다.
+                    <code>torch.no_grad()</code>를 사용하여 그래디언트 계산을 비활성화합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python"># 평가 모드로 전환 (Dropout, BatchNorm 비활성화)
+load_model.eval()
+
+# 그래디언트 계산 비활성화
+with torch.no_grad():
+    # 테스트 데이터에서 한 배치 가져오기
+    x_batch, y_batch = next(iter(test_DL))
+    
+    # 모델 예측
+    y_hat = load_model(x_batch)
+    pred = y_hat.argmax(dim=1)
+
+    # Feature Map 추출 (각 conv_block의 출력)
+    feature_map1 = load_model.conv_block1(x_batch)
+    feature_map2 = load_model.conv_block2(load_model.Maxpool1(feature_map1))
+    feature_map3 = load_model.conv_block3(load_model.Maxpool2(feature_map2))</code></pre>
+                </div>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-exclamation-triangle"></i> 중요 포인트</h4>
+                    <ul>
+                        <li><strong>load_model.eval()</strong>: 모델을 추론 모드로 전환 (BatchNorm, Dropout 동작 변경)</li>
+                        <li><strong>torch.no_grad()</strong>: 메모리 절약 및 연산 속도 향상</li>
+                        <li><strong>중간 레이어 출력</strong>: 직접 레이어를 호출하여 feature map 추출</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-chart-bar"></i> Feature Map 형태 확인</h3>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python">print(feature_map1.shape)  # torch.Size([1, 32, 32, 32])
+print(feature_map2.shape)  # torch.Size([1, 64, 16, 16])
+print(feature_map3.shape)  # torch.Size([1, 128, 8, 8])</code></pre>
+                </div>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-cyan);">Feature Map 1</h4>
+                        <p>Shape: [1, 32, 32, 32] — 32채널, 32×32 크기</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-purple);">Feature Map 2</h4>
+                        <p>Shape: [1, 64, 16, 16] — 64채널, 16×16 크기 (MaxPool 후)</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-pink);">Feature Map 3</h4>
+                        <p>Shape: [1, 128, 8, 8] — 128채널, 8×8 크기 (MaxPool 후)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Visualization -->
+        <section id="visualization" class="section">
+            <div class="section-header">
+                <div class="section-number">6</div>
+                <h2>Feature Map 시각화</h2>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-image"></i> 원본 이미지 표시</h3>
+                <p>
+                    먼저 입력으로 사용된 원본 이미지를 확인합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python"># 원본 이미지 표시
+plt.figure(figsize=(8, 8))
+plt.xticks([]); plt.yticks([])
+plt.imshow(x_batch[0].permute(1, 2, 0))  # CHW -> HWC 변환
+plt.show()</code></pre>
+                </div>
+
+                <div class="explanation">
+                    <h4><i class="fas fa-info-circle"></i> 텐서 차원 변환</h4>
+                    <ul>
+                        <li><strong>PyTorch 형식</strong>: (C, H, W) — 채널, 높이, 너비</li>
+                        <li><strong>Matplotlib 형식</strong>: (H, W, C) — 높이, 너비, 채널</li>
+                        <li><strong>permute(1, 2, 0)</strong>: 차원 순서를 변경하여 시각화 가능하게 변환</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-th"></i> Feature Map 1 시각화 (32채널)</h3>
+                <p>
+                    첫 번째 합성곱 블록에서 추출한 32개의 feature map을 그리드 형태로 시각화합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python">print(feature_map1.shape)  # torch.Size([1, 32, 32, 32])
+
+plt.figure(figsize=(32, 16))
+for idx in range(32):
+    plt.subplot(4, 8, idx+1, xticks=[], yticks=[])
+    plt.imshow(feature_map1[0, idx], cmap="gray")
+plt.show()</code></pre>
+                </div>
+
+                <div class="highlight-box">
+                    <h4><i class="fas fa-eye"></i> Feature Map 1 특징</h4>
+                    <ul>
+                        <li><strong>크기</strong>: 32×32 (원본과 동일)</li>
+                        <li><strong>채널 수</strong>: 32개의 서로 다른 필터 출력</li>
+                        <li><strong>학습 패턴</strong>: 저수준 특징 (엣지, 색상 변화 등)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-th-large"></i> Feature Map 2 시각화 (64채널)</h3>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python">print(feature_map2.shape)  # torch.Size([1, 64, 16, 16])
+
+plt.figure(figsize=(16, 16))
+for idx in range(64):
+    plt.subplot(8, 8, idx+1, xticks=[], yticks=[])
+    plt.imshow(feature_map2[0, idx], cmap="gray")
+plt.show()</code></pre>
+                </div>
+
+                <div class="explanation">
+                    <h4><i class="fas fa-layer-group"></i> Feature Map 2 특징</h4>
+                    <ul>
+                        <li><strong>크기</strong>: 16×16 (MaxPool로 축소)</li>
+                        <li><strong>채널 수</strong>: 64개</li>
+                        <li><strong>학습 패턴</strong>: 중간 수준 특징 (텍스처, 패턴 조합)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-cube"></i> Feature Map 3 시각화 (128채널)</h3>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python">print(feature_map3.shape)  # torch.Size([1, 128, 8, 8])
+
+plt.figure(figsize=(16, 8))
+for idx in range(128):
+    plt.subplot(8, 16, idx+1, xticks=[], yticks=[])
+    plt.imshow(feature_map3[0, idx], cmap="gray")
+plt.show()</code></pre>
+                </div>
+
+                <div class="warning-box">
+                    <h4><i class="fas fa-graduation-cap"></i> Feature Map 3 특징</h4>
+                    <ul>
+                        <li><strong>크기</strong>: 8×8 (더욱 축소)</li>
+                        <li><strong>채널 수</strong>: 128개</li>
+                        <li><strong>학습 패턴</strong>: 고수준 특징 (객체의 부분, 구조적 패턴)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-fire"></i> Feature Map 합산 (Activation Heatmap)</h3>
+                <p>
+                    모든 채널의 feature map을 합산하여 모델이 "주목하는" 영역을 시각화합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python"># Feature Map 채널 합산
+summed_map = feature_map3.sum(dim=1)
+
+# 합산된 map 시각화
+plt.figure(figsize=(8, 8))
+plt.xticks([]); plt.yticks([])
+plt.imshow(summed_map[0])
+plt.show()</code></pre>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-layer-group"></i> 원본 이미지와 Heatmap 오버레이</h3>
+                <p>
+                    원본 이미지 위에 activation heatmap을 오버레이하여
+                    모델이 분류에 사용한 중요 영역을 시각화합니다.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <div class="code-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span><i class="fab fa-python"></i> Python</span>
+                    </div>
+                    <pre><code class="language-python"># 원본 이미지 표시
+plt.figure(figsize=(8, 8))
+plt.xticks([]); plt.yticks([])
+plt.imshow(x_batch[0].permute(1, 2, 0))
+
+# Heatmap 오버레이 (alpha로 투명도 조절)
+plt.imshow(summed_map[0], extent=[0, 32, 32, 0], alpha=0.4)
+
+# 예측 결과를 제목으로 표시
+pred_class = test_DS.classes[pred]
+true_class = test_DS.classes[y_batch]
+plt.title(
+    f"{pred_class} ({true_class})",
+    color="g" if pred_class == true_class else "r"
+)
+plt.show()</code></pre>
+                </div>
+
+                <div class="explanation">
+                    <h4><i class="fas fa-magic"></i> 코드 설명</h4>
+                    <ul>
+                        <li><strong>extent=[0, 32, 32, 0]</strong>: heatmap을 32×32 크기로 스케일 조정</li>
+                        <li><strong>alpha=0.4</strong>: 투명도 40%로 원본 이미지가 보이도록 설정</li>
+                        <li><strong>색상 조건</strong>: 예측이 맞으면 초록색, 틀리면 빨간색으로 제목 표시</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary Section -->
+        <section id="summary" class="section">
+            <div class="section-header">
+                <div class="section-number"><i class="fas fa-check"></i></div>
+                <h2>요약</h2>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-clipboard-list"></i> Feature Map 시각화 핵심 정리</h3>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-cyan);">1. 모델 준비</h4>
+                        <p>학습된 모델을 로드하고 <code>eval()</code> 모드로 전환</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-purple);">2. Feature Map 추출</h4>
+                        <p>중간 레이어(conv_block)의 출력을 직접 호출하여 추출</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-pink);">3. 개별 채널 시각화</h4>
+                        <p>각 필터가 감지하는 패턴을 grayscale로 시각화</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-green);">4. Heatmap 생성</h4>
+                        <p>채널을 합산하여 모델의 attention 영역 시각화</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4 style="color: var(--accent-yellow);">5. 오버레이</h4>
+                        <p>원본 이미지와 heatmap을 결합하여 해석</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-box">
+                <h4><i class="fas fa-rocket"></i> 다음 단계</h4>
+                <ul>
+                    <li>Grad-CAM을 사용한 더 정교한 시각화</li>
+                    <li>다양한 이미지에 대한 feature map 비교</li>
+                    <li>필터 가중치 직접 시각화</li>
+                    <li>다른 레이어의 feature map 분석</li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>
+            <i class="fas fa-code"></i> CNN Feature Map 시각화 가이드
+            <br><br>
+            <span style="font-size: 0.85rem;">
+                PyTorch를 활용한 딥러닝 모델 해석
+            </span>
+        </p>
+    </footer>
+
+    <!-- Prism.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        // Generate Feature Map Demo
+        function generateFeatureMapDemo() {
+            const container = document.getElementById('featureMapDemo');
+            for (let i = 0; i < 32; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'feature-map-cell';
+                cell.style.animationDelay = `${i * 0.05}s`;
+
+                // Random gradient colors
+                const hue1 = Math.random() * 60 + 180; // Cyan to purple range
+                const hue2 = Math.random() * 60 + 200;
+                cell.style.background = `linear-gradient(135deg, hsl(${hue1}, 80%, 50%), hsl(${hue2}, 80%, 40%))`;
+                cell.style.opacity = 0.2 + Math.random() * 0.8;
+
+                container.appendChild(cell);
+            }
+        }
+
+        // Intersection Observer for scroll animations
+        function setupScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            });
+
+            document.querySelectorAll('.section').forEach(section => {
+                observer.observe(section);
+            });
+        }
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            generateFeatureMapDemo();
+            setupScrollAnimations();
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.nav');
+            if (window.scrollY > 50) {
+                nav.style.background = 'rgba(15, 12, 41, 0.98)';
+            } else {
+                nav.style.background = 'rgba(15, 12, 41, 0.9)';
+            }
+        });
+    </script>
+</body>
+
+</html>
