@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>손실함수 & 최적화 실전 가이드</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- KaTeX (수식 렌더링) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;700&display=swap');
+        
+        body { font-family: 'Pretendard', sans-serif; line-height: 1.6; }
+        
+        .math-block {
+            overflow-x: auto;
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            margin: 1rem 0;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        
+        .example-box {
+            background-color: #fffbeb; /* amber-50 */
+            border-left: 4px solid #f59e0b; /* amber-500 */
+            padding: 1rem 1.5rem;
+            margin-top: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .concept-card {
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* 슬라이더 커스텀 */
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px;
+            border-radius: 50%; background: #4f46e5; cursor: pointer; margin-top: -6px; 
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: #cbd5e1; border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 z-50 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-slate-100 font-bold text-xl text-slate-800">
+            ML Guidebook
+        </div>
+        <div class="flex-1 overflow-y-auto py-4 space-y-1">
+            <button onclick="scrollToSection('regression')" class="w-full text-left px-6 py-3 hover:bg-slate-50 text-slate-600 font-medium">1. 회귀 (MSE, Huber)</button>
+            <button onclick="scrollToSection('classification')" class="w-full text-left px-6 py-3 hover:bg-slate-50 text-slate-600 font-medium">2. 분류 (BCE, CCE)</button>
+            <button onclick="scrollToSection('special')" class="w-full text-left px-6 py-3 hover:bg-slate-50 text-slate-600 font-medium">3. 특수 (KL, Focal)</button>
+            <button onclick="scrollToSection('optimization')" class="w-full text-left px-6 py-3 hover:bg-slate-50 text-slate-600 font-medium">4. 최적화 (Momentum)</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 p-6 md:p-12 max-w-5xl mx-auto">
+        
+        <!-- Header -->
+        <header class="mb-16 text-center md:text-left">
+            <h1 class="text-4xl font-bold text-slate-900 mb-4">손실함수와 최적화</h1>
+            <p class="text-lg text-slate-600">
+                모델이 얼마나 틀렸는지 측정하는 <strong>손실함수(Loss Function)</strong>와, <br class="hidden md:inline">
+                그 오차를 줄여나가는 <strong>최적화(Optimizer)</strong>의 핵심 원리를 예제와 함께 정리했습니다.
+            </p>
+        </header>
+
+        <!-- 1. Regression -->
+        <section id="regression" class="mb-20">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-2 border-slate-200">
+                1. 회귀 문제 (연속된 값 예측)
+            </h2>
+
+            <!-- MSE -->
+            <div class="concept-card">
+                <div class="flex justify-between items-baseline mb-4">
+                    <h3 class="text-xl font-bold text-indigo-700">Mean Squared Error (MSE)</h3>
+                    <span class="text-xs font-bold bg-slate-100 px-2 py-1 rounded text-slate-500">기본</span>
+                </div>
+                <p class="mb-4">가장 보편적인 회귀 손실함수입니다. 오차를 제곱하여 평균을 냅니다. 제곱을 하기 때문에 <strong>큰 오차에 대해 매우 큰 페널티</strong>를 부여합니다.</p>
+                
+                <div class="math-block">
+                    $$ \text{MSE} = \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 $$
+                </div>
+
+                <div class="example-box">
+                    <h4 class="font-bold text-amber-800 mb-2">📝 예제: 아파트 가격 예측</h4>
+                    <ul class="text-sm space-y-2 text-slate-700">
+                        <li><strong>상황:</strong> 실제 가격이 <strong>10억</strong>인 아파트</li>
+                        <li><strong>모델 A:</strong> 11억 예측 (오차 1억) → $1^2 = \mathbf{1}$</li>
+                        <li><strong>모델 B:</strong> 13억 예측 (오차 3억) → $3^2 = \mathbf{9}$</li>
+                        <li>👉 오차는 3배 차이지만, 손실값(패널티)은 <strong>9배</strong>가 됩니다. 많이 틀릴수록 가혹하게 처벌합니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Huber -->
+            <div class="concept-card">
+                <div class="flex justify-between items-baseline mb-4">
+                    <h3 class="text-xl font-bold text-green-700">Huber Loss</h3>
+                    <span class="text-xs font-bold bg-green-50 px-2 py-1 rounded text-green-600">이상치에 강함</span>
+                </div>
+                <p class="mb-4">MSE는 이상치 하나 때문에 전체 모델이 망가질 수 있습니다. Huber Loss는 오차가 작을 땐 MSE처럼, 클 땐 MAE(절대값)처럼 동작하여 이를 방지합니다.</p>
+                
+                <div class="math-block text-sm">
+                    $$ L_\delta = \begin{cases} \frac{1}{2}(y - \hat{y})^2 & \text{if } |y - \hat{y}| \le \delta \\ \delta (|y - \hat{y}| - \frac{1}{2}\delta) & \text{otherwise} \end{cases} $$
+                </div>
+
+                <div class="example-box">
+                    <h4 class="font-bold text-amber-800 mb-2">📝 예제: 데이터 입력 오류가 있다면?</h4>
+                    <p class="text-sm text-slate-700 mb-2">대부분의 집값이 10억인데, 실수로 <strong>1000억</strong>이라는 데이터가 하나 들어왔다고 가정해봅시다.</p>
+                    <ul class="text-sm space-y-2 text-slate-700">
+                        <li><strong>MSE 사용 시:</strong> 오차 제곱이 천문학적인 숫자가 되어 모델이 이 데이터 하나를 맞추려고 전체 추세를 망가뜨립니다.</li>
+                        <li><strong>Huber 사용 시:</strong> 일정 기준($\delta$)을 넘으면 제곱하지 않고 절대값으로 계산하므로, 이상치의 영향을 제한합니다.</li>
+                    </ul>
+                </div>
+                
+                <!-- Visualization -->
+                <div class="mt-8">
+                    <h4 class="font-bold text-sm text-slate-500 mb-2">📊 [시뮬레이션] 오차 크기에 따른 손실 비교</h4>
+                    <div class="h-[250px] w-full">
+                        <canvas id="chart-huber"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Classification -->
+        <section id="classification" class="mb-20">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-2 border-slate-200">
+                2. 분류 문제 (카테고리 예측)
+            </h2>
+
+            <!-- BCE -->
+            <div class="concept-card">
+                <h3 class="text-xl font-bold text-indigo-700 mb-2">Binary Cross-Entropy (BCE)</h3>
+                <p class="mb-4">이진 분류(예/아니오)에서 사용합니다. 정답에 해당하는 확률에 로그를 취해 계산합니다.</p>
+                
+                <div class="math-block">
+                    $$ \text{Loss} = - [y \log(\hat{y}) + (1-y)\log(1-\hat{y})] $$
+                </div>
+
+                <div class="example-box">
+                    <h4 class="font-bold text-amber-800 mb-2">📝 예제: 스팸 메일 분류 (스팸=1)</h4>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm text-slate-700">
+                        <div class="bg-white p-3 rounded border">
+                            <strong>✅ 잘 맞춘 경우</strong><br>
+                            예측 확률: 0.9 (90% 확신)<br>
+                            Loss: $-\log(0.9) \approx \mathbf{0.10}$<br>
+                            <span class="text-xs text-green-600">→ 손실이 작음</span>
+                        </div>
+                        <div class="bg-white p-3 rounded border">
+                            <strong>❌ 틀린 경우</strong><br>
+                            예측 확률: 0.1 (10% 확신)<br>
+                            Loss: $-\log(0.1) \approx \mathbf{2.30}$<br>
+                            <span class="text-xs text-red-600">→ 손실이 23배 큼 (페널티)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CCE -->
+            <div class="concept-card">
+                <h3 class="text-xl font-bold text-indigo-700 mb-2">Categorical Cross-Entropy</h3>
+                <p class="mb-4">여러 개의 클래스 중 하나를 맞출 때 사용합니다. (예: 개, 고양이, 앵무새)</p>
+                <div class="math-block">
+                    $$ \text{CCE} = -\sum_{j=1}^{m} y_{j} \log(\hat{y}_{j}) $$
+                </div>
+                <div class="example-box">
+                    <h4 class="font-bold text-amber-800 mb-2">📝 예제: 동물 분류 (정답: 고양이[0, 1, 0])</h4>
+                    <p class="text-sm text-slate-700 mb-1">모델 예측: [개 0.1, <strong>고양이 0.7</strong>, 앵무새 0.2]</p>
+                    <p class="text-sm text-slate-700">
+                        계산: $-(0\times\log0.1 + \mathbf{1\times\log0.7} + 0\times\log0.2)$<br>
+                        결과: $-\log(0.7) \approx \mathbf{0.36}$
+                    </p>
+                    <p class="text-xs text-slate-500 mt-1">*정답인 클래스의 확률만 계산에 포함됩니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Special -->
+        <section id="special" class="mb-20">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-2 border-slate-200">
+                3. 특수 목적 손실함수 (심화)
+            </h2>
+
+            <!-- KL Divergence -->
+            <div class="concept-card">
+                <h3 class="text-xl font-bold text-purple-700 mb-2">KL Divergence</h3>
+                <p class="mb-4">두 확률 분포가 얼마나 다른지 측정합니다. 모델이 생성한 분포(Q)를 실제 분포(P)와 같게 만들 때 씁니다.</p>
+                <div class="math-block">
+                    $$ D_{KL}(P || Q) = \sum P(x) \log \left( \frac{P(x)}{Q(x)} \right) $$
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-lg mt-4 border border-slate-200">
+                    <h4 class="font-bold text-sm text-slate-700 mb-4">🎛️ 실습: 동전 던지기 분포 맞추기</h4>
+                    <p class="text-sm text-slate-600 mb-4">
+                        실제 동전(Target)은 앞면이 80% 나옵니다. 모델이 이를 따라하도록 조정해보세요.
+                    </p>
+                    
+                    <div class="flex items-center gap-6">
+                        <div class="w-1/3 text-right text-sm font-bold text-slate-500">
+                            Target (P)<br>
+                            <span class="text-xs font-normal">앞 0.8 / 뒤 0.2</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span>Model (Q) 예측값</span>
+                                <span id="q-text" class="text-purple-600">0.50</span>
+                            </div>
+                            <input type="range" id="kl-slider" min="0.01" max="0.99" step="0.01" value="0.50" class="w-full">
+                        </div>
+                        <div class="w-1/3">
+                            <div class="text-xs text-slate-400">KL Divergence</div>
+                            <div id="kl-result" class="font-mono font-bold text-2xl text-slate-800">0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Focal Loss -->
+            <div class="concept-card">
+                <h3 class="text-xl font-bold text-purple-700 mb-2">Focal Loss</h3>
+                <p class="mb-4">데이터 불균형 문제를 해결합니다. <strong>"이미 잘 맞추는 쉬운 문제는 무시하고, 어려운 문제에 집중하자"</strong>는 아이디어입니다.</p>
+                <div class="math-block">
+                    $$ \text{FL} = -(1 - p_t)^\gamma \log(p_t) $$
+                </div>
+                
+                <div class="example-box">
+                    <h4 class="font-bold text-amber-800 mb-2">📝 예제: 배경 vs 객체 (Gamma $\gamma=2$)</h4>
+                    <ul class="text-sm space-y-2 text-slate-700">
+                        <li><strong>쉬운 예제 (배경):</strong> 확률 0.9로 잘 맞춤 <br>→ $(1-0.9)^2 = 0.01$ (가중치가 1/100로 줌)</li>
+                        <li><strong>어려운 예제 (작은 물체):</strong> 확률 0.1로 잘 못 맞춤 <br>→ $(1-0.1)^2 = 0.81$ (가중치가 거의 그대로 유지)</li>
+                        <li>👉 결과적으로 모델은 어려운 예제를 학습하는 데 에너지를 80배 더 씁니다.</li>
+                    </ul>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-slate-100">
+                    <h4 class="font-bold text-sm text-slate-500 mb-2">📊 [시뮬레이션] Gamma 값에 따른 가중치 변화</h4>
+                    <div class="flex items-center gap-2 mb-2">
+                        <label class="text-xs font-bold text-slate-500">Gamma 조절:</label>
+                        <input type="range" id="gamma-slider" min="0" max="5" step="0.5" value="2.0" class="w-32">
+                        <span id="gamma-val" class="text-purple-600 text-sm font-bold">2.0</span>
+                    </div>
+                    <div class="h-[200px] w-full bg-white rounded">
+                        <canvas id="chart-focal"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Optimization -->
+        <section id="optimization" class="mb-20">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 border-b pb-2 border-slate-200">
+                4. 최적화 알고리즘 (학습 속도 높이기)
+            </h2>
+
+            <!-- Optimizer Cards -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="concept-card !p-6 !mb-0">
+                    <h4 class="font-bold text-pink-600 mb-2">Gradient Descent (SGD)</h4>
+                    <p class="text-sm text-slate-600">가장 기본적인 방법. 산 비탈길을 따라 한 발자국씩 내려갑니다.</p>
+                    <div class="math-block text-sm py-2 my-2 bg-slate-50">
+                        $$ \theta_{new} = \theta - \eta \cdot \text{Gradient} $$
+                    </div>
+                </div>
+                <div class="concept-card !p-6 !mb-0">
+                    <h4 class="font-bold text-pink-600 mb-2">Momentum</h4>
+                    <p class="text-sm text-slate-600">내려가던 속도(관성)를 유지합니다. 방향이 자주 바뀌어도 부드럽게 가속하여 빠르게 수렴합니다.</p>
+                    <div class="math-block text-sm py-2 my-2 bg-slate-50">
+                        $$ v \leftarrow \alpha v - \eta \nabla J $$
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulation -->
+            <div class="bg-slate-900 text-white p-6 rounded-xl shadow-lg">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">🎮 최적화 시뮬레이션</h3>
+                        <p class="text-slate-400 text-sm">Momentum을 켜면 공이 골짜기를 어떻게 넘어가는지 확인해보세요.</p>
+                    </div>
+                    <div class="flex items-center gap-4 bg-slate-800 p-2 rounded-lg border border-slate-700">
+                        <div>
+                            <label class="text-xs text-slate-400 block">학습률 (LR)</label>
+                            <input type="range" id="sim-lr" min="0.01" max="0.3" step="0.01" value="0.1" class="w-24">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="sim-momentum" class="w-4 h-4 rounded text-pink-600 focus:ring-pink-500">
+                            <label for="sim-momentum" class="text-sm font-bold text-pink-400 select-none cursor-pointer">Momentum 켜기</label>
+                        </div>
+                        <button onclick="resetSim()" class="text-xs bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">초기화</button>
+                        <button onclick="stepSim()" class="text-xs bg-pink-600 hover:bg-pink-500 px-3 py-1 rounded font-bold shadow">실행 (Step)</button>
+                    </div>
+                </div>
+                
+                <div class="h-[300px] w-full bg-slate-800 rounded-lg relative overflow-hidden border border-slate-700">
+                    <canvas id="chart-opt"></canvas>
+                </div>
+                
+                <div class="flex justify-center gap-8 mt-4 font-mono text-sm">
+                    <span class="text-slate-400">위치: <b id="sim-pos" class="text-pink-400">0.00</b></span>
+                    <span class="text-slate-400">속도: <b id="sim-vel" class="text-blue-400">0.00</b></span>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-slate-400 text-sm py-12 border-t border-slate-200">
+            <p>ML Practice Guide</p>
+        </footer>
+    </main>
+
+    <script>
+        // Navigation Scroll
+        function scrollToSection(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
+
+        // --- 1. Huber Chart ---
+        const ctxHuber = document.getElementById('chart-huber').getContext('2d');
+        const errs = [], mse = [], huber = [], delta = 1.5;
+        for(let e=-4; e<=4; e+=0.1) {
+            errs.push(e); 
+            mse.push(e*e);
+            huber.push(Math.abs(e)<=delta ? 0.5*e*e : delta*(Math.abs(e)-0.5*delta));
+        }
+        new Chart(ctxHuber, {
+            type: 'line',
+            data: {
+                labels: errs.map(v=>v.toFixed(1)),
+                datasets: [
+                    {label:'MSE (제곱)', data:mse, borderColor:'#ef4444', borderWidth:2, pointRadius:0},
+                    {label:'Huber (안정적)', data:huber, borderColor:'#22c55e', borderWidth:4, pointRadius:0}
+                ]
+            },
+            options: { responsive:true, maintainAspectRatio:false, scales:{x:{display:false}, y:{display:false}}, plugins:{legend:{position:'top'}} }
+        });
+
+        // --- 2. Focal Chart ---
+        let focalChart;
+        const gSlider = document.getElementById('gamma-slider');
+        const gVal = document.getElementById('gamma-val');
+        function getFocalData(g) {
+            const d = [];
+            for(let p=0.01; p<=1; p+=0.02) d.push(-Math.pow(1-p, g)*Math.log(p));
+            return d;
+        }
+        focalChart = new Chart(document.getElementById('chart-focal'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length:50}, (_,i)=>(i*0.02+0.01).toFixed(2)),
+                datasets: [{label:'Loss Value', data:getFocalData(2), borderColor:'#7c3aed', borderWidth:3, fill:true, backgroundColor:'rgba(124,58,237,0.1)', pointRadius:0}]
+            },
+            options: { responsive:true, maintainAspectRatio:false, scales:{x:{title:{display:true, text:'예측 확률 (p)'}}, y:{max:5}}, plugins:{legend:{display:false}} }
+        });
+        gSlider.oninput = function() {
+            gVal.innerText = this.value;
+            focalChart.data.datasets[0].data = getFocalData(this.value);
+            focalChart.update();
+        };
+
+        // --- 3. KL Logic ---
+        const klSlider = document.getElementById('kl-slider');
+        const qText = document.getElementById('q-text');
+        const klRes = document.getElementById('kl-result');
+        klSlider.oninput = function() {
+            const q = parseFloat(this.value);
+            qText.innerText = q.toFixed(2);
+            const p1=0.8, p2=0.2, q1=q, q2=1-q;
+            // prevent log(0)
+            const safeQ1 = Math.max(q1, 0.0001); 
+            const safeQ2 = Math.max(q2, 0.0001);
+            const kl = p1*Math.log(p1/safeQ1) + p2*Math.log(p2/safeQ2);
+            klRes.innerText = kl.toFixed(4);
+        };
+
+        // --- 4. Sim Logic ---
+        let sX = -3.5, sV = 0, sChart;
+        const sLr = document.getElementById('sim-lr');
+        const sMom = document.getElementById('sim-momentum');
+        const sPos = document.getElementById('sim-pos');
+        const sVel = document.getElementById('sim-vel');
+        
+        function f(x) { return x*x; }
+        function df(x) { return 2*x; }
+
+        sChart = new Chart(document.getElementById('chart-opt'), {
+            type: 'line',
+            data: {
+                datasets: [
+                    {label:'Surface', data:Array.from({length:81}, (_,i)=>({x:(i-40)/10, y:f((i-40)/10)})), borderColor:'#475569', pointRadius:0, borderWidth:2},
+                    {label:'Agent', data:[{x:sX, y:f(sX)}], backgroundColor:'#db2777', pointRadius:10, type:'scatter'}
+                ]
+            },
+            options: { 
+                responsive:true, maintainAspectRatio:false, animation:{duration:200},
+                scales:{ x:{type:'linear', min:-4, max:4, grid:{color:'#334155'}}, y:{min:0, max:16, grid:{color:'#334155'}} },
+                plugins:{legend:{display:false}}
+            }
+        });
+
+        window.stepSim = function() {
+            const lr = parseFloat(sLr.value);
+            const grad = df(sX);
+            if(sMom.checked) {
+                sV = 0.9 * sV - lr * grad;
+                sX += sV;
+            } else {
+                sV = 0;
+                sX -= lr * grad;
+            }
+            // Boundary check for visual
+            if(sX > 4) sX = 4; if(sX < -4) sX = -4;
+
+            sChart.data.datasets[1].data = [{x:sX, y:f(sX)}];
+            sChart.update();
+            sPos.innerText = sX.toFixed(2);
+            sVel.innerText = sV.toFixed(2);
+        };
+        window.resetSim = function() { sX=-3.5; sV=0; sChart.data.datasets[1].data=[{x:sX, y:f(sX)}]; sChart.update(); sPos.innerText="-3.50"; sVel.innerText="0.00"; };
+
+        // Render Math on Load
+        document.addEventListener("DOMContentLoaded", function() {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false}
+                ]
+            });
+            // Initial KL Calc
+            klSlider.dispatchEvent(new Event('input'));
+        });
+    </script>
+</body>
+</html>
