@@ -3,195 +3,533 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STL10 다중 클래스 분류 프로젝트 분석</title>
-    <!-- Tailwind CSS for Layout -->
+    <title>STL10 심층 신경망 분류 프로젝트 완전 분석</title>
+    <!-- Tailwind CSS (스타일링 프레임워크) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Prism.js for Syntax Highlighting -->
+    <!-- Prism.js (코드 하이라이팅) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Noto Sans KR, Fira Code) -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome (아이콘) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
     <style>
+        :root {
+            --primary-color: #3b82f6;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --code-bg: #1e1e1e;
+        }
+
         body {
             font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            line-height: 1.7;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            scroll-behavior: smooth;
         }
         
-        .code-font {
+        code, pre {
             font-family: 'Fira Code', monospace;
         }
 
-        /* Sidebar Navigation */
+        /* 스크롤바 커스텀 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* 사이드바 스타일 */
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
-            width: 280px;
+            width: 300px;
             height: 100vh;
-            background: #ffffff;
+            background: var(--card-bg);
             border-right: 1px solid #e5e7eb;
             overflow-y: auto;
-            padding: 2rem 1.5rem;
-            display: none; /* Mobile default */
             z-index: 50;
+            padding-bottom: 2rem;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .nav-group {
+            margin-bottom: 1.5rem;
         }
         
-        @media (min-width: 1024px) {
-            .sidebar {
-                display: block;
-            }
-            .main-content {
-                margin-left: 280px;
-            }
+        .nav-group-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ca3af;
+            font-weight: 700;
+            padding: 0 1.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .nav-link {
-            display: block;
-            padding: 0.5rem 0;
-            color: #6b7280;
-            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 1.5rem;
+            color: #4b5563;
             font-size: 0.9rem;
-            border-left: 2px solid transparent;
-            padding-left: 1rem;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
         }
 
-        .nav-link:hover, .nav-link.active {
-            color: #3b82f6;
-            border-left-color: #3b82f6;
-            font-weight: 500;
+        .nav-link:hover {
+            background-color: #f3f4f6;
+            color: var(--primary-color);
         }
 
-        /* Main Content Cards */
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            padding: 2rem;
-            margin-bottom: 2rem;
-            border: 1px solid #f0f0f0;
+        .nav-link.active {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .nav-icon {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+
+        /* 메인 컨텐츠 스타일 */
+        .main-content {
+            margin-left: 300px;
+            padding: 2rem 3rem;
+            max-width: 1200px;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem;
+            }
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            border: 1px solid #f3f4f6;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .section-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #e5e7eb;
+            margin-right: 1rem;
+            line-height: 1;
         }
 
         .section-title {
             font-size: 1.5rem;
             font-weight: 700;
             color: #111827;
-            margin-bottom: 1rem;
+        }
+
+        /* 설명 박스 스타일 */
+        .info-box {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary-color);
+            padding: 1.25rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 1.5rem;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .info-title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
-        
-        .section-title::before {
-            content: '#';
-            color: #3b82f6;
-        }
 
-        .explanation {
-            background-color: #f0f9ff;
-            border-left: 4px solid #3b82f6;
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-            font-size: 0.95rem;
-            color: #1e293b;
-        }
-
-        /* Code Block Styling */
+        /* 코드 블록 스타일 */
         pre[class*="language-"] {
-            border-radius: 8px;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            border-radius: 12px !important;
+            margin: 1.5rem 0 !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 0.9rem !important;
         }
 
-        .output-block {
+        .file-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e2e8f0;
+            color: #475569;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* 출력 결과 스타일 */
+        .output-container {
             background-color: #2d2d2d;
-            color: #e6e6e6;
-            padding: 1rem;
             border-radius: 8px;
-            margin-top: -0.5rem;
+            padding: 1rem;
+            margin-top: -1rem;
             margin-bottom: 1.5rem;
+            border: 1px solid #444;
+            color: #e5e7eb;
             font-family: 'Fira Code', monospace;
             font-size: 0.85rem;
             white-space: pre-wrap;
-            border-top: 1px solid #444;
+            position: relative;
         }
-
+        
         .output-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: #9ca3af;
-            margin-bottom: 0.25rem;
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #4b5563;
+            color: white;
+            font-size: 0.6rem;
+            padding: 2px 8px;
+            border-radius: 0 8px 0 8px;
             font-weight: bold;
         }
 
-        /* Badge Styles */
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-right: 0.5rem;
+        /* 모바일 메뉴 버튼 */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+            z-index: 100;
+            cursor: pointer;
+            font-size: 1.2rem;
         }
-        .badge-torch { background-color: #ee4c2c; color: white; }
-        .badge-data { background-color: #10b981; color: white; }
-        .badge-model { background-color: #8b5cf6; color: white; }
 
     </style>
 </head>
 <body>
 
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar">
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold text-gray-800 tracking-tight">STL10 분류</h1>
-            <p class="text-sm text-gray-500 mt-2">Deep CNN with PyTorch</p>
+    <!-- 모바일 메뉴 토글 -->
+    <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- 사이드바 네비게이션 -->
+    <nav class="sidebar" id="sidebar">
+        <div class="p-6 mb-2">
+            <h1 class="text-xl font-extrabold text-gray-800">STL10 Project</h1>
+            <p class="text-xs text-gray-500 mt-1">PyTorch Classification Report</p>
         </div>
-        <div class="space-y-1">
-            <a href="#setup" class="nav-link">1. 환경 설정 및 라이브러리</a>
-            <a href="#hyperparams" class="nav-link">2. 하이퍼파라미터 설정</a>
-            <a href="#transform" class="nav-link">3. 데이터 전처리 (Transforms)</a>
-            <a href="#dataset" class="nav-link">4. 데이터셋 로드 및 분할</a>
-            <a href="#visualize" class="nav-link">5. 데이터 확인 및 시각화</a>
-            <a href="#model" class="nav-link">6. 모델 설계 (CNN_deep)</a>
-            <a href="#training" class="nav-link">7. 학습 (Training Loop)</a>
-            <a href="#history" class="nav-link">8. 학습 결과 및 그래프</a>
-            <a href="#test" class="nav-link">9. 테스트 및 평가</a>
+
+        <div class="nav-group">
+            <div class="nav-group-title">Module Analysis</div>
+            <a href="#module-file" class="nav-link"><i class="fas fa-code nav-icon"></i>multiclass_functions2.py</a>
         </div>
-        <div class="mt-8 pt-8 border-t border-gray-200">
-            <p class="text-xs text-gray-400">Created via Gemini</p>
+
+        <div class="nav-group">
+            <div class="nav-group-title">Notebook Pipeline</div>
+            <a href="#setup" class="nav-link"><i class="fas fa-tools nav-icon"></i>1. 환경 설정</a>
+            <a href="#hyperparams" class="nav-link"><i class="fas fa-sliders-h nav-icon"></i>2. 하이퍼파라미터</a>
+            <a href="#transform" class="nav-link"><i class="fas fa-image nav-icon"></i>3. 데이터 전처리</a>
+            <a href="#dataset" class="nav-link"><i class="fas fa-database nav-icon"></i>4. 데이터셋 구축</a>
+            <a href="#eda" class="nav-link"><i class="fas fa-eye nav-icon"></i>5. 데이터 확인</a>
+            <a href="#model" class="nav-link"><i class="fas fa-layer-group nav-icon"></i>6. 모델 아키텍처</a>
+            <a href="#training" class="nav-link"><i class="fas fa-running nav-icon"></i>7. 학습 실행</a>
+            <a href="#results" class="nav-link"><i class="fas fa-chart-line nav-icon"></i>8. 결과 분석</a>
+            <a href="#testing" class="nav-link"><i class="fas fa-check-circle nav-icon"></i>9. 최종 테스트</a>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="main-content p-6 lg:p-12">
+    <!-- 메인 컨텐츠 -->
+    <main class="main-content">
         
-        <!-- Header -->
-        <header class="max-w-4xl mx-auto mb-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">STL10 이미지 다중 클래스 분류</h1>
-            <p class="text-lg text-gray-600">
-                PyTorch를 활용하여 STL10 데이터셋을 학습하는 Deep CNN 모델 구현 프로젝트입니다.
-                데이터 전처리부터 모델 설계, 학습, 그리고 결과 시각화까지의 전체 파이프라인을 상세하게 다룹니다.
+        <!-- 헤더 영역 -->
+        <header class="mb-12 text-center lg:text-left">
+            <h1 class="text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4 leading-tight">
+                <span class="text-blue-600">STL10</span> 데이터셋<br>다중 클래스 분류 프로젝트
+            </h1>
+            <p class="text-lg text-gray-600 max-w-2xl">
+                이 보고서는 PyTorch를 활용하여 STL10 이미지를 분류하는 Deep CNN 모델의 전체 파이프라인을 상세히 다룹니다.
+                특히, 커스텀 함수 모듈인 <code>multiclass_functions2.py</code>의 분석부터 실제 모델 학습 과정까지 모든 코드를 포함하고 있습니다.
             </p>
-            <div class="mt-4 flex gap-2">
-                <span class="badge badge-torch">PyTorch</span>
-                <span class="badge badge-data">STL10 Dataset</span>
-                <span class="badge badge-model">CNN</span>
+            <div class="mt-6 flex flex-wrap gap-2 justify-center lg:justify-start">
+                <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">PyTorch</span>
+                <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">CNN</span>
+                <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1 rounded-full">Classification</span>
+                <span class="bg-gray-100 text-gray-800 text-xs font-semibold px-3 py-1 rounded-full">Custom Module</span>
             </div>
         </header>
 
-        <div class="max-w-4xl mx-auto">
-            
-            <!-- Section 1: Setup -->
-            <section id="setup" class="card">
-                <h2 class="section-title">1. 환경 설정 및 라이브러리 임포트</h2>
-                <div class="explanation">
-                    <p>먼저 Google Drive를 마운트하고 필요한 라이브러리들을 불러옵니다. PyTorch, Torchvision 등 딥러닝 필수 라이브러리와 데이터 시각화를 위한 Matplotlib, 그리고 사용자 정의 모듈인 <code>multiclass_functions2</code>를 가져옵니다. GPU 사용 가능 여부도 확인합니다.</p>
+        <!-- ========================================================================================== -->
+        <!-- PART 0: MODULE ANALYSIS -->
+        <!-- ========================================================================================== -->
+        
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-gray-800 pl-4 mb-6">PART 0. 커스텀 모듈 분석</h2>
+            <p class="text-gray-600 mb-4">
+                노트북에서 <code>from multiclass_functions2 import *</code>로 불러와 사용하는 핵심 함수들이 정의된 파일입니다.
+                학습 루프, 평가, 시각화 등의 유틸리티 함수를 담고 있습니다.
+            </p>
+        </div>
+
+        <section id="module-file" class="section-card border-l-4 border-l-purple-500">
+            <div class="flex justify-between items-center mb-4">
+                <div class="section-header border-0 mb-0 p-0">
+                    <span class="section-number text-purple-200">00</span>
+                    <h3 class="section-title">multiclass_functions2.py</h3>
                 </div>
-                <pre><code class="language-python">from google.colab import drive
+                <span class="file-badge"><i class="far fa-file-code mr-2"></i>multiclass_functions2.py</span>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-info-circle"></i> 모듈 개요</div>
+                <p>이 파일은 반복되는 학습 및 평가 코드를 함수화하여 노트북 코드를 간결하게 유지하기 위해 작성되었습니다. 주요 함수는 다음과 같습니다:</p>
+                <ul class="list-disc list-inside mt-2 space-y-1 text-sm">
+                    <li><strong>Train:</strong> 전체 에폭(Epoch) 동안 학습 및 검증을 수행하고, 성능이 개선될 때 모델을 저장합니다.</li>
+                    <li><strong>loss_epoch:</strong> 1 에폭 동안의 손실(Loss)과 정확도(Accuracy)를 계산합니다.</li>
+                    <li><strong>Test / Test_plot:</strong> 테스트 셋 평가 및 예측 결과 시각화를 담당합니다.</li>
+                    <li><strong>get_conf / plot_confusion_matrix:</strong> 혼동 행렬을 계산하고 그립니다.</li>
+                </ul>
+            </div>
+
+            <p class="text-sm text-gray-500 font-bold mb-2">▼ 전체 소스 코드</p>
+            <pre><code class="language-python">import torch
+from torch.optim.lr_scheduler import StepLR
+import numpy as np # confusion matrix 사용시
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+import time
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+def Train(model, train_DL, val_DL, criterion, optimizer, scheduler,
+          EPOCH, BATCH_SIZE, save_model_path, save_history_path):
+    
+    loss_history = {"train": [], "val": []}
+    acc_history = {"train": [], "val": []}
+    best_loss = 9999
+    for ep in range(EPOCH):
+        epoch_start = time.time()
+        current_lr = optimizer.param_groups[0]["lr"]
+        print(f"Epoch: {ep+1}, current_LR = {current_lr}")
+        
+        model.train() # train mode로 전환
+        train_loss, train_acc, _ = loss_epoch(model, train_DL, criterion, optimizer = optimizer)
+        loss_history["train"] += [train_loss]
+        acc_history["train"] += [train_acc]
+        
+        model.eval() # test mode로 전환
+        with torch.no_grad():
+            val_loss, val_acc, _ = loss_epoch(model, val_DL, criterion)
+            loss_history["val"] += [val_loss]
+            acc_history["val"] += [val_acc]
+            if val_loss < best_loss:
+                best_loss = val_loss
+                # optimizer도 같이 save하면 이어서 학습 가능
+                torch.save({"model": model,
+                            "ep": ep+1,
+                            "optimizer": optimizer,
+                            "scheduler": scheduler}, save_model_path)
+        if scheduler is not None:
+            scheduler.step()
+
+        # print loss
+        print(f"train loss: {train_loss:.5f}, "
+              f"val loss: {val_loss:.5f} \n"
+              f"train acc: {train_acc:.1f} %, "
+              f"val acc: {val_acc:.1f} %, time: {time.time()-epoch_start:.0f} s")
+        print("-"*20)
+
+    torch.save({"loss_history": loss_history,
+                "acc_history": acc_history,
+                "EPOCH": EPOCH,
+                "BATCH_SIZE": BATCH_SIZE}, save_history_path)
+
+def Test(model,test_DL, criterion):
+    model.eval() # test mode로 전환
+    with torch.no_grad():
+        test_loss, test_acc, rcorrect = loss_epoch(model, test_DL, criterion)
+    print()
+    print(f"Test loss: {test_loss:.3f}")
+    print(f"Test accuracy: {rcorrect}/{len(test_DL.dataset)} ({test_acc:.1f} %)")
+    return round(test_acc,1)
+    
+def loss_epoch(model, DL, criterion, optimizer = None):
+    N = len(DL.dataset) # the number of data
+    rloss = 0; rcorrect = 0
+    for x_batch, y_batch in tqdm(DL, leave=False): #tqdm(DL, position=10, leave=False): # position은 줄바꿈 개수
+        x_batch = x_batch.to(DEVICE)
+        y_batch = y_batch.to(DEVICE)
+        # inference
+        y_hat = model(x_batch)
+        # loss
+        loss = criterion(y_hat, y_batch)
+        # update
+        if optimizer is not None:
+            optimizer.zero_grad() # gradient 누적을 막기 위한 초기화
+            loss.backward() # backpropagation
+            optimizer.step() # weight update
+        # loss accumulation
+        loss_b = loss.item() * x_batch.shape[0] # batch loss # BATCH_SIZE 로 하면 마지막 18개도 32개로 계산해버림
+        rloss += loss_b # running loss
+        # corrects accumulation
+        pred = y_hat.argmax(dim=1)
+        corrects_b = torch.sum(pred == y_batch).item()
+        rcorrect += corrects_b
+    loss_e = rloss/N # epoch loss
+    accuracy_e = rcorrect/N * 100
+
+    return loss_e, accuracy_e, rcorrect
+
+def Test_plot(model, test_DL):
+    model.eval()
+    with torch.no_grad():
+        x_batch, y_batch = next(iter(test_DL))
+        x_batch = x_batch.to(DEVICE)
+        y_hat = model(x_batch)
+        pred = y_hat.argmax(dim=1)
+
+    x_batch = x_batch.to("cpu")
+
+    plt.figure(figsize=(8,4))
+    for idx in range(6):
+        plt.subplot(2,3, idx+1, xticks=[], yticks=[])
+        plt.imshow(x_batch[idx].permute(1,2,0), cmap="gray")
+        pred_class = test_DL.dataset.classes[pred[idx]]
+        true_class = test_DL.dataset.classes[y_batch[idx]]
+        plt.title(f"{pred_class} ({true_class})", color = "g" if pred_class==true_class else "r") 
+
+def count_params(model):
+    num = sum([p.numel() for p in model.parameters() if p.requires_grad])
+    return num
+
+def get_conf(model, test_DL):
+    N = len(test_DL.dataset.classes)
+    model.eval()
+    with torch.no_grad():
+        confusion = torch.zeros(N,N)
+        for x_batch, y_batch in test_DL:
+            x_batch = x_batch.to(DEVICE)
+            y_batch = y_batch.to(DEVICE)
+            # inference
+            y_hat = model(x_batch)
+            # accuracy
+            pred = y_hat.argmax(dim=1)
+            
+            confusion += torch.bincount(N * y_batch.cpu() + pred.cpu(), minlength=N**2).reshape(N, N)
+        
+    confusion = confusion.numpy()
+
+    return confusion
+
+def plot_confusion_matrix(confusion, classes=None):
+    N = confusion.shape[0]
+    accuracy=np.trace(confusion)/np.sum(confusion) * 100
+    
+    plt.figure(figsize=(10,7))
+    plt.imshow(confusion, cmap="Blues")
+    plt.title("confusion matrix")
+    plt.colorbar()
+
+    for i in range(N):
+        for j in range(N):
+            plt.text(j,i, round(confusion[i,j]), 
+                     horizontalalignment="center", fontsize=10,
+                     color="white" if confusion[i,j] > np.max(confusion) / 1.5 else "black")
+
+    if classes is not None:
+        plt.xticks(range(N), classes)
+        plt.yticks(range(N), classes)
+    else:
+        plt.xticks(range(N))
+        plt.yticks(range(N))
+
+    plt.xlabel(f"Predicted label \n accuracy = {accuracy:.1f} %")
+    plt.ylabel("True label")
+
+def calculate_recall_precision_f1(confusion):
+    # Calculate True Positives, False Positives, and False Negatives
+    TP = np.diag(confusion)
+    FP = np.sum(confusion, axis=0) - TP
+    FN = np.sum(confusion, axis=1) - TP
+
+    # Calculate recall, precision, and f1-score
+    recall = TP / (TP + FN)
+    precision = TP / (TP + FP)
+    f1 = 2 * (recall * precision) / (recall + precision)
+
+    return recall, precision, f1</code></pre>
+        </section>
+
+
+        <!-- ========================================================================================== -->
+        <!-- PART 1: NOTEBOOK ANALYSIS -->
+        <!-- ========================================================================================== -->
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-gray-800 pl-4 mb-6">PART 1. 노트북 코드 분석</h2>
+            <p class="text-gray-600 mb-4">
+                이제 실제 <code>multiclass_classification_STL10.ipynb</code> 노트북의 실행 흐름을 따라갑니다.
+                위에서 정의한 모듈을 활용하여 데이터 처리부터 모델 학습까지 진행합니다.
+            </p>
+        </div>
+
+        <!-- 섹션 1: 환경 설정 -->
+        <section id="setup" class="section-card">
+            <div class="section-header">
+                <span class="section-number">01</span>
+                <h3 class="section-title">환경 설정 및 라이브러리 임포트</h3>
+            </div>
+            
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-plug"></i> 설정 내용</div>
+                <p>
+                    Google Colab 환경에서 Google Drive를 마운트하고, 앞서 살펴본 커스텀 모듈(<code>multiclass_functions2</code>)이 있는 경로를 시스템 경로에 추가합니다.
+                    PyTorch, Torchvision 등 딥러닝에 필요한 필수 라이브러리를 불러오고 GPU 사용 가능 여부를 확인합니다.
+                </p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 1</span>
+            <pre><code class="language-python">from google.colab import drive
 drive.mount('/content/drive')
 import sys
 sys.path.append('/content/drive/MyDrive/Colab Notebooks/LEVEL 1/torch')
@@ -202,22 +540,36 @@ from torchvision import datasets, transforms
 from torch.utils.data import Dataset, DataLoader, random_split
 import numpy as np
 import matplotlib.pyplot as plt
-
-# GPU 사용 가능 여부 확인
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 print(DEVICE)</code></pre>
-                <div class="output-label">OUTPUT</div>
-                <div class="output-block">Mounted at /content/drive
-cuda</div>
-            </section>
+            
+            <div class="output-container">
+                <span class="output-label">OUTPUT</span>
+Mounted at /content/drive
+cuda
+            </div>
+        </section>
 
-            <!-- Section 2: Hyperparameters -->
-            <section id="hyperparams" class="card">
-                <h2 class="section-title">2. 하이퍼파라미터 및 경로 설정</h2>
-                <div class="explanation">
-                    <p>학습에 필요한 주요 설정값들을 정의합니다. 배치 사이즈, 학습률(Learning Rate), 에폭(Epoch) 수 등을 설정하고, 모델과 학습 기록을 저장할 경로를 지정합니다.</p>
-                </div>
-                <pre><code class="language-python">BATCH_SIZE = 64
+        <!-- 섹션 2: 하이퍼파라미터 -->
+        <section id="hyperparams" class="section-card">
+            <div class="section-header">
+                <span class="section-number">02</span>
+                <h3 class="section-title">하이퍼파라미터 및 전역 변수 설정</h3>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-sliders-h"></i> 주요 파라미터</div>
+                <ul class="list-disc list-inside space-y-1">
+                    <li><strong>BATCH_SIZE:</strong> 64 (한 번에 학습할 이미지 수)</li>
+                    <li><strong>LR (Learning Rate):</strong> 0.002 (학습률)</li>
+                    <li><strong>EPOCH:</strong> 15 (전체 데이터셋 반복 횟수)</li>
+                    <li><strong>LR_STEP / LR_GAMMA:</strong> 스케줄러 설정 (3 에폭마다 학습률에 0.9 곱함)</li>
+                    <li><strong>model_type:</strong> 사용할 모델 클래스 이름 ("CNN_deep")</li>
+                </ul>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 2</span>
+            <pre><code class="language-python">BATCH_SIZE = 64
 LR = 2e-3
 LR_STEP = 3
 LR_GAMMA = 0.9
@@ -229,31 +581,49 @@ model_type = "CNN_deep"
 dataset = "STL10"
 save_model_path = f'/content/drive/MyDrive/Colab Notebooks/results/{model_type}_{dataset}.pt'
 save_history_path = f'/content/drive/MyDrive/Colab Notebooks/results/{model_type}_history_{dataset}.pt'</code></pre>
-            </section>
+        </section>
 
-            <!-- Section 3: Transforms -->
-            <section id="transform" class="card">
-                <h2 class="section-title">3. 데이터 전처리 (Transforms) 정의</h2>
-                <div class="explanation">
-                    <p>학습 데이터의 다양성을 높이기 위해 <strong>Data Augmentation</strong>(데이터 증강)을 적용합니다. <code>RandomAffine</code>을 사용하여 이미지를 회전, 이동, 스케일링하여 모델의 일반화 성능을 높입니다. 테스트 데이터는 텐서 변환만 수행합니다.</p>
-                </div>
-                <pre><code class="language-python">transform_train = transforms.Compose([
-    transforms.RandomAffine(degrees=(0,10), translate=(0.1,0.2), scale=(0.5,1.2)),
+        <!-- 섹션 3: 데이터 전처리 -->
+        <section id="transform" class="section-card">
+            <div class="section-header">
+                <span class="section-number">03</span>
+                <h3 class="section-title">데이터 변환 (Transforms) 정의</h3>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-magic"></i> Data Augmentation</div>
+                <p>
+                    <strong>Train 데이터</strong>에는 <code>RandomAffine</code>을 적용하여 이미지를 회전, 이동, 스케일링함으로써 데이터 다양성을 확보하고 과적합을 방지합니다.
+                    반면, <strong>Test 데이터</strong>는 평가를 위해 원본 이미지를 그대로 텐서로 변환만 수행합니다.
+                </p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 3</span>
+            <pre><code class="language-python">transform_train = transforms.Compose([
+    transforms.RandomAffine(degrees=(0,10),translate=(0.1,0.2),scale=(0.5,1.2)),
     transforms.ToTensor()])
 
 transform_test = transforms.Compose([
     transforms.ToTensor()])</code></pre>
-            </section>
+        </section>
 
-            <!-- Section 4: Custom Dataset Wrapper -->
-            <section id="dataset" class="card">
-                <h2 class="section-title">4. Custom Dataset Wrapper & 로드</h2>
-                <div class="explanation">
-                    <p><code>random_split</code>을 사용하면 데이터셋이 <code>Subset</code> 객체가 되어 <code>transform</code> 속성을 직접 수정하기 어렵습니다. 이를 해결하기 위해 <code>SubsetWithTransform</code>이라는 커스텀 클래스를 정의하여 Train셋과 Validation셋에 서로 다른 전처리를 적용할 수 있도록 합니다.</p>
-                </div>
-                
-                <h3 class="text-lg font-semibold mb-2">4-1. Custom Wrapper Class</h3>
-                <pre><code class="language-python">class SubsetWithTransform(Dataset):
+        <!-- 섹션 4: 데이터셋 Wrapper 및 로드 -->
+        <section id="dataset" class="section-card">
+            <div class="section-header">
+                <span class="section-number">04</span>
+                <h3 class="section-title">데이터셋 커스텀 Wrapper & 로드</h3>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-code-branch"></i> SubsetWithTransform 클래스</div>
+                <p>
+                    <code>random_split</code>으로 나눈 데이터셋은 원본 데이터셋의 속성을 공유하기 때문에, Train셋과 Val셋에 서로 다른 Transform을 적용하기 어렵습니다.
+                    이를 해결하기 위해 <code>SubsetWithTransform</code> 클래스를 정의하여, 데이터를 꺼낼 때(<code>__getitem__</code>) 각각 지정된 transform을 적용하도록 감싸줍니다.
+                </p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 4</span>
+            <pre><code class="language-python">class SubsetWithTransform(Dataset):
     def __init__(self, subset, transform=None):
         self.subset = subset
         self.transform = transform
@@ -268,81 +638,110 @@ transform_test = transforms.Compose([
             x = self.transform(x)
         return x, y</code></pre>
 
-                <h3 class="text-lg font-semibold mb-2 mt-6">4-2. 데이터셋 로드 및 분할</h3>
-                <div class="explanation">
-                    <p>STL10 데이터셋을 다운로드하고, Train 데이터를 8:2 비율로 Train/Validation 셋으로 나눕니다. 그 후 앞서 만든 Wrapper를 사용하여 각각의 Transform을 적용하고 DataLoader를 생성합니다.</p>
-                </div>
-                <pre><code class="language-python">train_DS = datasets.STL10(root = '/content/drive/MyDrive/Colab Notebooks/data', split="train", download=True)
+            <div class="mt-6 mb-4">
+                <p class="text-gray-700">이어서 STL10 데이터셋을 다운로드하고 Train/Validation으로 8:2 분할한 뒤, 위에서 만든 Wrapper를 이용해 각각 다른 전처리를 적용합니다.</p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 5</span>
+            <pre><code class="language-python">train_DS = datasets.STL10(root = '/content/drive/MyDrive/Colab Notebooks/data', split="train", download=True)
 NoT = int(0.8 * len(train_DS))
 NoV = len(train_DS) - NoT
 train_DS, val_DS = random_split(train_DS, [NoT, NoV])
 
-# Wrapper를 사용하여 각각 다른 transform 적용
-train_DS = SubsetWithTransform(train_DS, transform=transform_train) 
-val_DS = SubsetWithTransform(val_DS, transform=transform_test) 
+train_DS = SubsetWithTransform(train_DS, transform=transform_train) # transform을 train과 val 다르게 주기 위함
+val_DS = SubsetWithTransform(val_DS, transform=transform_test) # transform을 train과 val 다르게 주기 위함
 test_DS = datasets.STL10(root = '/content/drive/MyDrive/Colab Notebooks/data', split="test", download=True, transform=transform_test)
 
 train_DL = DataLoader(train_DS, batch_size = BATCH_SIZE, shuffle = True)
 val_DL = DataLoader(val_DS, batch_size = BATCH_SIZE, shuffle = True)
 test_DL = DataLoader(test_DS, batch_size = BATCH_SIZE, shuffle = True)</code></pre>
 
-                <h3 class="text-lg font-semibold mb-2 mt-6">4-3. 데이터 개수 확인</h3>
-                <pre><code class="language-python">print(len(train_DS))
+            <span class="file-badge">ipynb / Cell 6</span>
+            <pre><code class="language-python">print(len(train_DS))
 print(len(val_DS))
 print(len(test_DS))</code></pre>
-                <div class="output-label">OUTPUT</div>
-                <div class="output-block">4000
+            <div class="output-container">
+                <span class="output-label">OUTPUT</span>
+4000
 1000
-8000</div>
-            </section>
+8000
+            </div>
+        </section>
 
-            <!-- Section 5: Visualization -->
-            <section id="visualize" class="card">
-                <h2 class="section-title">5. 데이터 확인 및 시각화</h2>
-                <div class="explanation">
-                    <p>데이터가 올바르게 로드되었는지 확인하기 위해 각 DataLoader에서 배치를 하나씩 꺼내어 이미지와 라벨을 출력해봅니다. 이미지는 (C, H, W) 형태이므로 <code>permute(1, 2, 0)</code>을 통해 (H, W, C) 형태로 바꿔 시각화합니다.</p>
-                </div>
+        <!-- 섹션 5: 데이터 시각화 -->
+        <section id="eda" class="section-card">
+            <div class="section-header">
+                <span class="section-number">05</span>
+                <h3 class="section-title">데이터 확인 및 시각화</h3>
+            </div>
 
-                <h3 class="text-lg font-semibold mb-2">Train Set 확인</h3>
-                <pre><code class="language-python">print(test_DS.classes)
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-eye"></i> 샘플 이미지 확인</div>
+                <p>
+                    DataLoader가 정상적으로 작동하는지 확인하기 위해 Train, Validation, Test 셋에서 각각 배치를 하나씩 꺼내 이미지와 라벨을 출력합니다.
+                    PyTorch 텐서 `(C, H, W)`를 Matplotlib 포맷 `(H, W, C)`로 변환하기 위해 <code>permute(1,2,0)</code>을 사용합니다.
+                </p>
+            </div>
+
+            <!-- Train Check -->
+            <span class="file-badge">ipynb / Cell 7</span>
+            <pre><code class="language-python">print(test_DS.classes)
 x_batch, y_batch = next(iter(train_DL))
 print(x_batch.shape)
 plt.imshow(x_batch[0].permute(1,2,0))
 print(test_DS.classes[y_batch[0]])</code></pre>
-                <div class="output-label">OUTPUT</div>
-                <div class="output-block">['airplane', 'bird', 'car', 'cat', 'deer', 'dog', 'horse', 'monkey', 'ship', 'truck']
+            <div class="output-container">
+                <span class="output-label">OUTPUT</span>
+['airplane', 'bird', 'car', 'cat', 'deer', 'dog', 'horse', 'monkey', 'ship', 'truck']
 torch.Size([64, 3, 96, 96])
-deer</div>
+deer
+            </div>
 
-                <h3 class="text-lg font-semibold mb-2 mt-6">Validation Set 확인</h3>
-                <pre><code class="language-python">x_batch, y_batch = next(iter(val_DL))
+            <!-- Validation Check -->
+            <span class="file-badge">ipynb / Cell 8</span>
+            <pre><code class="language-python">x_batch, y_batch = next(iter(val_DL))
 print(x_batch.shape)
 plt.imshow(x_batch[0].permute(1,2,0))
 print(test_DS.classes[y_batch[0]])</code></pre>
-                <div class="output-label">OUTPUT</div>
-                <div class="output-block">torch.Size([64, 3, 96, 96])
-cat</div>
+            <div class="output-container">
+                <span class="output-label">OUTPUT</span>
+torch.Size([64, 3, 96, 96])
+cat
+            </div>
 
-                <h3 class="text-lg font-semibold mb-2 mt-6">Test Set 확인</h3>
-                <pre><code class="language-python">x_batch, y_batch = next(iter(test_DL))
+            <!-- Test Check -->
+            <span class="file-badge">ipynb / Cell 9</span>
+            <pre><code class="language-python">x_batch, y_batch = next(iter(test_DL))
 print(x_batch.shape)
 plt.imshow(x_batch[0].permute(1,2,0))
 print(test_DS.classes[y_batch[0]])</code></pre>
-                <div class="output-label">OUTPUT</div>
-                <div class="output-block">torch.Size([64, 3, 96, 96])
-bird</div>
-            </section>
+            <div class="output-container">
+                <span class="output-label">OUTPUT</span>
+torch.Size([64, 3, 96, 96])
+bird
+            </div>
+        </section>
 
-            <!-- Section 6: Model Architecture -->
-            <section id="model" class="card">
-                <h2 class="section-title">6. 모델 설계 (CNN_deep)</h2>
-                <div class="explanation">
-                    <p>VGG 스타일의 깊은 CNN 모델을 정의합니다. 3개의 Convolutional Block으로 구성되어 있으며, 각 블록은 <code>Conv2d -> BatchNorm -> ReLU</code> 구조를 반복하고 마지막에 MaxPool로 크기를 줄입니다. 최종적으로 Fully Connected Layer를 통해 10개의 클래스로 분류합니다.</p>
-                </div>
-                <pre><code class="language-python">class CNN_deep(nn.Module):
+        <!-- 섹션 6: 모델 설계 -->
+        <section id="model" class="section-card">
+            <div class="section-header">
+                <span class="section-number">06</span>
+                <h3 class="section-title">CNN 모델 아키텍처 (CNN_deep)</h3>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-layer-group"></i> 모델 구조</div>
+                <p>
+                    VGGNet 스타일의 깊은 합성곱 신경망을 정의합니다. 3개의 Convolution Block으로 구성되어 있으며, 각 블록은 
+                    <code>Conv2d -> BatchNorm -> ReLU</code> 구조를 반복하고 마지막에 <code>MaxPool2d</code>로 공간 해상도를 줄입니다.
+                    최종적으로 <code>Linear</code> 레이어를 통해 10개의 클래스로 분류합니다.
+                </p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 10</span>
+            <pre><code class="language-python">class CNN_deep(nn.Module):
     def __init__(self):
         super().__init__()
-        # Block 1: 32 filters
         self.conv_block1 = nn.Sequential(nn.Conv2d(3,32,3,padding=1, bias=False),
                                          nn.BatchNorm2d(32),
                                          nn.ReLU(),
@@ -350,8 +749,6 @@ bird</div>
                                          nn.BatchNorm2d(32),
                                          nn.ReLU())
         self.Maxpool1 = nn.MaxPool2d(2)
-
-        # Block 2: 64 filters
         self.conv_block2 = nn.Sequential(nn.Conv2d(32,64,3,padding=1, bias=False),
                                          nn.BatchNorm2d(64),
                                          nn.ReLU(),
@@ -363,7 +760,6 @@ bird</div>
                                          nn.ReLU())
         self.Maxpool2 = nn.MaxPool2d(2)
 
-        # Block 3: 128 filters
         self.conv_block3 = nn.Sequential(nn.Conv2d(64,128,3,padding=1, bias=False),
                                          nn.BatchNorm2d(128),
                                          nn.ReLU(),
@@ -374,8 +770,6 @@ bird</div>
                                          nn.BatchNorm2d(128),
                                          nn.ReLU())
         self.Maxpool3 = nn.MaxPool2d(2)
-
-        # Classifier
         self.classifier = nn.Sequential(nn.Linear(128*12*12,512),
                                         nn.ReLU(),
                                         nn.Linear(512,10))
@@ -390,12 +784,13 @@ bird</div>
         x = torch.flatten(x, start_dim=1)
         x = self.classifier(x)
         return x</code></pre>
-                
-                <h3 class="text-lg font-semibold mb-2 mt-6">모델 인스턴스 생성 및 구조 확인</h3>
-                <div class="explanation">
-                    <p>모델을 생성하고 GPU로 이동시킨 후 구조를 출력합니다. 또한 더미 데이터를 통과시켜 출력 크기가 (Batch_Size, 10)으로 올바르게 나오는지 확인합니다.</p>
-                </div>
-                <pre><code class="language-python">model = globals()[model_type]().to(DEVICE)
+
+            <div class="mt-6 mb-4">
+                <p class="text-gray-700">모델 객체를 생성하고 GPU로 이동시킨 후, 구조를 출력하고 더미 데이터를 넣어 출력 크기를 확인합니다.</p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 11</span>
+            <pre><code class="language-python">model = globals()[model_type]().to(DEVICE)
 print(model)
 
 x_batch, _ = next(iter(train_DL))
@@ -404,8 +799,10 @@ print(x_batch.shape)
 model.eval()
 with torch.no_grad():
     print(model(x_batch.to(DEVICE)).shape)</code></pre>
-                <div class="output-label">OUTPUT (Summary)</div>
-                <div class="output-block">CNN_deep(
+            
+            <div class="output-container">
+                <span class="output-label">OUTPUT (Summary)</span>
+CNN_deep(
   (conv_block1): Sequential(...)
   (Maxpool1): MaxPool2d(...)
   (conv_block2): Sequential(...)
@@ -415,43 +812,68 @@ with torch.no_grad():
   (classifier): Sequential(...)
 )
 torch.Size([64, 3, 96, 96])
-torch.Size([64, 10])</div>
-            </section>
+torch.Size([64, 10])
+            </div>
+        </section>
 
-            <!-- Section 7: Training -->
-            <section id="training" class="card">
-                <h2 class="section-title">7. 학습 (Training Loop)</h2>
-                <div class="explanation">
-                    <p>
-                        새로운 모델을 학습시키는 경우(<code>new_model_train = True</code>), Optimizer와 Scheduler를 설정하고 <code>Train</code> 함수를 호출합니다.
-                        (노트북 실행 기록상 중간에 중단되었으나, 코드는 정상적으로 작성되었습니다.)
-                    </p>
-                </div>
-                <pre><code class="language-python">if new_model_train:
+        <!-- 섹션 7: 학습 -->
+        <section id="training" class="section-card">
+            <div class="section-header">
+                <span class="section-number">07</span>
+                <h3 class="section-title">학습 (Training Loop)</h3>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-running"></i> 학습 실행</div>
+                <p>
+                    <code>new_model_train</code> 변수가 True일 때만 학습을 진행합니다.
+                    최적화 도구로 <code>Adam</code>을, 학습률 스케줄러로 <code>StepLR</code>을 사용합니다.
+                    실제 학습 로직은 앞서 <code>multiclass_functions2.py</code>에서 정의한 <code>Train</code> 함수를 호출하여 수행합니다.
+                </p>
+                <p class="text-xs text-red-500 mt-2">* 주의: 원본 노트북 로그상에서 학습 도중 사용자가 중단(KeyboardInterrupt)한 기록이 있습니다.</p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 12</span>
+            <pre><code class="language-python">if new_model_train:
     params = [p for p in model.parameters() if p.requires_grad] # for transfer learning
     optimizer = optim.Adam(params, lr = LR, weight_decay=LAMBDA)
     scheduler = StepLR(optimizer, step_size=LR_STEP, gamma=LR_GAMMA)
 
     Train(model, train_DL, val_DL, criterion, optimizer, scheduler,
           EPOCH, BATCH_SIZE, save_model_path, save_history_path)</code></pre>
-                <div class="output-label">OUTPUT LOG (Partial)</div>
-                <div class="output-block">Epoch: 1, current_LR = 0.002
+            
+            <div class="output-container">
+                <span class="output-label">OUTPUT LOG</span>
+Epoch: 1, current_LR = 0.002
 train loss: 5.32023, val loss: 2.33069 
 train acc: 11.2 %, val acc: 9.2 %, time: 410 s
 --------------------
 Epoch: 2, current_LR = 0.002
 train loss: 2.30384, val loss: 2.25753 
 train acc: 11.9 %, val acc: 15.4 %, time: 413 s
-...</div>
-            </section>
+--------------------
+Epoch: 3, current_LR = 0.002
+KeyboardInterrupt: ...
+            </div>
+        </section>
 
-            <!-- Section 8: History & Results -->
-            <section id="history" class="card">
-                <h2 class="section-title">8. 저장된 모델 로드 및 학습 결과 그래프</h2>
-                <div class="explanation">
-                    <p>학습이 완료되어 저장된 모델과 히스토리 파일을 로드합니다. 이를 통해 학습 과정에서의 Loss와 Accuracy 변화를 시각화합니다.</p>
-                </div>
-                <pre><code class="language-python">loaded = torch.load(save_model_path, map_location=DEVICE, weights_only=False)
+        <!-- 섹션 8: 결과 분석 -->
+        <section id="results" class="section-card">
+            <div class="section-header">
+                <span class="section-number">08</span>
+                <h3 class="section-title">학습 결과 및 그래프 시각화</h3>
+            </div>
+
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-save"></i> 모델 로드</div>
+                <p>
+                    학습이 완료되어 저장된 모델 파라미터(<code>.pt</code>)와 학습 기록(Loss/Acc History)을 불러옵니다.
+                    이를 통해 학습이 중단되었어도 저장된 시점까지의 결과를 확인할 수 있습니다.
+                </p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 13</span>
+            <pre><code class="language-python">loaded = torch.load(save_model_path, map_location=DEVICE, weights_only=False)
 load_model = loaded["model"]
 ep = loaded["ep"]
 optimizer = loaded["optimizer"]
@@ -466,11 +888,12 @@ print(optimizer)
 print(scheduler.step_size)
 print(scheduler.gamma)</code></pre>
 
-                <h3 class="text-lg font-semibold mb-2 mt-6">Loss & Accuracy Plot</h3>
-                <div class="explanation">
-                    <p>Matplotlib을 사용하여 Epoch별 Train/Validation의 Loss 감소 추이와 Accuracy 증가 추이를 그래프로 그립니다.</p>
-                </div>
-                <pre><code class="language-python">plt.figure()
+            <div class="mt-6 mb-4">
+                <p class="text-gray-700">불러온 히스토리를 바탕으로 Epoch별 <strong>Loss(손실)</strong>와 <strong>Accuracy(정확도)</strong> 변화를 그래프로 그립니다.</p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 14</span>
+            <pre><code class="language-python">plt.figure()
 plt.plot(range(1,EPOCH+1), loss_history["train"], label="train")
 plt.plot(range(1,EPOCH+1), loss_history["val"], label="val")
 plt.xlabel("Epoch")
@@ -487,55 +910,75 @@ plt.ylabel("Accuracy")
 plt.title("Train, Val Accuracy")
 plt.legend()
 plt.grid()</code></pre>
-            </section>
+        </section>
 
-            <!-- Section 9: Test & Evaluate -->
-            <section id="test" class="card">
-                <h2 class="section-title">9. 테스트 및 최종 평가</h2>
-                <div class="explanation">
-                    <p>로드한 모델(<code>load_model</code>)을 사용하여 Test 데이터셋에 대한 최종 성능을 평가합니다. 또한 모델의 총 파라미터 개수를 확인하고, 혼동 행렬(Confusion Matrix)을 통해 클래스별 분류 성능을 상세히 분석합니다.</p>
-                </div>
+        <!-- 섹션 9: 최종 테스트 -->
+        <section id="testing" class="section-card">
+            <div class="section-header">
+                <span class="section-number">09</span>
+                <h3 class="section-title">테스트 및 최종 평가</h3>
+            </div>
 
-                <h3 class="text-lg font-semibold mb-2">Test 실행 및 파라미터 수 확인</h3>
-                <pre><code class="language-python">Test(load_model, test_DL, criterion)
+            <div class="info-box">
+                <div class="info-title"><i class="fas fa-check-circle"></i> 성능 평가</div>
+                <p>
+                    로드한 모델을 사용하여 Test 데이터셋에 대한 최종 정확도를 평가합니다.
+                    또한 <code>count_params</code> 함수를 통해 모델의 파라미터 개수를 확인하고, 예측 결과 시각화 및 혼동 행렬(Confusion Matrix)을 출력하여 클래스별 성능을 분석합니다.
+                </p>
+            </div>
+
+            <span class="file-badge">ipynb / Cell 15</span>
+            <pre><code class="language-python">Test(load_model, test_DL, criterion)
 print(count_params(load_model))</code></pre>
 
-                <h3 class="text-lg font-semibold mb-2 mt-6">테스트 결과 시각화 (Predictions)</h3>
-                <pre><code class="language-python">Test_plot(load_model,test_DL)</code></pre>
+            <div class="mt-6 mb-4">
+                <p class="text-gray-700 font-bold">예측 결과 시각화 (Test_plot)</p>
+            </div>
+            <span class="file-badge">ipynb / Cell 16</span>
+            <pre><code class="language-python">Test_plot(load_model,test_DL)</code></pre>
 
-                <h3 class="text-lg font-semibold mb-2 mt-6">Confusion Matrix</h3>
-                <div class="explanation">
-                    <p>모델이 어떤 클래스를 잘 맞추고, 어떤 클래스끼리 헷갈려하는지 시각적으로 확인하기 위해 Confusion Matrix를 그립니다.</p>
-                </div>
-                <pre><code class="language-python">confusion = get_conf(load_model, test_DL)
+            <div class="mt-6 mb-4">
+                <p class="text-gray-700 font-bold">혼동 행렬 (Confusion Matrix) 출력</p>
+                <p class="text-sm text-gray-500">모델이 어떤 클래스를 잘 맞추고, 어떤 클래스끼리 혼동하는지 한눈에 파악할 수 있습니다.</p>
+            </div>
+            <span class="file-badge">ipynb / Cell 17</span>
+            <pre><code class="language-python">confusion = get_conf(load_model, test_DL)
 plot_confusion_matrix(confusion, test_DS.classes)
 plt.xticks(rotation=45);</code></pre>
-            </section>
+        </section>
 
-        </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="text-center py-8 text-gray-500 text-sm border-t border-gray-200 mt-12 bg-white">
-        <p>Analysis of <code>multiclass_classification_STL10.ipynb</code></p>
-        <p>&copy; 2024 Project Analysis Report</p>
-    </footer>
-
-    <!-- Prism JS for Highlighting -->
+    <!-- Prism JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 
-    <!-- Sidebar Active State Script -->
     <script>
+        // 사이드바 토글 스크립트 (모바일용)
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const currentTransform = window.getComputedStyle(sidebar).getPropertyValue('transform');
+            
+            if (currentTransform === 'none' || currentTransform.includes('matrix(1, 0, 0, 1, 0, 0)')) {
+                sidebar.style.transform = 'translateX(-100%)';
+            } else {
+                sidebar.style.transform = 'translateX(0)';
+            }
+        }
+
+        // 스크롤 스파이 (Scroll Spy) 구현
         document.addEventListener('DOMContentLoaded', () => {
             const sections = document.querySelectorAll('section');
             const navLinks = document.querySelectorAll('.nav-link');
 
             window.addEventListener('scroll', () => {
                 let current = '';
+                
                 sections.forEach(section => {
                     const sectionTop = section.offsetTop;
-                    if (scrollY >= sectionTop - 100) {
+                    const sectionHeight = section.clientHeight;
+                    // 화면 중앙쯤 왔을 때 활성화
+                    if (scrollY >= sectionTop - 300) {
                         current = section.getAttribute('id');
                     }
                 });
