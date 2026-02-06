@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차원 축소 & t-SNE 학습 노트</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PrismJS for Code Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            scroll-behavior: smooth;
+        }
+        
+        /* Code Block Styling */
+        pre {
+            border-radius: 0.75rem !important;
+            margin: 1rem 0 !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        code {
+            font-family: 'Fira Code', monospace !important;
+            font-size: 0.9rem !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        .notebook-cell {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .notebook-cell:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .output-box {
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #475569;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .section-title {
+            color: #2563eb;
+            font-weight: 700;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            color: #4b5563;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .markdown-content h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: #111827; }
+        .markdown-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; color: #1f2937; }
+        .markdown-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #374151; }
+        .markdown-content h4 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #4b5563; }
+        .markdown-content ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .markdown-content li { margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <div class="flex flex-col lg:flex-row min-h-screen max-w-7xl mx-auto">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="lg:w-64 lg:fixed lg:h-screen overflow-y-auto bg-white border-r border-gray-200 p-6 z-10 hidden lg:block">
+            <div class="mb-8">
+                <h1 class="text-xl font-bold text-blue-600">📘 차원 축소 학습</h1>
+                <p class="text-sm text-gray-500 mt-2">t-SNE & PCA 심화</p>
+            </div>
+            <nav>
+                <a href="#env-setup" class="sidebar-link">1. 환경 준비</a>
+                <a href="#high-dim" class="sidebar-link">2. 고차원 데이터 축소</a>
+                <div class="pl-4 text-sm">
+                    <a href="#data-prep" class="sidebar-link text-gray-500">데이터 준비</a>
+                    <a href="#pca-make" class="sidebar-link text-gray-500">주성분 만들기</a>
+                    <a href="#pca-graph" class="sidebar-link text-gray-500">누적 분산 그래프</a>
+                </div>
+                <a href="#supervised-link" class="sidebar-link">3. 지도학습 연계</a>
+                <a href="#tsne-sec" class="sidebar-link">4. t-SNE</a>
+                <a href="#review-sec" class="sidebar-link">5. 복습</a>
+            </nav>
+        </aside>
+
+        <!-- Mobile Header -->
+        <div class="lg:hidden bg-white p-4 shadow-sm sticky top-0 z-20">
+            <h1 class="text-lg font-bold text-blue-600">📘 차원 축소: t-SNE</h1>
+        </div>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-4 lg:p-10">
+            
+            <!-- Intro Header -->
+            <div class="mb-10 text-center lg:text-left">
+                <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold mb-2">Machine Learning</span>
+                <h1 class="text-4xl font-extrabold text-gray-900 mb-4">차원 축소 (Dimensionality Reduction)</h1>
+                <p class="text-lg text-gray-600">PCA와 t-SNE를 활용한 고차원 데이터 분석 및 시각화 가이드</p>
+            </div>
+
+            <!-- Content Start -->
+            
+            <!-- 1. 환경준비 -->
+            <section id="env-setup" class="notebook-cell">
+                <div class="markdown-content">
+                    <h2 class="section-title">1. 환경준비</h2>
+                    <h3>(1) 라이브러리 로딩</h3>
+                </div>
+                <pre><code class="language-python"># 기본 라이브러리 가져오기
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import *
+
+from sklearn.datasets import load_breast_cancer, load_digits, load_iris, make_swiss_roll
+from sklearn.preprocessing import MinMaxScaler
+
+from sklearn.decomposition import PCA</code></pre>
+            </section>
+
+            <!-- 2. 고차원 데이터 차원축소 -->
+            <section id="high-dim" class="notebook-cell">
+                <div class="markdown-content">
+                    <h2 class="section-title">2. 고차원 데이터 차원축소</h2>
+                    <p><strong>종양 진단 데이터</strong>를 사용합니다.</p>
+                </div>
+            </section>
+
+            <!-- 데이터 준비 -->
+            <section id="data-prep" class="notebook-cell">
+                <div class="markdown-content">
+                    <h3>(1) 데이터 준비</h3>
+                    <h4>1) 데이터 로딩</h4>
+                </div>
+                <pre><code class="language-python"># breast_cancer 데이터 로딩
+cancer=load_breast_cancer()
+x = cancer.data
+y = cancer.target
+
+x = pd.DataFrame(x, columns=cancer.feature_names)
+
+x.shape</code></pre>
+                
+                <pre><code class="language-python">x.head()</code></pre>
+
+                <div class="markdown-content mt-6">
+                    <h4>2) 스케일링</h4>
+                    <ul>
+                        <li>거리계산 기반 차원축소이므로 스케일링이 필요합니다.</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python">scaler = MinMaxScaler()
+x = scaler.fit_transform(x)
+
+# (옵션)데이터프레임 변환
+x = pd.DataFrame(x, columns=cancer.feature_names)</code></pre>
+
+                <div class="markdown-content mt-6">
+                    <h4>3) 데이터 분할</h4>
+                    <ul>
+                        <li>train, validation 분할</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python">x_train, x_val, y_train, y_val = train_test_split(x, y, test_size = .3, random_state = 20)</code></pre>
+            </section>
+
+            <!-- 주성분 만들기 -->
+            <section id="pca-make" class="notebook-cell">
+                <div class="markdown-content">
+                    <h3>(2) 주성분 만들기</h3>
+                </div>
+                <pre><code class="language-python"># feature 수
+x_train.shape[1]</code></pre>
+
+                <div class="markdown-content mt-4">
+                    <ul>
+                        <li>주 성분 분석 수행</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python"># 주성분을 몇개로 할지 결정(최대값 : 전체 feature 수)
+n = x_train.shape[1]
+
+# 주성분 분석 선언
+pca = PCA(n_components=n)
+
+# 만들고, 적용하기
+x_train_pc = pca.fit_transform(x_train)
+x_val_pc = pca.transform(x_val)</code></pre>
+
+                <div class="markdown-content mt-4">
+                    <ul>
+                        <li>편리하게 사용하기 위해 데이터프레임으로 변환</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python"># 칼럼이름 생성
+column_names = [ 'PC'+str(i+1) for i in range(n) ]
+column_names</code></pre>
+
+                <pre><code class="language-python"># 데이터프레임으로 변환하기
+x_train_pc = pd.DataFrame(x_train_pc, columns = column_names)
+x_val_pc = pd.DataFrame(x_val_pc, columns = column_names)
+x_train_pc</code></pre>
+            </section>
+
+            <!-- 주성분 누적 분산 그래프 -->
+            <section id="pca-graph" class="notebook-cell">
+                <div class="markdown-content">
+                    <h3>(3) 주성분 누적 분산 그래프</h3>
+                    <ul>
+                        <li>그래프를 보고 적절한 주성분의 개수를 지정(elbow method!)</li>
+                        <li>x축 : PC 수</li>
+                        <li>y축 : 전체 분산크기 - 누적 분산크기</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python">plt.plot(range(1,n+1), pca.explained_variance_ratio_, marker = '.')
+plt.xlabel('No. of PC')
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-box">📊 그래프 출력 영역 (Elbow Point 확인)</div>
+
+                <div class="markdown-content mt-8">
+                    <h3>(4) 시각화</h3>
+                    <ul>
+                        <li>주 성분 중 상위 2개를 뽑아 시각화 해 봅시다.</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python">sns.scatterplot(x = 'PC1', y = 'PC2', data = x_train_pc, hue = y_train)
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-box">📊 산점도 출력 영역 (PC1 vs PC2)</div>
+            </section>
+
+            <!-- 3. 지도학습으로 연계하기 -->
+            <section id="supervised-link" class="notebook-cell">
+                <div class="markdown-content">
+                    <h2 class="section-title">3. 지도학습으로 연계하기</h2>
+                    
+                    <h3>(1) 원본데이터로 모델 생성하기</h3>
+                    <ul>
+                        <li>knn 알고리즘으로 분류 모델링을 수행합니다.</li>
+                        <li>k : 기본값으로 지정</li>
+                    </ul>
+                    <p class="mt-2 text-gray-600 font-medium">* 학습</p>
+                </div>
+                <pre><code class="language-python">model0 = KNeighborsClassifier()
+model0.fit(x_train, y_train)</code></pre>
+
+                <div class="markdown-content mt-4">
+                    <p class="text-gray-600 font-medium">* 예측 및 평가</p>
+                </div>
+                <pre><code class="language-python"># 원본데이터 모델의 성능
+pred0 = model0.predict(x_val)
+
+print(confusion_matrix(y_val, pred0))
+print(accuracy_score(y_val, pred0))
+print(classification_report(y_val, pred0, digits=4))</code></pre>
+
+                <div class="markdown-content mt-8">
+                    <h3>(2) PCA 후 모델링</h3>
+                    <ul>
+                        <li>다음의 조건으로 모델을 만들고 성능을 확인해 봅시다.</li>
+                        <li>알고리즘 : KNN</li>
+                    </ul>
+                    
+                    <h4>1) 주성분 상위 1개로 모델 만들기</h4>
+                </div>
+                <pre><code class="language-python">column_names</code></pre>
+                <pre><code class="language-python">column_names[:1]</code></pre>
+                <pre><code class="language-python">cols = column_names[:1]
+x_train_pc1 = x_train_pc.loc[:, cols]
+x_val_pc1 = x_val_pc.loc[:, cols]</code></pre>
+                <pre><code class="language-python">x_train_pc1.shape</code></pre>
+
+                <div class="markdown-content mt-4">
+                    <ul>
+                        <li>주성분 1개로 만든 모델 Vs. 전체 변수로 만든 모델</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python"># KNN 모델링, 주성분 1개로 모델링
+model1 = KNeighborsClassifier()
+model1.fit(x_train_pc1, y_train)</code></pre>
+                <pre><code class="language-python"># 원본데이터 모델의 성능
+pred1 = model1.predict(x_val_pc1)
+
+print(confusion_matrix(y_val, pred1))
+print(accuracy_score(y_val, pred1))
+print(classification_report(y_val, pred1))</code></pre>
+
+                <div class="markdown-content mt-8">
+                    <h4>2) 주성분 2개로 모델링</h4>
+                </div>
+                <pre><code class="language-python">n = 2
+# 데이터 준비
+cols = column_names[:n]
+x_train_pc_n = x_train_pc.loc[:, cols]
+x_val_pc_n = x_val_pc.loc[:, cols]
+
+# 모델링
+model_n = KNeighborsClassifier()
+model_n.fit(x_train_pc_n, y_train)</code></pre>
+                <pre><code class="language-python"># 예측
+pred_n = model_n.predict(x_val_pc_n)
+
+# 평가
+print(confusion_matrix(y_val, pred_n))
+print(accuracy_score(y_val, pred_n))
+print(classification_report(y_val, pred_n))</code></pre>
+
+                <div class="markdown-content mt-8">
+                    <h4>3) 주성분 개수를 1~30개까지 늘려가면서 실험</h4>
+                </div>
+                <pre><code class="language-python">result_acc = []  # 빈 리스트 생성
+
+for n in range(1,31):
+    # 데이터 준비
+    cols = column_names[:n]
+    x_train_pc_n = x_train_pc.loc[:, cols]
+    x_val_pc_n = x_val_pc.loc[:, cols]
+
+    # 모델링
+    model_n = KNeighborsClassifier()
+    model_n.fit(x_train_pc_n, y_train)
+
+    # 예측
+    pred_n = model_n.predict(x_val_pc_n)
+
+    result_acc.append(accuracy_score(y_val, pred_n))</code></pre>
+                <pre><code class="language-python">result_acc</code></pre>
+                <pre><code class="language-python">plt.plot(range(1,31), result_acc, marker = '.')
+plt.xlabel('No. of PC')
+plt.grid()</code></pre>
+                <div class="output-box">📊 성능 변화 그래프 출력 영역</div>
+            </section>
+
+            <!-- 4. t-SNE -->
+            <section id="tsne-sec" class="notebook-cell">
+                <div class="markdown-content">
+                    <h2 class="section-title">4. t-SNE</h2>
+                    <h3>(1) 주제1 : 종양 진단 데이터</h3>
+                    <h4>1) 학습(차원축소)</h4>
+                </div>
+                <pre><code class="language-python">from sklearn.manifold import TSNE</code></pre>
+                <pre><code class="language-python"># 2차원으로 축소하기
+tsne = TSNE(n_components = 2, random_state=20)
+x_tsne = tsne.fit_transform(x)
+
+# 사용의 편리함을 위해 DataFrame으로 변환
+x_tsne = pd.DataFrame(x_tsne, columns = ['T1','T2'])</code></pre>
+                <pre><code class="language-python">x_tsne.shape</code></pre>
+
+                <div class="markdown-content mt-4">
+                    <h4>2) 시각화</h4>
+                </div>
+                <pre><code class="language-python">plt.figure(figsize=(6,6))
+sns.scatterplot(x = 'T1', y = 'T2', data = x_tsne, hue = y)
+plt.grid()</code></pre>
+                <div class="output-box">📊 t-SNE 시각화 출력 영역</div>
+
+                <div class="markdown-content mt-10 border-t pt-6">
+                    <h3>(2) MNIST(슬림 버전)</h3>
+                    <h4>1) 데이터 준비</h4>
+                    <ul>
+                        <li>샘플데이터 로딩</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python">digits = load_digits()
+x = digits.data
+y = digits.target
+
+y = pd.Categorical(y)</code></pre>
+                <pre><code class="language-python">x.shape</code></pre>
+
+                <div class="markdown-content mt-4">
+                    <ul>
+                        <li>둘러보기</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python">print(x[0].reshape(8,8))</code></pre>
+                <pre><code class="language-python"># f, axes = plt.subplots(5, 2, sharey=True, figsize=(16,6))
+plt.figure(figsize=(10, 4))
+for i in range(10):
+    plt.subplot(2, 5, i + 1)
+    plt.imshow(x[i,:].reshape([8,8]), cmap='gray');</code></pre>
+
+                <div class="markdown-content mt-4">
+                    <ul>
+                        <li>스케일링</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python"># 최대, 최소값
+np.min(x), np.max(x)</code></pre>
+                <pre><code class="language-python"># 최대값으로 나누면 Min Max 스케일링이 됩니다.
+x = x / 16</code></pre>
+
+                <div class="markdown-content mt-8">
+                    <h4>2) PCA</h4>
+                    <ul>
+                        <li>주성분 2개로 차원을 축소하고</li>
+                        <li>시각화 합니다.</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python"># 차원 축소
+pca = PCA(n_components=2)
+x_pca = pca.fit_transform(x)
+
+# 데이터프레임으로 변환(옵션)
+x_pca = pd.DataFrame(x_pca, columns = ['PC1', 'PC2'])</code></pre>
+                <pre><code class="language-python"># 시각화
+plt.figure(figsize=(8, 8))
+sns.scatterplot(x = 'PC1', y = 'PC2', data = x_pca, hue = y)
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-box">📊 PCA MNIST 시각화 출력 영역</div>
+
+                <div class="markdown-content mt-8">
+                    <h4>3) tSNE</h4>
+                    <ul>
+                        <li>2차원으로 축소하고</li>
+                        <li>시각화 합니다.</li>
+                    </ul>
+                </div>
+                <pre><code class="language-python">tsne = TSNE(n_components = 2, random_state=20)
+x_tsne = tsne.fit_transform(x)
+
+# 데이터프레임으로 변환(옵션)
+x_tsne = pd.DataFrame(x_tsne, columns = ['T1', 'T2'])</code></pre>
+                <pre><code class="language-python"># 시각화
+plt.figure(figsize=(8, 8))
+sns.scatterplot(x = 'T1', y = 'T2', data = x_tsne, hue = y)
+plt.grid()
+plt.show()</code></pre>
+                <div class="output-box">📊 t-SNE MNIST 시각화 출력 영역</div>
+            </section>
+
+            <!-- 5. 복습 -->
+            <section id="review-sec" class="notebook-cell border-l-4 border-l-green-500">
+                <div class="markdown-content">
+                    <h2 class="section-title text-green-700">5. 복습</h2>
+                    <p class="text-lg">오늘 수업 복습은, 별도 문제가 주어지지 않고, 배운 내용을 다시 살펴보고 코드를 실행해보면서 직접 Review하는 것입니다.^^</p>
+                </div>
+                <pre><code class="language-python"></code></pre>
+            </section>
+            
+            <footer class="text-center text-gray-500 text-sm mt-12 pb-10">
+                <p>Notebook converted to Beautiful HTML</p>
+            </footer>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>

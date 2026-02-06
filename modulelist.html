@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyTorch Mininet & Modules 정리</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Highlight.js (Code Highlighting) -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;700&display=swap');
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+        }
+
+        .code-header {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-size: 0.875rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-block {
+            border-radius: 0 0 0.5rem 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        pre {
+            margin: 0;
+        }
+
+        .section-title {
+            color: #1e293b;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .note-box {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            margin-bottom: 1.5rem;
+            color: #0c4a6e;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navbar -->
+    <nav
+        class="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 z-50 flex flex-col hidden md:flex shadow-lg">
+        <div class="p-6 border-b border-slate-100 font-bold text-xl text-blue-600">
+            <i class="fas fa-cubes"></i> PyTorch Lab
+        </div>
+        <div class="flex-1 overflow-y-auto py-4 space-y-1 text-sm">
+            <a href="#basic" class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">1.
+                Linear & Tensor</a>
+            <a href="#activation"
+                class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">2. Activation
+                (ReLU)</a>
+            <a href="#normalization"
+                class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">3.
+                Normalization</a>
+            <a href="#dropout" class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">4.
+                Dropout</a>
+            <a href="#cnn" class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">5. CNN
+                Basics</a>
+            <a href="#rnn" class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">6. RNN
+                Internals</a>
+            <a href="#modules" class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">7.
+                Modules & Params</a>
+            <a href="#containers"
+                class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">8. Sequential vs
+                List</a>
+            <a href="#transposed"
+                class="block w-full text-left px-6 py-2 hover:bg-slate-50 text-slate-600 font-medium">9. Transposed
+                Conv</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="md:ml-64 p-6 md:p-12 max-w-5xl mx-auto">
+        <header class="mb-12">
+            <span class="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-600 text-xs font-bold mb-3">Beginner
+                Guide</span>
+            <h1 class="text-4xl font-bold text-slate-900 mb-2">PyTorch 모듈 & 레이어 완전 정복</h1>
+            <p class="text-lg text-slate-600">Jupyter Notebook의 모든 코드를 한 줄도 빠짐없이, 초보자도 이해하기 쉽게 정리했습니다.</p>
+        </header>
+
+        <!-- 1. Linear & Tensor -->
+        <section id="basic" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-grip-lines"></i> 1. Linear Layer와 Tensor 기초</h2>
+            <div class="note-box">
+                가장 기본적인 선형 변환($y = Wx + b$)을 수행하는 <code>nn.Linear</code> 레이어를 살펴봅시다.
+            </div>
+
+            <div class="code-header"><span>Import & Linear</span><i class="fas fa-code"></i></div>
+            <pre class="code-block"><code class="python">import torch
+from torch import nn
+
+# 데이터를 생성합니다 (100개의 샘플, 각 샘플은 3개의 특징을 가짐)
+x = torch.randn(100, 3)
+
+# 3개의 입력을 받아 5개의 출력을 내놓는 선형 층 정의
+layer = nn.Linear(3, 5)
+
+print(layer(x).shape)  # 출력 크기 확인 -> [100, 5]가 되어야 함
+print(layer.weight)    # 가중치(Weight) 텐서 확인
+print(layer.bias)      # 편향(Bias) 텐서 확인</code></pre>
+            <p class="text-slate-600 mb-4">입력 데이터 <code>(100, 3)</code>이 레이어를 통과하면 <code>(100, 5)</code>로 변환됩니다. 내부적으로
+                $3 \times 5$ 크기의 Weight 행렬과 연산됩니다.</p>
+        </section>
+
+        <!-- 2. Activation -->
+        <section id="activation" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-bolt"></i> 2. 활성화 함수 (ReLU)</h2>
+            <div class="note-box">
+                음수는 0으로 만들고, 양수는 그대로 통과시키는 ReLU 함수입니다. 비선형성을 추가하는 핵심 요소입니다.
+            </div>
+
+            <div class="code-header"><span>ReLU Activation</span><i class="fas fa-code"></i></div>
+            <pre class="code-block"><code class="python">x = torch.randn(2, 5)
+layer = nn.ReLU()
+
+print(x)          # 원본 데이터
+print(layer(x))   # ReLU 통과 후 데이터 (음수가 0이 되었는지 확인!)</code></pre>
+        </section>
+
+        <!-- 3. Normalization -->
+        <section id="normalization" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-sliders"></i> 3. 정규화 (Normalization)</h2>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">3-1. BatchNorm1d (배치 정규화)</h3>
+            <p class="text-slate-600 mb-2">데이터의 <strong>세로 방향(Batch)</strong>으로 평균과 분산을 구해 정규화합니다. 특성(Feature)별로 독립적으로
+                계산됩니다.</p>
+            <pre class="code-block"><code class="python">layer = nn.BatchNorm1d(3)  # 입력 Feature 개수 3
+print(layer.weight) # 학습 가능한 Scale 파라미터 (초기값 1)
+print(layer.bias)   # 학습 가능한 Shift 파라미터 (초기값 0)
+
+x = torch.randn(5, 3) # (Batch: 5, Feature: 3)
+print(x)
+print(layer(x))
+
+# 정규화 후 평균이 0, 표준편차가 1에 가까운지 확인
+print(layer(x).mean(dim=0))
+print(layer(x).std(dim=0, unbiased=False))</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">3-2. LayerNorm (층 정규화)</h3>
+            <p class="text-slate-600 mb-2">데이터의 <strong>가로 방향(Feature)</strong>으로 정규화합니다. 샘플 하나 안에서 평균을 냅니다.</p>
+            <pre class="code-block"><code class="python">layer = nn.LayerNorm(3)
+print(layer.weight)
+print(layer.bias)
+
+x = torch.randn(5, 3)
+print(x)
+print(layer(x))
+
+# dim=1 (가로 방향)로 통계를 냈을 때 0과 1이 되는지 확인
+print(layer(x).mean(dim=1))
+print(layer(x).std(dim=1, unbiased=False))</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">3-3. BatchNorm2d (이미지 배치 정규화)</h3>
+            <p class="text-slate-600 mb-2">이미지 데이터(B, C, H, W)에서 사용합니다. 채널(C)을 기준으로, 나머지 차원(B, H, W) 전체에 대해 통계를 냅니다.</p>
+            <pre class="code-block"><code class="python">layer = nn.BatchNorm2d(3) # 채널 수 3
+print(layer.weight)
+print(layer.bias)
+
+x = torch.randn(5, 3, 32, 32)
+# (0, 2, 3) 차원, 즉 Batch, Height, Width에 대해 평균을 냄
+print(layer(x).mean(dim=(0,2,3))) 
+print(layer(x).std(dim=(0,2,3), unbiased=False))</code></pre>
+        </section>
+
+        <!-- 4. Dropout -->
+        <section id="dropout" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-eraser"></i> 4. Dropout (드롭아웃)</h2>
+            <div class="note-box">
+                과적합을 막기 위해 뉴런의 일부를 랜덤하게 꺼버립니다(0으로 만듬).<br>
+                PyTorch 구현에서는 살아남은 값들에 <code>1/(1-p)</code>를 곱해 스케일을 유지합니다.
+            </div>
+
+            <pre class="code-block"><code class="python">x = torch.randn(3, 7)
+drop = nn.Dropout(p=0.9) # 90% 확률로 0으로 만듦 (매우 강력한 드롭아웃)
+
+print(x)
+# 직접 계산해보기: 원본 * (1/0.1) 이 되는지 확인 (Dropout은 훈련 시에만 동작)
+print(drop(x) * (1-0.9)) 
+
+drop.eval() # 평가 모드로 전환
+print(drop(x)) # 평가 모드에서는 드롭아웃이 동작하지 않음 (모두 통과)</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">실전 모델에서의 Dropout</h3>
+            <pre class="code-block"><code class="python">class sample_model(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.drop_layer = nn.Sequential(
+            nn.Linear(5, 7),
+            nn.ReLU(),
+            nn.Dropout(p=0.9) # 마지막에 드롭아웃 적용
+        )
+
+    def forward(self, x):
+        x = self.drop_layer(x)
+        return x
+
+model = sample_model()
+model.train() # 훈련 모드
+x = torch.randn(3, 5)
+print("Training Output:\n", model(x))
+
+model.eval()  # 테스트 모드 (드롭아웃 꺼짐)
+print("Eval Output:\n", model(x))</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">CNN에서의 Dropout2d</h3>
+            <pre class="code-block"><code class="python">class sample_model_conv(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.drop_layer = nn.Sequential(
+            nn.Conv2d(3, 3, 3),
+            nn.Dropout2d(p=0.3) # 채널 전체를 날려버릴 수도 있음
+        )
+    def forward(self, x):
+        return self.drop_layer(x)
+
+model = sample_model_conv()
+model.train()
+
+# GPU 사용 가능 여부 확인 및 이동
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Device:", DEVICE)
+
+x = torch.randn(5, 3, 4, 4).to(DEVICE) # (Batch, Channel, H, W)
+model.to(DEVICE)
+print(model(x))</code></pre>
+        </section>
+
+        <!-- 5. CNN -->
+        <section id="cnn" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-image"></i> 5. CNN 기초 (Convolution & Pooling)</h2>
+
+            <div class="note-box">
+                합성곱(Convolution) 레이어의 입출력 크기 변화를 이해하는 것이 중요합니다.
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">5-1. Conv2d Shape 확인</h3>
+            <pre class="code-block"><code class="python"># 입력: 채널 1개, 출력: 채널 2개, 커널: 3x3
+layer = nn.Conv2d(in_channels=1, out_channels=2, kernel_size=3) 
+# 입력 이미지: (Batch 32, Channel 1, Height 5, Width 5)
+print(layer(torch.randn(32, 1, 5, 5)).shape)
+# 출력 크기 예상: 5 - 3 + 1 = 3 -> (32, 2, 3, 3)
+
+layer = nn.Conv2d(3, 5, 3) # 입력 3채널, 출력 5채널
+print(layer(torch.randn(32, 3, 5, 5)).shape)
+print(layer.weight.shape) # 가중치 크기: (Out 5, In 3, K 3, K 3)</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">5-2. Stride & Padding</h3>
+            <pre class="code-block"><code class="python">conv1 = nn.Conv2d(1, 8, 6, stride=2) # 6x6 커널, 2칸씩 이동
+x = torch.randn(32, 1, 28, 28)
+print("Conv1 Out:", conv1(x).shape) 
+# (28-6)/2 + 1 = 11 + 1 = 12 -> (32, 8, 12, 12)
+
+conv2 = nn.Conv2d(8, 16, 3, padding=1) # 패딩 1 추가
+print("Conv2 Out:", conv2(conv1(x)).shape)
+# (12+2-3)/1 + 1 = 12 -> 크기 유지 (32, 16, 12, 12)
+
+Maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+print("Pool Out:", Maxpool(conv2(conv1(x))).shape)
+# 12 / 2 = 6 -> (32, 16, 6, 6)</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">5-3. Pooling Layers</h3>
+            <pre class="code-block"><code class="python"># Max Pooling: 가장 큰 값만 남김
+maxpool = nn.MaxPool2d(2)
+x = torch.randn(1, 6, 6)
+print("Input:\n", x)
+print("MaxPool Output:\n", maxpool(x))
+
+# Average Pooling: 평균값을 구함
+avgpool = nn.AvgPool2d(2)
+print("AvgPool Output:\n", avgpool(x))</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">5-4. 전체 CNN 클래스 구현</h3>
+            <pre class="code-block"><code class="python">class CNN(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 8, 6, stride=2)
+        self.conv2 = nn.Conv2d(8, 16, 3, padding=1)
+        self.Maxpool = nn.MaxPool2d(2)
+        # FC Layer 입력 크기 계산: 16채널 * 6 * 6
+        self.fc = nn.Linear(16 * 6 * 6, 10)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.conv2(x)
+        x = self.Maxpool(x)
+        x = torch.flatten(x, start_dim=1) # 1차원으로 펼치기
+        x = self.fc(x)
+        return x
+
+x = torch.randn(32, 1, 28, 28)
+model = CNN()
+print("Final Output Shape:", model(x).shape) # (32, 10)</code></pre>
+        </section>
+
+        <!-- 6. RNN -->
+        <section id="rnn" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-circle-notch"></i> 6. RNN (Recurrent Neural Network)</h2>
+            <div class="note-box">
+                RNN의 내부 동작 원리를 수식으로 직접 구현해보고, <code>nn.RNN</code> 결과와 비교해봅니다.
+            </div>
+
+            <pre class="code-block"><code class="python"># RNN Cell 정의 (입력 4 -> 은닉 5)
+rnn_cell = nn.RNN(input_size=4, hidden_size=5, batch_first=True)
+
+x = torch.randn(3, 2, 4) # (Batch 3, Seq 2, Feat 4)
+out, h = rnn_cell(x)
+
+print("Output Shape:", out.shape) # (Batch, Seq, Hidden) -> 각 시점의 은닉 상태
+print("Final Hidden Shape:", h.shape) # (Layers, Batch, Hidden) -> 마지막 시점 은닉 상태
+
+# --- 수동 계산 검증 (Manual Verification) ---
+Wx = rnn_cell.weight_ih_l0
+Wh = rnn_cell.weight_hh_l0
+bx = rnn_cell.bias_ih_l0
+bh = rnn_cell.bias_hh_l0
+
+h_init = torch.zeros(1, 5) # 초기 은닉 상태 0
+
+# 첫 번째 시점 (t=0) 계산: tanh(x @ Wx + h_prev @ Wh + b)
+h0 = torch.tanh(x[0,0,:].unsqueeze(dim=0) @ Wx.T + bx + h_init @ Wh.T + bh)
+
+# 두 번째 시점 (t=1) 계산
+h1 = torch.tanh(x[0,1,:].unsqueeze(dim=0) @ Wx.T + bx + h0 @ Wh.T + bh)
+
+print("Manual h0:", h0)
+print("Manual h1:", h1)
+print("Library Output:", out[0]) # 결과가 일치해야 함</code></pre>
+        </section>
+
+        <!-- 7. Modules -->
+        <section id="modules" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-search"></i> 7. 모델 파라미터 탐색 (Modules & Children)</h2>
+
+            <pre class="code-block"><code class="python">class MLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Sequential(nn.Linear(2, 3), nn.ReLU())
+        self.fc2 = nn.Sequential(nn.Linear(3, 4), nn.ReLU())
+        self.fc_out = nn.Sequential(nn.Linear(4, 1), nn.Sigmoid())
+
+    def forward(self, x):
+        return self.fc_out(self.fc2(self.fc1(x)))
+
+model = MLP()
+print(model) # 모델 구조 출력</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">Parameters 접근</h3>
+            <pre class="code-block"><code class="python"># 모든 학습 가능한 파라미터(Weight, Bias) 확인
+print(list(model.parameters())[3]) # 특정 파라미터 값 확인
+
+# 이름과 함께 확인 (Named Parameters)
+for name, p in model.named_parameters():
+    print(f"{name}: {p.shape}")</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">Modules vs Children</h3>
+            <div class="note-box">
+                <code>modules()</code>는 모델 내부의 **모든** 서브 모듈(재귀적)을 반환하고,<br>
+                <code>children()</code>은 **바로 아래 단계**의 모듈만 반환합니다.
+            </div>
+            <pre class="code-block"><code class="python">print("Modules:", list(model.modules())) # 전체 다 나옴
+print("Children:", list(model.children())) # fc1, fc2, fc_out 만 나옴
+
+# 응용: 모든 Linear 레이어의 가중치 초기화 (Kaiming Normal)
+for m in model.modules():
+    if isinstance(m, nn.Linear):
+        nn.init.kaiming_normal_(m.weight)</code></pre>
+        </section>
+
+        <!-- Transfer Learning -->
+        <section class="mb-16">
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6"><i class="fas fa-snowflake"></i> Transfer Learning
+                (Freezing)</h3>
+            <pre class="code-block"><code class="python">model = MLP()
+
+# 1. 기존 파라미터 얼리기 (Gradient 계산 끔)
+for p in list(model.parameters())[:-4]: # 마지막 층 제외하고 얼리기
+    p.requires_grad = False
+
+# 2. 마지막 층 교체 (4 -> 10 클래스 분류로 변경)
+# 새로 생성된 층은 requires_grad=True 가 기본값
+model.fc_out = nn.Linear(4, 10) 
+
+# 3. 학습해야 할 파라미터만 Optimizer에 전달
+params = [p for p in model.parameters() if p.requires_grad]
+optimizer = torch.optim.Adam(params, lr=0.1)</code></pre>
+        </section>
+
+        <!-- 8. Containers -->
+        <section id="containers" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-box"></i> 8. nn.Sequential vs nn.ModuleList</h2>
+
+            <div class="note-box warning bg-orange-50 border-orange-400 text-orange-900 border-l-4 p-4">
+                <strong>주의!</strong> Python list <code>[layer1, layer2]</code>를 사용하면 PyTorch가 파라미터를 등록하지 못해 학습이 안
+                됩니다.<br>
+                반드시 <code>nn.ModuleList</code>를 써야 합니다.
+            </div>
+
+            <pre class="code-block"><code class="python">class TestNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # self.layers = [nn.Linear(3,3)] # (X) 파라미터 등록 안 됨!
+        self.layers = nn.ModuleList([nn.Linear(3,3), nn.Linear(3,3)]) # (O)
+
+    def forward(self, x):
+        for layer in self.layers:
+            x = layer(x)
+        return x
+
+model = TestNet()
+print(model) # ModuleList 안의 층들이 잘 보이는지 확인</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">왜 Sequential 쓰지 ModuleList 쓰나요?</h3>
+            <p class="text-slate-600 mb-2"><code>Sequential</code>은 입력이 하나여야만 합니다. 복잡한 연결(입력이 2개이거나 중간에 분기 등)이 필요할 땐
+                <code>ModuleList</code>에 담아두고 <code>forward</code>에서 직접 제어합니다.</p>
+            <pre class="code-block"><code class="python">class TwoInputBlock(nn.Module):
+    def forward(self, x, y):
+        # ... logic ...
+        return x, y
+
+# Sequential은 forward 인자가 하나라 불가능
+# model = nn.Sequential(TwoInputBlock(), ...) (Error!)
+
+# ModuleList는 가능
+model = nn.ModuleList([TwoInputBlock(), TwoInputBlock()])
+for block in model:
+    x, y = block(x, y)</code></pre>
+        </section>
+
+        <!-- 9. Transposed Conv -->
+        <section id="transposed" class="mb-16 scroll-mt-10">
+            <h2 class="section-title"><i class="fas fa-expand-arrows-alt"></i> 9. Transposed Convolution (Upsampling)
+            </h2>
+            <div class="note-box">
+                이미지 크기를 **키우는** 레이어입니다. (Conv2d의 반대 과정)<br>
+                입력 픽셀 하나가 커널 크기만큼 퍼져나가는 것으로 이해할 수 있습니다.
+            </div>
+
+            <pre class="code-block"><code class="python"># 입력 1 -> 1, 커널 3x3, 스트라이드 3 (많이 퍼짐)
+up = nn.ConvTranspose2d(1, 1, kernel_size=3, stride=3, bias=False)
+up.weight.data.fill_(1) # 가중치를 모두 1로 설정해 동작 확인
+
+x = torch.tensor([[[[1., 2], [1, 2]]]]) # 2x2 입력
+print(up(x)) 
+# 결과는 각 1, 2 값이 3x3 영역으로 퍼져나가 서로 겹치지 않게 배치됨 (Stride=3이라서)</code></pre>
+
+            <h3 class="text-lg font-bold text-slate-800 mb-2 mt-6">효율적인 Convolution 기법</h3>
+            <pre class="code-block"><code class="python"># Grouped Convolution
+# 입력을 32개 그룹으로 쪼개서 각각 컨볼루션 -> 파라미터 개수 획기적으로 감소
+print(nn.Conv2d(128, 256, 3, groups=32).weight.shape) 
+
+# Depthwise Separable (groups = in_channels)
+print(nn.Conv2d(3, 3, 3, groups=3).weight.shape) # 채널별로 따로 필터 적용</code></pre>
+        </section>
+
+        <footer class="text-center text-slate-400 text-sm py-12 border-t border-slate-200">
+            <p>Generated based on Jupyter Notebook Analysis</p>
+        </footer>
+    </main>
+
+</body>
+
+</html>
