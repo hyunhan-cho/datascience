@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>비지도학습 - 군집화 (Clustering)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 0.5rem 1rem;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-family: monospace;
+        }
+        .code-circle {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white py-10 shadow-lg">
+        <div class="container mx-auto px-4 max-w-4xl">
+            <h1 class="text-4xl font-bold mb-2">비지도학습 - 군집화</h1>
+            <p class="text-indigo-100 text-lg">K-Means와 DBSCAN 알고리즘 완전 정복</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 max-w-4xl py-8 space-y-12">
+
+        <!-- 1. 환경준비 -->
+        <section id="setup">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4 border-b pb-2">1. 환경준비</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-3">(1) 라이브러리 로딩</h3>
+                <p class="mb-4 text-slate-600">데이터 분석과 시각화, 그리고 머신러닝 모델링을 위한 필수 라이브러리들을 불러옵니다.</p>
+                
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <div class="code-header">
+                        <div>
+                            <span class="code-circle bg-red-500"></span>
+                            <span class="code-circle bg-yellow-500"></span>
+                            <span class="code-circle bg-green-500"></span>
+                        </div>
+                        <span>Python</span>
+                    </div>
+                    <pre><code class="language-python">import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+import seaborn as sns
+
+# 샘플데이터 로딩 함수
+from sklearn.datasets import make_blobs, make_moons
+
+# 클러스터링을 위한 함수
+from sklearn.neighbors import NearestNeighbors
+from sklearn.cluster import KMeans, DBSCAN
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)</code></pre>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-xl font-semibold text-slate-700 mb-3">(2) Sample Data 1 생성</h3>
+                <p class="mb-4 text-slate-600"><code>make_blobs</code> 함수를 사용하여 가상의 군집 데이터를 생성하고 시각화합니다.</p>
+                
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <div class="code-header">Python Input</div>
+                    <pre><code class="language-python">x, y = make_blobs(n_samples=300, centers=4, cluster_std=0.60, random_state=0)
+x = pd.DataFrame(x, columns = ['x1', 'x2'])
+y = pd.Series(y, name = 'shape')
+
+plt.figure(figsize = (8,6))
+plt.scatter(x['x1'], x['x2'])
+plt.show()</code></pre>
+                </div>
+
+                <!-- Chart Simulation -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Output Visualization</h4>
+                    <canvas id="chart-blobs-original"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. K-means -->
+        <section id="kmeans">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4 border-b pb-2">2. k-means</h2>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-slate-700 mb-3">(1) k means 모델 만들기</h3>
+                
+                <h4 class="text-lg font-medium text-slate-800 mt-4 mb-2">1) 무작정 군집모델 만들기 (k=2)</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input</div>
+                    <pre><code class="language-python"># k means 학습
+model = KMeans(n_clusters= 2, n_init = 'auto')
+model.fit(x)
+
+# 예측
+pred = model.predict(x)
+print(pred)</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                     <div class="code-header">Python Input</div>
+                    <pre><code class="language-python"># feature + pred + y 붙여 놓고 비교해 봅시다.
+pred = pd.DataFrame(pred, columns = ['predicted'])
+result = pd.concat([x, pred, y], axis = 1)
+result.head()</code></pre>
+                </div>
+
+                <h4 class="text-lg font-medium text-slate-800 mt-6 mb-2">2) 결과 시각화</h4>
+                <p class="mb-2 text-slate-600">모델이 학습한 중심점(Centroids) 좌표를 확인합니다.</p>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                     <div class="code-header">Python Input</div>
+                    <pre><code class="language-python"># k means 모델로 부터 클러스터의 평균 값들을 가져올 수 있습니다.
+centers = pd.DataFrame(model.cluster_centers_, columns=['x1','x2'])
+centers</code></pre>
+                </div>
+
+                <p class="mb-2 text-slate-600">예측된 군집(색상)과 중심점(빨간 다이아몬드)을 시각화합니다.</p>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                     <div class="code-header">Python Input</div>
+                    <pre><code class="language-python">plt.figure(figsize = (8,6))
+plt.scatter(result['x1'], result['x2'], c = result['predicted'], alpha=0.5)
+plt.scatter(centers['x1'], centers['x2'], s=50, marker='D', c='r')
+plt.show()</code></pre>
+                </div>
+
+                <!-- Chart Simulation -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-8">
+                     <h4 class="text-center text-sm text-gray-500 mb-2">K-Means Result (k=2)</h4>
+                    <canvas id="chart-kmeans-k2"></canvas>
+                </div>
+
+                <h4 class="text-lg font-medium text-slate-800 mt-6 mb-2">3) k 값에 따라 모델을 생성하고 그래프 그리기 함수</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                     <div class="code-header">Python Input</div>
+                    <pre><code class="language-python">def k_means_plot(x, y, k) :
+    # 모델 생성
+    model = KMeans(n_clusters= k, n_init = 'auto')
+    model.fit(x)
+    pred = model.predict(x)
+
+    # 군집 결과와 원본 데이터 합치기(concat)
+    pred = pd.DataFrame(pred, columns = ['predicted'])
+    result = pd.concat([x, pred, y], axis = 1)
+
+    # 중앙(평균) 값 뽑기
+    centers = pd.DataFrame(model.cluster_centers_, columns=['x1','x2'])
+
+    # 그래프 그리기
+    plt.figure(figsize = (8,6))
+    plt.scatter(result['x1'],result['x2'],c=result['predicted'],alpha=0.5)
+    plt.scatter(centers['x1'], centers['x2'], s=50,marker='D',c='r')
+    plt.grid()
+    plt.show()</code></pre>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-slate-700 mb-3">(2) 적절한 K 값 찾기</h3>
+                
+                <h4 class="text-lg font-medium text-slate-800 mt-4 mb-2">1) k 값 조절</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                     <div class="code-header">Python Input</div>
+                    <pre><code class="language-python"># k 값을 1~8까지 조절해 봅시다.
+k_means_plot(x, y, k = 1)</code></pre>
+                </div>
+
+                <h4 class="text-lg font-medium text-slate-800 mt-6 mb-2">2) 적절한 k값 찾기① - inertia (Elbow Method)</h4>
+                <p class="mb-2 text-slate-600">군집 내 오차 제곱합(Inertia)을 이용하여 최적의 k를 찾습니다. 그래프가 꺾이는 지점(Elbow)이 최적점입니다.</p>
+                
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">model.inertia_</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python"># k의 갯수에 따라 각 점과의 거리를 계산하여 적정한 k를 찾아 봅시다.
+kvalues = range(1, 10)
+inertias = []
+
+for k in kvalues:
+    model = KMeans(n_clusters=k, n_init = 'auto')
+    model.fit(x)
+    inertias.append(model.inertia_)</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python"># Plot k vs inertias
+plt.figure(figsize = (8, 6))
+plt.plot(kvalues, inertias, marker='o')
+plt.xlabel('number of clusters, k')
+plt.ylabel('inertia')
+plt.grid()
+plt.show()</code></pre>
+                </div>
+
+                 <!-- Chart Simulation -->
+                 <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                     <h4 class="text-center text-sm text-gray-500 mb-2">Inertia (Elbow Curve)</h4>
+                    <canvas id="chart-inertia"></canvas>
+                </div>
+
+                <p class="mb-4 text-slate-600">위 결과로부터 적절한 k 값을 정해 봅시다. (보통 4가 적절해 보입니다)</p>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <div class="code-header">Python Input</div>
+                    <pre><code class="language-python">k_means_plot(x, y, k=4)</code></pre>
+                </div>
+
+                <h4 class="text-lg font-medium text-slate-800 mt-6 mb-2">3) 적절한 k값 찾기② - 실루엣 점수 (Silhouette Score)</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">from sklearn.metrics import silhouette_score</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python"># 클러스터 개수에 따른 실루엣 점수를 저장할 리스트
+kvalues = range(2, 10) # 최소 2개 이상이어야 함.
+sil_score = []
+
+for k in kvalues:
+    # KMeans 모델 생성
+    model = KMeans(n_clusters=k, n_init = 'auto')
+
+    # 모델을 학습하고 예측
+    pred = model.fit_predict(x)
+
+    # 실루엣 점수 계산
+    sil_score.append(silhouette_score(x, pred))</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python"># 실루엣 점수 시각화
+plt.figure(figsize = (8, 6))
+plt.plot(kvalues, sil_score, marker='o')
+plt.xlabel('n_clusters')
+plt.ylabel('Silhouette Score')
+plt.grid()
+plt.show()</code></pre>
+                </div>
+
+                <!-- Chart Simulation -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Silhouette Score</h4>
+                   <canvas id="chart-silhouette"></canvas>
+               </div>
+            </div>
+
+            <!-- 3. 복습문제 : k-means 실습 -->
+            <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-6 mb-8">
+                <h3 class="text-xl font-bold text-indigo-800 mb-4">(3) 복습문제 : k-means 실습</h3>
+                <ul class="list-disc list-inside mb-4 text-slate-700">
+                    <li>k 값을 1부터 20까지 늘려가면서 inertia 값을 저장하고</li>
+                    <li>그래프를 그려 최적의 k값을 찾고</li>
+                    <li>모델을 생성하여 시각화 해 봅시다.</li>
+                </ul>
+
+                <h4 class="font-semibold mt-4 mb-2">1) 데이터 준비</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python">x, y = make_blobs(n_samples=300, centers=5, cluster_std=1.8, random_state=20)
+x = pd.DataFrame(x, columns = ['x1', 'x2'])
+y = pd.Series(y, name = 'shape')
+
+plt.figure(figsize = (8,6))
+plt.scatter(x['x1'], x['x2'])
+plt.show()</code></pre>
+                </div>
+
+                <h4 class="font-semibold mt-4 mb-2">2) 적절한 k값 찾기① - inertia</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># k의 갯수에 따라 각 점과의 거리(inertia)를 계산하여 적정한 k를 찾아 봅시다.
+kvalues = range(1, 21)
+inertias = []
+
+for k in kvalues:
+    model = KMeans(n_clusters=k, n_init='auto', random_state=20)
+    model.fit(x)
+    inertias.append(model.inertia_)</code></pre>
+                </div>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># 그래프 그리기
+plt.figure(figsize = (8, 6))
+plt.plot(kvalues, inertias, marker='o')
+plt.xlabel('number of clusters, k')
+plt.ylabel('inertia')
+plt.grid()
+plt.show()</code></pre>
+                </div>
+                 <!-- Chart Simulation: Review Inertia -->
+                 <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Review: Inertia (Elbow at k=5)</h4>
+                   <canvas id="chart-review-inertia"></canvas>
+               </div>
+
+                <h4 class="font-semibold mt-4 mb-2">3) 적절한 k값 찾기② - 실루엣점수</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># k값을 늘려가며 실루엣 점수를 계산해 봅시다.
+kvalues = range(2, 21)
+sil_score = []
+
+for k in kvalues:
+    model = KMeans(n_clusters=k, n_init='auto', random_state=20)
+    pred = model.fit_predict(x)
+    sil_score.append(silhouette_score(x, pred))</code></pre>
+                </div>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># 실루엣 점수 그래프
+plt.figure(figsize = (8, 6))
+plt.plot(kvalues, sil_score, marker='o')
+plt.xlabel('n_clusters')
+plt.ylabel('Silhouette Score')
+plt.grid()
+plt.show()</code></pre>
+                </div>
+                <!-- Chart Simulation: Review Silhouette -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Review: Silhouette Score (Peak at k=5)</h4>
+                   <canvas id="chart-review-silhouette"></canvas>
+               </div>
+
+                <h4 class="font-semibold mt-4 mb-2">4) 최적의 k 값으로 모델 생성 및 시각화</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># 최적의 k=5 (데이터 생성시 5개였으므로)
+k_means_plot(x, y, k=5)</code></pre>
+                </div>
+                <!-- Chart Simulation: Review Result -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Review: K-Means Result (k=5)</h4>
+                   <canvas id="chart-review-result"></canvas>
+               </div>
+            </div>
+
+            <!-- (4) K-means 한계 -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-slate-700 mb-3">(4) K-means 한계</h3>
+                
+                <h4 class="text-lg font-medium text-slate-800 mt-4 mb-2">1) Sample Data 2 (Moon shape)</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python">x, y = make_moons(n_samples = 300, noise = .08, random_state=2)
+x = pd.DataFrame(x, columns = ['x1', 'x2'])
+y = pd.Series(y, name = 'shape')
+
+plt.figure(figsize = (8,6))
+plt.scatter(x['x1'], x['x2'])
+plt.show()</code></pre>
+                </div>
+
+                <!-- Chart Moons -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                     <h4 class="text-center text-sm text-gray-500 mb-2">Moons Data</h4>
+                    <canvas id="chart-moons-original"></canvas>
+                </div>
+
+                <h4 class="text-lg font-medium text-slate-800 mt-6 mb-2">2) k means 모델 만들기 (k=2)</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">k_means_plot(x, y, k = 2)</code></pre>
+                </div>
+
+                <h4 class="text-lg font-medium text-slate-800 mt-6 mb-2">3) 실루엣점수를 이용하여 k값 찾기</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">kvalues = range(2, 12) # 최소 2개 이상이어야 함.
+sil_score = []
+
+for k in kvalues:
+    # KMeans 모델 생성
+    model = KMeans(n_clusters=k, n_init = 'auto')
+    # 모델을 학습하고 예측
+    pred = model.fit_predict(x)
+    # 실루엣 점수 계산
+    sil_score.append(silhouette_score(x, pred))
+
+# 실루엣 점수 시각화
+plt.figure(figsize = (8, 6))
+plt.plot(kvalues, sil_score, marker='o')
+plt.xlabel('n_clusters')
+plt.ylabel('Silhouette Score')
+plt.grid()
+plt.show()</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python"># 적절한 k값으로 모델을 생성해 봅시다.
+k_means_plot(x, y, k = 8)</code></pre>
+                </div>
+
+                <!-- Chart Moons KMeans Fail -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">K-Means Failed on Moons (k=2)</h4>
+                   <canvas id="chart-moons-kmeans"></canvas>
+               </div>
+
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 text-red-700 mb-6">
+                    <p class="font-bold">K-Means의 한계</p>
+                    <p>우리가 기대하는 바대로 모델이 생성되지 않았습니다. K-Means는 볼록한(Spherical) 덩어리 형태의 군집에서는 잘 작동하지만, 달 모양처럼 복잡한 기하학적 구조에서는 거리 기반 알고리즘의 한계로 인해 제대로 군집화하지 못합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. DBSCAN -->
+        <section id="dbscan">
+            <h2 class="text-3xl font-bold text-slate-900 mb-4 border-b pb-2">3. DBSCAN</h2>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-slate-700 mb-3">(1) DBSCAN 모델 만들기</h3>
+                <p class="mb-4 text-slate-600">밀도 기반 군집화(Density-Based Spatial Clustering)를 사용하여 복잡한 형태의 데이터도 군집화해 봅니다.</p>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python"># DBSCAN 모델을 만들어 봅시다.
+model = DBSCAN(eps=0.1, min_samples=3)
+model.fit(x)</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python"># fitting한 후에 모델의 labels_ 값이 찾아낸 군집 종류입니다.
+clusters = model.labels_</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python"># 군집 번호 중 -1은 이상치를 의미합니다.(어느 군집에도 포함 안되는 값들!)
+clusters</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">plt.figure(figsize = (8, 6))
+plt.scatter(x['x1'], x['x2'], c=clusters, alpha=0.5)
+plt.show()</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python">def dbscan_plot(x, y, eps) :
+    model = DBSCAN(eps=eps, min_samples=3)
+    model.fit(x)
+    clusters = model.labels_
+    plt.figure(figsize = (8,6))
+    plt.scatter(x['x1'], x['x2'], c=clusters, alpha=0.5)
+    plt.grid()
+    plt.show()</code></pre>
+                </div>
+
+                 <!-- Chart Moons DBSCAN Success -->
+                 <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">DBSCAN Success (eps=0.13)</h4>
+                   <canvas id="chart-moons-dbscan"></canvas>
+               </div>
+            </div>
+
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-slate-700 mb-3">(2) 적절한 eps 값 찾기</h3>
+                <p class="mb-2 text-slate-600">KNN(K-Nearest Neighbors) 거리를 이용하여 급격히 거리가 증가하는 지점(Elbow point)을 찾아 적절한 Epsilon을 설정합니다.</p>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">x.shape</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python"># 각점과 근처 3개 점과의 평균 거리
+# NearestNeighbors은 거리계산할 때, 자기 자신을 포함하므로 n+1
+n = 3
+knnDist = NearestNeighbors(n_neighbors = n+1).fit(x)
+distances, _ = knnDist.kneighbors(x)</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">distances.shape</code></pre>
+                </div>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python">distances[:5]</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <pre><code class="language-python"># 평균 거리 계산
+dist = np.mean(distances[:,1:], axis = 1)
+
+# 정렬
+dist = np.sort(dist)</code></pre>
+                </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python"># 그래프 그리기
+plt.figure(figsize = (8,6))
+plt.plot(dist)
+plt.grid()
+plt.show()</code></pre>
+                </div>
+
+                 <!-- Chart K-Dist -->
+                 <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Sorted K-Dist Graph</h4>
+                   <canvas id="chart-kdist"></canvas>
+               </div>
+
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python"># 찾아낸 eps 값을 대입시켜 봅시다.
+
+epsilon = 0.13
+dbscan_plot(x,y, eps = epsilon)</code></pre>
+                </div>
+            </div>
+
+            <!-- (3) 복습문제 : DBSCAN 실습 -->
+            <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-6 mb-8">
+                <h3 class="text-xl font-bold text-indigo-800 mb-4">(3) 복습문제 : DBSCAN 실습</h3>
+                <ul class="list-disc list-inside mb-4 text-slate-700">
+                    <li>적절한 eps값 찾기</li>
+                    <li>모델을 생성하여 시각화 해 봅시다.</li>
+                </ul>
+
+                <h4 class="font-semibold mt-4 mb-2">1) 데이터 준비</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-6">
+                    <pre><code class="language-python">x, y = make_blobs(n_samples=300, centers=5, cluster_std=1.8, random_state=20)
+x = pd.DataFrame(x, columns = ['x1', 'x2'])
+y = pd.Series(y, name = 'shape')
+
+plt.figure(figsize = (8,6))
+plt.scatter(x['x1'], x['x2'])
+plt.show()</code></pre>
+                </div>
+
+                <h4 class="font-semibold mt-4 mb-2">2) 적절한 eps 찾기</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># 각점과 근처 3개 점과의 평균 거리
+n = 3
+knnDist = NearestNeighbors(n_neighbors = n+1).fit(x)
+distances, _ = knnDist.kneighbors(x)
+
+# 평균 거리 계산 및 정렬
+dist = np.mean(distances[:,1:], axis = 1)
+dist = np.sort(dist)</code></pre>
+                </div>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># K-Distance 그래프 그리기
+plt.figure(figsize = (8,6))
+plt.plot(dist)
+plt.grid()
+plt.show()</code></pre>
+                </div>
+                <!-- Chart Simulation: Review K-Dist -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Review: Sorted K-Distance</h4>
+                   <canvas id="chart-review-kdist"></canvas>
+               </div>
+
+                <h4 class="font-semibold mt-4 mb-2">3) DBSCAN 모델 생성</h4>
+                <div class="bg-gray-800 rounded-lg shadow-md mb-4">
+                    <div class="code-header">Python Input (Solution)</div>
+                    <pre><code class="language-python"># 그래프 급격 상승 지점 eps 설정 (예: 1.5)
+epsilon = 1.5 
+dbscan_plot(x, y, eps=epsilon)</code></pre>
+                </div>
+                <!-- Chart Simulation: Review DBSCAN Result -->
+                <div class="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6">
+                    <h4 class="text-center text-sm text-gray-500 mb-2">Review: DBSCAN Result (eps=1.5)</h4>
+                   <canvas id="chart-review-dbscan"></canvas>
+               </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 py-8 text-center mt-12">
+        <p>비지도학습 군집화 강의 자료</p>
+    </footer>
+
+    <!-- Scripts for Charts -->
+    <script>
+        // --- Helper: Generate Blob Data (Approximation) ---
+        function generateBlobs(count, centers, std) {
+            const data = [];
+            const labels = [];
+            centers.forEach((center, idx) => {
+                for (let i = 0; i < count / centers.length; i++) {
+                    const x = center.x + (Math.random() - 0.5) * std * 5; // Simplified gaussian
+                    const y = center.y + (Math.random() - 0.5) * std * 5;
+                    data.push({x, y});
+                    labels.push(idx);
+                }
+            });
+            return { data, labels };
+        }
+
+        // --- Helper: Generate Moon Data (Approximation) ---
+        function generateMoons(count) {
+            const data = [];
+            const labels = [];
+            for (let i = 0; i < count/2; i++) {
+                // Top moon
+                const theta = Math.PI * (i / (count/2));
+                const x1 = Math.cos(theta);
+                const y1 = Math.sin(theta);
+                data.push({x: x1 + (Math.random()-.5)*0.1, y: y1 + (Math.random()-.5)*0.1});
+                labels.push(0);
+
+                // Bottom moon
+                const x2 = 1 - Math.cos(theta);
+                const y2 = 0.5 - Math.sin(theta);
+                data.push({x: x2 + (Math.random()-.5)*0.1, y: y2 + (Math.random()-.5)*0.1});
+                labels.push(1);
+            }
+            return { data, labels };
+        }
+
+        // --- Chart 1: Blobs Original ---
+        const blobsData = generateBlobs(300, [{x:-3,y:5}, {x:3,y:5}, {x:3,y:-2}, {x:-3,y:-2}], 0.6);
+        new Chart(document.getElementById('chart-blobs-original'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Sample Data',
+                    data: blobsData.data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                }]
+            },
+            options: { scales: { x: {display:true}, y: {display:true} }, plugins:{legend:{display:false}} }
+        });
+
+        // --- Chart 2: KMeans K=2 Result ---
+        // Simulating K=2 (Split horizontally roughly)
+        const k2Colors = blobsData.data.map(p => p.x > 0 ? 'rgba(255, 99, 132, 0.6)' : 'rgba(75, 192, 192, 0.6)');
+        new Chart(document.getElementById('chart-kmeans-k2'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Clustered Points',
+                    data: blobsData.data,
+                    backgroundColor: k2Colors
+                }, {
+                    label: 'Centroids',
+                    data: [{x: -3, y: 1.5}, {x: 3, y: 1.5}],
+                    backgroundColor: 'red',
+                    pointStyle: 'rectRot',
+                    radius: 8
+                }]
+            }
+        });
+
+        // --- Chart 3: Inertia (Elbow) ---
+        new Chart(document.getElementById('chart-inertia'), {
+            type: 'line',
+            data: {
+                labels: [1,2,3,4,5,6,7,8,9],
+                datasets: [{
+                    label: 'Inertia',
+                    data: [2500, 1500, 800, 200, 180, 160, 150, 140, 130], // Mock elbow at 4
+                    borderColor: 'blue',
+                    tension: 0.1,
+                    pointBackgroundColor: 'blue'
+                }]
+            },
+            options: { scales: { y: { title: {display:true, text:'Inertia'} }, x: { title: {display:true, text:'k'} } } }
+        });
+
+        // --- Chart 4: Silhouette ---
+        new Chart(document.getElementById('chart-silhouette'), {
+            type: 'line',
+            data: {
+                labels: [2,3,4,5,6,7,8,9],
+                datasets: [{
+                    label: 'Silhouette Score',
+                    data: [0.5, 0.6, 0.85, 0.7, 0.65, 0.6, 0.55, 0.5], // Peak at 4
+                    borderColor: 'orange',
+                    tension: 0.1,
+                    pointBackgroundColor: 'orange'
+                }]
+            }
+        });
+
+        // --- Chart 5: Moons Original ---
+        const moonsData = generateMoons(300);
+        new Chart(document.getElementById('chart-moons-original'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Moons Data',
+                    data: moonsData.data,
+                    backgroundColor: 'rgba(153, 102, 255, 0.6)'
+                }]
+            }
+        });
+
+        // --- Chart 6: KMeans on Moons (Fail) ---
+        // Simulating linear split failure
+        const moonKmeansColors = moonsData.data.map(p => p.x + p.y > 1 ? 'rgba(255, 99, 132, 0.6)' : 'rgba(54, 162, 235, 0.6)');
+        new Chart(document.getElementById('chart-moons-kmeans'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'KMeans Result (Fail)',
+                    data: moonsData.data,
+                    backgroundColor: moonKmeansColors
+                }]
+            }
+        });
+
+        // --- Chart 7: DBSCAN on Moons (Success) ---
+        // Using original generated labels 0 and 1
+        const moonDbscanColors = moonsData.labels.map(l => l === 0 ? 'rgba(75, 192, 192, 0.6)' : 'rgba(255, 206, 86, 0.6)');
+        new Chart(document.getElementById('chart-moons-dbscan'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'DBSCAN Result (Success)',
+                    data: moonsData.data,
+                    backgroundColor: moonDbscanColors
+                }]
+            }
+        });
+
+         // --- Chart 8: K-Dist (Sorted) ---
+         // Generating exponential curve
+         const kDistData = Array.from({length: 300}, (_, i) => 0.05 + Math.pow(i/300, 10) * 0.5);
+         new Chart(document.getElementById('chart-kdist'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length:300}, (_,i)=>i),
+                datasets: [{
+                    label: 'Sorted K-Distance',
+                    data: kDistData,
+                    borderColor: 'purple',
+                    pointRadius: 0,
+                    borderWidth: 2
+                }]
+            },
+            options: { elements: { point: { radius: 0 } } }
+        });
+
+        // --- Review Problem Charts ---
+        // 1. Review Data (5 centers, larger std)
+        const reviewBlobs = generateBlobs(300, [
+            {x:-5,y:5}, {x:0,y:5}, {x:5,y:5},
+            {x:-3,y:-3}, {x:3,y:-3}
+        ], 1.8);
+
+        // 2. Review Inertia (Elbow at 5)
+        new Chart(document.getElementById('chart-review-inertia'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length:20}, (_,i)=>i+1),
+                datasets: [{
+                    label: 'Inertia',
+                    data: [5000, 3000, 1800, 1000, 400, 350, 320, 300, 280, 270, 260, 250, 240, 230, 220, 210, 200, 190, 180, 170],
+                    borderColor: 'blue',
+                    tension: 0.1,
+                    pointBackgroundColor: 'blue'
+                }]
+            },
+            options: { scales: { y: { title: {display:true, text:'Inertia'} }, x: { title: {display:true, text:'k'} } } }
+        });
+
+        // 3. Review Silhouette (Peak at 5)
+        new Chart(document.getElementById('chart-review-silhouette'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length:19}, (_,i)=>i+2),
+                datasets: [{
+                    label: 'Silhouette Score',
+                    data: [0.4, 0.45, 0.5, 0.65, 0.55, 0.5, 0.48, 0.45, 0.42, 0.4, 0.38, 0.36, 0.34, 0.32, 0.3, 0.28, 0.26, 0.24, 0.22],
+                    borderColor: 'orange',
+                    tension: 0.1,
+                    pointBackgroundColor: 'orange'
+                }]
+            }
+        });
+
+        // 4. Review Result (k=5)
+        const k5Colors = reviewBlobs.labels.map(l => {
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'];
+            return colors[l] + '99'; // Add transparency
+        });
+        new Chart(document.getElementById('chart-review-result'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'K-Means (k=5)',
+                    data: reviewBlobs.data,
+                    backgroundColor: k5Colors
+                }]
+            }
+        });
+
+        // 5. Review K-Dist
+        const reviewKDistData = Array.from({length: 300}, (_, i) => 0.2 + Math.pow(i/300, 8) * 1.5);
+         new Chart(document.getElementById('chart-review-kdist'), {
+            type: 'line',
+            data: {
+                labels: Array.from({length:300}, (_,i)=>i),
+                datasets: [{
+                    label: 'Sorted K-Distance',
+                    data: reviewKDistData,
+                    borderColor: 'purple',
+                    pointRadius: 0,
+                    borderWidth: 2
+                }]
+            },
+            options: { elements: { point: { radius: 0 } } }
+        });
+
+        // 6. Review DBSCAN Result
+        new Chart(document.getElementById('chart-review-dbscan'), {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'DBSCAN Result',
+                    data: reviewBlobs.data,
+                    backgroundColor: k5Colors // reusing clusters for convenience
+                }]
+            }
+        });
+
+    </script>
+</body>
+</html>
